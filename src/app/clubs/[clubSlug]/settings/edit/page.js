@@ -1,0 +1,179 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import {
+  addClubPlayerAction,
+  removeClubPlayerAction,
+  updateClubSettingsAction,
+} from "@/app/clubs/[clubSlug]/settings/actions";
+import { getClubPageData } from "@/lib/clubPageData";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+function ErrorMessage({ value }) {
+  if (!value) return null;
+
+  return (
+    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+      {value}
+    </div>
+  );
+}
+
+export default async function EditClubSettingsPage({ params, searchParams }) {
+  const { clubSlug } = await params;
+  const query = await searchParams;
+  const error = query?.error;
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const club = await getClubPageData(supabase, user, clubSlug);
+
+  if (!club) {
+    notFound();
+  }
+
+  if (club.role !== "admin") {
+    redirect(`/clubs/${clubSlug}/settings`);
+  }
+
+  const { data: members, error: membersError } = await supabase
+    .from("club_players")
+    .select(
+      `
+        id,
+        player:players (
+          id,
+          full_name,
+          user_id
+        )
+      `
+    )
+    .eq("club_id", club.id)
+    .order("created_at", { ascending: true });
+
+  if (membersError) {
+    throw new Error(membersError.message);
+  }
+
+  return (
+    <section className="space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="font-mono text-3xl font-semibold text-white">
+          Edit Club
+        </h1>
+        <Link href={`/clubs/${clubSlug}/settings`} className="text-sm font-medium text-[#17dccb]">
+          Back
+        </Link>
+      </div>
+
+      <ErrorMessage value={error} />
+
+      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
+        <h2 className="font-mono text-[1.5rem] font-semibold text-white">
+          Club Configuration
+        </h2>
+
+        <form action={updateClubSettingsAction} className="mt-5 space-y-4">
+          <input type="hidden" name="club_slug" value={clubSlug} />
+
+          <label className="block">
+            <span className="mb-2 block text-sm text-white/70">Nama club</span>
+            <input
+              name="name"
+              defaultValue={club.name}
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm text-white/70">Lokasi</span>
+            <input
+              name="location"
+              defaultValue={club.location ?? ""}
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm text-white/70">Jadwal bermain</span>
+            <input
+              name="play_schedule"
+              defaultValue={club.playSchedule ?? ""}
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm text-white/70">Deskripsi</span>
+            <textarea
+              name="description"
+              rows="4"
+              defaultValue={club.description ?? ""}
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm text-white/70">URL gambar club</span>
+            <input
+              name="image_url"
+              defaultValue={club.imageUrl ?? ""}
+              placeholder="Kosongkan untuk placeholder"
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
+            />
+          </label>
+
+          <button className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
+            Save Club
+          </button>
+        </form>
+      </div>
+
+      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
+        <h2 className="font-mono text-[1.5rem] font-semibold text-white">
+          Tambah pemain
+        </h2>
+        <form action={addClubPlayerAction} className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <input type="hidden" name="club_slug" value={clubSlug} />
+          <input
+            name="full_name"
+            placeholder="Nama pemain baru"
+            className="flex-1 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
+          />
+          <button className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-[#082032] sm:self-start">
+            Add
+          </button>
+        </form>
+
+        <div className="mt-5 space-y-3">
+          {(members ?? []).map((member) => (
+            <div
+              key={member.id}
+              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/7 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-white">{member.player?.full_name}</p>
+                <p className="text-sm text-white/60">
+                  {member.player?.user_id ? "Akun terhubung" : "Pemain manual"}
+                </p>
+              </div>
+              <form action={removeClubPlayerAction} className="sm:shrink-0">
+                <input type="hidden" name="club_slug" value={clubSlug} />
+                <input type="hidden" name="club_player_id" value={member.id} />
+                <button className="w-full rounded-full border border-white/15 px-3 py-2 text-sm text-white/80 sm:w-auto">
+                  Remove
+                </button>
+              </form>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

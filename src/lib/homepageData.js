@@ -35,7 +35,8 @@ export async function getHomepageData(supabase, user) {
           id,
           name,
           slug,
-          city
+          city,
+          location
         )
       `
     )
@@ -62,7 +63,7 @@ export async function getHomepageData(supabase, user) {
       return {
         id: club.id,
         name: club.name,
-        city: club.city,
+        city: club.location || club.city,
         role: membership.role,
         slug: club.slug,
         rosterCount: rosterCount ?? 0,

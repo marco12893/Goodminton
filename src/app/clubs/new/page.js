@@ -65,11 +65,31 @@ export default async function NewClubPage({ searchParams }) {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Kota / venue</span>
+              <span className="mb-2 block text-sm text-white/70">Lokasi</span>
               <input
-                name="city"
+                name="location"
                 type="text"
                 placeholder="GOR Satria"
+                className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-white/70">Jadwal bermain</span>
+              <input
+                name="play_schedule"
+                type="text"
+                placeholder="Setiap Jumat, 19.00 - 21.00"
+                className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm text-white/70">Deskripsi</span>
+              <textarea
+                name="description"
+                rows="4"
+                placeholder="Komunitas badminton untuk sparring dan latihan rutin."
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
               />
             </label>

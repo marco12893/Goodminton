@@ -8,7 +8,11 @@ export async function getClubPageData(supabase, user, clubSlug) {
           id,
           name,
           slug,
-          city
+          city,
+          location,
+          play_schedule,
+          description,
+          image_url
         )
       `
     )
@@ -28,7 +32,11 @@ export async function getClubPageData(supabase, user, clubSlug) {
     id: membership.club.id,
     name: membership.club.name,
     slug: membership.club.slug,
-    city: membership.club.city,
+    city: membership.club.location || membership.club.city,
+    location: membership.club.location || membership.club.city,
+    playSchedule: membership.club.play_schedule,
+    description: membership.club.description,
+    imageUrl: membership.club.image_url,
     role: membership.role,
   };
 }

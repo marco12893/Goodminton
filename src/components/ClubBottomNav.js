@@ -15,8 +15,9 @@ export default function ClubBottomNav({ clubSlug }) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 w-full bg-[#1c1d22] px-3 pb-6 pt-3 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] border-t border-white/10">
-      <div className="mx-auto flex max-w-md items-center justify-between gap-2">
+    <nav className="sticky bottom-0 z-40 mt-6 rounded-t-[2rem] border border-white/10 bg-[#1c1d22]/95 px-3 pb-5 pt-3 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+      <div className="mx-auto mb-3 h-1 w-20 rounded-full bg-white/60" />
+      <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
         {navItems.map((item) => {
           const href = `/clubs/${clubSlug}${item.href}`;
           const isActive = pathname === href;
@@ -26,16 +27,16 @@ export default function ClubBottomNav({ clubSlug }) {
             <Link
               key={item.label}
               href={href}
-              className={`flex flex-1 flex-col items-center justify-center rounded-xl py-2.5 transition-all duration-200 ${
+              className={`flex min-h-20 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center transition-all duration-200 ${
                 isActive
                   ? "bg-white text-[#1c1d22] shadow-sm"
                   : "bg-transparent text-white/50 hover:text-white/90"
               }`}
             >
               <Icon 
-                className="mb-1 h-5 w-5" 
+                className="mb-1 h-5 w-5"
                 strokeWidth={isActive ? 2.5 : 1.5}
-                color={isActive ? "#1c1d22" : "currentColor"} 
+                color={isActive ? "#1c1d22" : "currentColor"}
               />
               <span 
                 className={`text-[10px] font-semibold tracking-wide ${

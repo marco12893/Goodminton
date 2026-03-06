@@ -44,7 +44,9 @@ async function buildUniqueSlug(name) {
 
 export async function createClubAction(formData) {
   const name = getString(formData, "name");
-  const city = getString(formData, "city");
+  const location = getString(formData, "location");
+  const playSchedule = getString(formData, "play_schedule");
+  const description = getString(formData, "description");
 
   if (!name) {
     redirect("/clubs/new?error=Nama club wajib diisi.");
@@ -66,7 +68,11 @@ export async function createClubAction(formData) {
     .insert({
       name,
       slug,
-      city: city || null,
+      city: location || null,
+      location: location || null,
+      play_schedule: playSchedule || null,
+      description: description || null,
+      image_url: null,
     })
     .select()
     .single();
