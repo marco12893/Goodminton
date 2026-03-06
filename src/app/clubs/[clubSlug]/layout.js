@@ -47,7 +47,7 @@ export default async function ClubLayout({ children, params }) {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col gap-5 pb-6 pt-6">{children}</div>
+        <div className="flex flex-1 flex-col gap-5 pb-24 pt-6">{children}</div>
 
         <ClubBottomNav clubSlug={clubSlug} />
       </div>
