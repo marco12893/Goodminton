@@ -87,11 +87,8 @@ export default async function Home() {
 
         <section className="mt-10 flex-1 rounded-t-[2.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(62,69,90,0.8),rgba(38,45,66,0.9))] px-5 pb-7 pt-4 shadow-[0_-8px_40px_rgba(2,10,20,0.22)] backdrop-blur-xl">
           <div className="mx-auto h-1 w-20 rounded-full bg-white/70" />
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4">
             <h2 className="font-mono text-[2rem] font-semibold text-white">My Clubs</h2>
-            <Link href="/register" className="text-sm font-medium text-[#17dccb]">
-              Invite player
-            </Link>
           </div>
 
           <div className="mt-5 space-y-5">

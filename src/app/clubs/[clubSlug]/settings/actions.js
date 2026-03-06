@@ -136,6 +136,170 @@ export async function addClubPlayerAction(formData) {
   redirect(`/clubs/${clubSlug}/settings/edit`);
 }
 
+export async function linkClubPlayerAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const clubPlayerId = getString(formData, "club_player_id");
+  const email = getString(formData, "email").toLowerCase();
+
+  if (!clubSlug || !clubPlayerId || !email) {
+    redirect(
+      `/clubs/${clubSlug}/settings/edit?error=Club player and account email are required.`
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let club;
+  try {
+    club = await getAuthorizedClub(clubSlug, user.id);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const clubPlayerLookup = await supabaseAdmin
+    .from("club_players")
+    .select(
+      `
+        id,
+        club_id,
+        player_id,
+        player:players (
+          id,
+          full_name,
+          user_id
+        )
+      `
+    )
+    .eq("id", clubPlayerId)
+    .eq("club_id", club.id)
+    .maybeSingle();
+
+  if (clubPlayerLookup.error || !clubPlayerLookup.data) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Club player was not found.`);
+  }
+
+  const currentPlayer = clubPlayerLookup.data.player;
+
+  if (currentPlayer?.user_id) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=This player is already linked to an account.`);
+  }
+
+  const profileLookup = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (profileLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(profileLookup.error.message)}`);
+  }
+
+  if (!profileLookup.data) {
+    redirect(
+      `/clubs/${clubSlug}/settings/edit?error=No registered account was found for that email.`
+    );
+  }
+
+  const membershipLookup = await supabaseAdmin
+    .from("club_members")
+    .select("id")
+    .eq("club_id", club.id)
+    .eq("user_id", profileLookup.data.id)
+    .maybeSingle();
+
+  if (membershipLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipLookup.error.message)}`);
+  }
+
+  if (!membershipLookup.data) {
+    const membershipInsert = await supabaseAdmin.from("club_members").insert({
+      club_id: club.id,
+      user_id: profileLookup.data.id,
+      role: "player",
+    });
+
+    if (membershipInsert.error) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipInsert.error.message)}`);
+    }
+  }
+
+  const existingLinkedPlayer = await supabaseAdmin
+    .from("players")
+    .select("id, full_name")
+    .eq("user_id", profileLookup.data.id)
+    .maybeSingle();
+
+  if (existingLinkedPlayer.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(existingLinkedPlayer.error.message)}`);
+  }
+
+  if (existingLinkedPlayer.data && existingLinkedPlayer.data.id !== currentPlayer.id) {
+    const duplicateClubPlayer = await supabaseAdmin
+      .from("club_players")
+      .select("id")
+      .eq("club_id", club.id)
+      .eq("player_id", existingLinkedPlayer.data.id)
+      .maybeSingle();
+
+    if (duplicateClubPlayer.error) {
+      redirect(
+        `/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(duplicateClubPlayer.error.message)}`
+      );
+    }
+
+    if (duplicateClubPlayer.data) {
+      redirect(
+        `/clubs/${clubSlug}/settings/edit?error=That account is already linked to another player in this club.`
+      );
+    }
+
+    const clubPlayerUpdate = await supabaseAdmin
+      .from("club_players")
+      .update({
+        player_id: existingLinkedPlayer.data.id,
+      })
+      .eq("id", clubPlayerId);
+
+    if (clubPlayerUpdate.error) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerUpdate.error.message)}`);
+    }
+
+    const remainingUsage = await supabaseAdmin
+      .from("club_players")
+      .select("id", { head: true, count: "exact" })
+      .eq("player_id", currentPlayer.id);
+
+    if (!remainingUsage.error && remainingUsage.count === 0) {
+      await supabaseAdmin
+        .from("players")
+        .delete()
+        .eq("id", currentPlayer.id)
+        .is("user_id", null);
+    }
+  } else {
+    const playerUpdate = await supabaseAdmin
+      .from("players")
+      .update({
+        user_id: profileLookup.data.id,
+        full_name: currentPlayer.full_name || profileLookup.data.full_name,
+      })
+      .eq("id", currentPlayer.id);
+
+    if (playerUpdate.error) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(playerUpdate.error.message)}`);
+    }
+  }
+
+  redirect(`/clubs/${clubSlug}/settings/edit`);
+}
+
 export async function removeClubPlayerAction(formData) {
   const clubSlug = getString(formData, "club_slug");
   const clubPlayerId = getString(formData, "club_player_id");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   addClubPlayerAction,
+  linkClubPlayerAction,
   removeClubPlayerAction,
   updateClubSettingsAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
@@ -50,7 +51,11 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
         player:players (
           id,
           full_name,
-          user_id
+          user_id,
+          profile:profiles!players_user_id_fkey (
+            email,
+            full_name
+          )
         )
       `
     )
@@ -137,8 +142,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
 
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
         <h2 className="font-mono text-[1.5rem] font-semibold text-white">
-          Add players
+          Players
         </h2>
+        <p className="mt-2 text-sm leading-6 text-white/65">
+          Add manual players, then link them to registered accounts by email so the
+          club appears on their homepage automatically.
+        </p>
         <form action={addClubPlayerAction} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input type="hidden" name="club_slug" value={clubSlug} />
           <input
@@ -162,14 +171,38 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                 <p className="text-sm text-white/60">
                   {member.player?.user_id ? "Linked account" : "Manual player"}
                 </p>
+                {member.player?.profile?.email ? (
+                  <p className="mt-1 text-xs text-[#17dccb]">
+                    {member.player.profile.email}
+                  </p>
+                ) : null}
               </div>
-              <form action={removeClubPlayerAction} className="sm:shrink-0">
-                <input type="hidden" name="club_slug" value={clubSlug} />
-                <input type="hidden" name="club_player_id" value={member.id} />
-                <button className="w-full rounded-full border border-white/15 px-3 py-2 text-sm text-white/80 sm:w-auto">
-                  Remove
-                </button>
-              </form>
+
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[16rem]">
+                {!member.player?.user_id ? (
+                  <form action={linkClubPlayerAction} className="flex flex-col gap-2 sm:flex-row">
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="club_player_id" value={member.id} />
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="Link account email"
+                      className="min-w-0 flex-1 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white outline-none placeholder:text-white/35"
+                    />
+                    <button className="rounded-full bg-[#16d4c1] px-4 py-2 text-sm font-semibold text-[#082032]">
+                      Link
+                    </button>
+                  </form>
+                ) : null}
+
+                <form action={removeClubPlayerAction} className="sm:self-end">
+                  <input type="hidden" name="club_slug" value={clubSlug} />
+                  <input type="hidden" name="club_player_id" value={member.id} />
+                  <button className="w-full rounded-full border border-white/15 px-3 py-2 text-sm text-white/80 sm:w-auto">
+                    Remove
+                  </button>
+                </form>
+              </div>
             </div>
           ))}
         </div>
