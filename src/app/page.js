@@ -101,9 +101,10 @@ export default async function Home() {
               </div>
             ) : (
               data.clubs.map((club) => (
-                <article
+                <Link
                   key={club.id}
-                  className={`rounded-[2rem] bg-gradient-to-br ${club.gradient} px-5 py-5 text-[#07202f] shadow-[0_22px_50px_rgba(0,0,0,0.2)]`}
+                  href={`/clubs/${club.slug}`}
+                  className={`block rounded-[2rem] bg-gradient-to-br ${club.gradient} px-5 py-5 text-[#07202f] shadow-[0_22px_50px_rgba(0,0,0,0.2)]`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#f3f8f8] text-[1.6rem] font-bold tracking-tight text-[#0d2433] shadow-inner">
@@ -111,7 +112,7 @@ export default async function Home() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-mono text-[1.9rem] font-semibold leading-tight text-[#071c2b] break-words">
+                      <h3 className="break-words font-mono text-[1.9rem] font-semibold leading-tight text-[#071c2b]">
                         {club.name}
                       </h3>
                       <div className="mt-3 h-[2px] w-full rounded-full bg-[#0d7d87]/35" />
@@ -120,7 +121,7 @@ export default async function Home() {
                       </div>
                     </div>
                   </div>
-                </article>
+                </Link>
               ))
             )}
           </div>
