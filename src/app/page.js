@@ -77,9 +77,12 @@ export default async function Home() {
             </div>
           </div>
 
-          <button className="mt-5 w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-lg font-semibold tracking-wide text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
+          <Link
+            href="/clubs/new"
+            className="mt-5 block w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-center text-lg font-semibold tracking-wide text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]"
+          >
             New Club
-          </button>
+          </Link>
         </section>
 
         <section className="mt-10 flex-1 rounded-t-[2.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(62,69,90,0.8),rgba(38,45,66,0.9))] px-5 pb-7 pt-4 shadow-[0_-8px_40px_rgba(2,10,20,0.22)] backdrop-blur-xl">
@@ -108,21 +111,12 @@ export default async function Home() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-mono text-[1.9rem] font-semibold leading-none text-[#071c2b]">
-                            {club.name}
-                          </h3>
-                          <div className="mt-3 h-[2px] w-full rounded-full bg-[#0d7d87]/35" />
-                        </div>
-                        <RoleBadge role={club.role} />
-                      </div>
-
-                      <div className="mt-3 space-y-2 text-[1rem] leading-none text-[#08222f]/84">
+                      <h3 className="font-mono text-[1.9rem] font-semibold leading-tight text-[#071c2b] break-words">
+                        {club.name}
+                      </h3>
+                      <div className="mt-3 h-[2px] w-full rounded-full bg-[#0d7d87]/35" />
+                      <div className="mt-3 text-[1rem] leading-none text-[#08222f]/84">
                         <p>{club.city || "Venue belum diisi"}</p>
-                        <div className="inline-flex rounded-full bg-white/45 px-3 py-2 text-sm font-medium text-[#0b2c3b]">
-                          {club.rosterCount} pemain aktif - {club.matchCount} match
-                        </div>
                       </div>
                     </div>
                   </div>
