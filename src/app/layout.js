@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Goodminton",
-  description: "Goodminton mobile web app",
+  description: "Platform statistik badminton untuk klub, leaderboard, elo, dan analisis performa pemain.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/favicon.ico",
@@ -28,12 +28,12 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0b1220",
+  themeColor: "#07111f",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="id">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
