@@ -83,7 +83,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           <input type="hidden" name="club_slug" value={clubSlug} />
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Nama club</span>
+            <span className="mb-2 block text-sm text-white/70">Club name</span>
             <input
               name="name"
               defaultValue={club.name}
@@ -92,7 +92,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Lokasi</span>
+            <span className="mb-2 block text-sm text-white/70">Location</span>
             <input
               name="location"
               defaultValue={club.location ?? ""}
@@ -101,7 +101,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Jadwal bermain</span>
+            <span className="mb-2 block text-sm text-white/70">Playing schedule</span>
             <input
               name="play_schedule"
               defaultValue={club.playSchedule ?? ""}
@@ -110,7 +110,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Deskripsi</span>
+            <span className="mb-2 block text-sm text-white/70">Description</span>
             <textarea
               name="description"
               rows="4"
@@ -120,11 +120,11 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">URL gambar club</span>
+            <span className="mb-2 block text-sm text-white/70">Club image URL</span>
             <input
               name="image_url"
               defaultValue={club.imageUrl ?? ""}
-              placeholder="Kosongkan untuk placeholder"
+              placeholder="Leave empty to use a placeholder"
               className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
             />
           </label>
@@ -137,13 +137,13 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
 
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
         <h2 className="font-mono text-[1.5rem] font-semibold text-white">
-          Tambah pemain
+          Add players
         </h2>
         <form action={addClubPlayerAction} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input type="hidden" name="club_slug" value={clubSlug} />
           <input
             name="full_name"
-            placeholder="Nama pemain baru"
+            placeholder="New player name"
             className="flex-1 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
           />
           <button className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-[#082032] sm:self-start">
@@ -160,7 +160,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
               <div className="min-w-0">
                 <p className="font-medium text-white">{member.player?.full_name}</p>
                 <p className="text-sm text-white/60">
-                  {member.player?.user_id ? "Akun terhubung" : "Pemain manual"}
+                  {member.player?.user_id ? "Linked account" : "Manual player"}
                 </p>
               </div>
               <form action={removeClubPlayerAction} className="sm:shrink-0">

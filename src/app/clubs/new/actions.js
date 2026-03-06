@@ -49,7 +49,7 @@ export async function createClubAction(formData) {
   const description = getString(formData, "description");
 
   if (!name) {
-    redirect("/clubs/new?error=Nama club wajib diisi.");
+    redirect("/clubs/new?error=Club name is required.");
   }
 
   const supabase = await createSupabaseServerClient();

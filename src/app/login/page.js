@@ -33,7 +33,7 @@ export default async function LoginPage({ searchParams }) {
             Login
           </h1>
           <p className="mt-3 text-base text-white/68">
-            Masuk untuk melihat klub yang Anda ikuti.
+            Sign in to see the clubs you belong to.
           </p>
 
           <div className="mt-5 space-y-3">
@@ -57,7 +57,7 @@ export default async function LoginPage({ searchParams }) {
               <input
                 name="password"
                 type="password"
-                placeholder="Minimal 6 karakter"
+                placeholder="At least 6 characters"
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
               />
             </label>
@@ -68,7 +68,7 @@ export default async function LoginPage({ searchParams }) {
           </form>
 
           <p className="mt-6 text-sm text-white/70">
-            Belum punya akun?{" "}
+            Don&apos;t have an account yet?{" "}
             <Link href="/register" className="font-semibold text-[#17dccb]">
               Register
             </Link>

@@ -4,7 +4,7 @@ export default function ClubComparePage() {
   return (
     <ClubComingSoon
       title="Compare"
-      description="Perbandingan pemain dan performa head-to-head akan ditambahkan di halaman ini."
+      description="Player comparison and head-to-head performance will be added here."
     />
   );
 }

@@ -46,7 +46,7 @@ export default async function NewClubPage({ searchParams }) {
           </div>
 
           <p className="mt-3 text-base text-white/68">
-            Buat club baru, lalu Anda otomatis menjadi admin dan anggota club tersebut.
+            Create a new club and you will automatically become its admin and member.
           </p>
 
           <div className="mt-5">
@@ -55,7 +55,7 @@ export default async function NewClubPage({ searchParams }) {
 
           <form action={createClubAction} className="mt-5 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Nama club</span>
+              <span className="mb-2 block text-sm text-white/70">Club name</span>
               <input
                 name="name"
                 type="text"
@@ -65,7 +65,7 @@ export default async function NewClubPage({ searchParams }) {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Lokasi</span>
+              <span className="mb-2 block text-sm text-white/70">Location</span>
               <input
                 name="location"
                 type="text"
@@ -75,21 +75,21 @@ export default async function NewClubPage({ searchParams }) {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Jadwal bermain</span>
+              <span className="mb-2 block text-sm text-white/70">Playing schedule</span>
               <input
                 name="play_schedule"
                 type="text"
-                placeholder="Setiap Jumat, 19.00 - 21.00"
+                placeholder="Every Friday, 7:00 PM - 9:00 PM"
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Deskripsi</span>
+              <span className="mb-2 block text-sm text-white/70">Description</span>
               <textarea
                 name="description"
                 rows="4"
-                placeholder="Komunitas badminton untuk sparring dan latihan rutin."
+                placeholder="A badminton community for sparring and regular training."
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
               />
             </label>

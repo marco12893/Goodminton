@@ -27,7 +27,7 @@ export default async function RegisterPage({ searchParams }) {
             Register
           </h1>
           <p className="mt-3 text-base text-white/68">
-            Buat akun sederhana dengan nama lengkap, email, dan password.
+            Create a simple account with your full name, email, and password.
           </p>
 
           <div className="mt-5">
@@ -36,7 +36,7 @@ export default async function RegisterPage({ searchParams }) {
 
           <form action={registerAction} className="mt-5 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Nama lengkap</span>
+              <span className="mb-2 block text-sm text-white/70">Full name</span>
               <input
                 name="full_name"
                 type="text"
@@ -60,18 +60,18 @@ export default async function RegisterPage({ searchParams }) {
               <input
                 name="password"
                 type="password"
-                placeholder="Minimal 6 karakter"
+                placeholder="At least 6 characters"
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
               />
             </label>
 
             <button className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
-              Buat akun
+              Create account
             </button>
           </form>
 
           <p className="mt-6 text-sm text-white/70">
-            Sudah punya akun?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="font-semibold text-[#17dccb]">
               Login
             </Link>

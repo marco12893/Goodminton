@@ -30,7 +30,7 @@ async function getAuthorizedClub(clubSlug, userId) {
   }
 
   if (!data?.club?.id) {
-    throw new Error("Anda tidak memiliki akses admin ke klub ini.");
+    throw new Error("You do not have admin access to this club.");
   }
 
   return data.club;
@@ -45,7 +45,7 @@ export async function updateClubSettingsAction(formData) {
   const imageUrl = getString(formData, "image_url");
 
   if (!clubSlug || !name) {
-    redirect(`/clubs/${clubSlug}/settings/edit?error=Nama club wajib diisi.`);
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Club name is required.`);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -88,7 +88,7 @@ export async function addClubPlayerAction(formData) {
   const fullName = getString(formData, "full_name");
 
   if (!clubSlug || !fullName) {
-    redirect(`/clubs/${clubSlug}/settings/edit?error=Nama pemain wajib diisi.`);
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Player name is required.`);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -141,7 +141,7 @@ export async function removeClubPlayerAction(formData) {
   const clubPlayerId = getString(formData, "club_player_id");
 
   if (!clubSlug || !clubPlayerId) {
-    redirect(`/clubs/${clubSlug}/settings/edit?error=Data pemain tidak valid.`);
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid player data.`);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -166,7 +166,7 @@ export async function removeClubPlayerAction(formData) {
     .maybeSingle();
 
   if (lookup.error || !lookup.data) {
-    redirect(`/clubs/${clubSlug}/settings/edit?error=Player club tidak ditemukan.`);
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Club player was not found.`);
   }
 
   const deleteClubPlayer = await supabaseAdmin

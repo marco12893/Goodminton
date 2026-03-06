@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Goodminton",
-  description: "Platform statistik badminton untuk klub, leaderboard, elo, dan analisis performa pemain.",
+  description: "Badminton club stats platform for leaderboards, Elo ratings, and player performance analysis.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/favicon.ico",

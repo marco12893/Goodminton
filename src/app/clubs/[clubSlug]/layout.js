@@ -42,7 +42,7 @@ export default async function ClubLayout({ children, params }) {
               <p className="break-words font-mono text-3xl font-semibold leading-tight text-white">
                 {club.name}
               </p>
-              <p className="mt-2 text-sm leading-5 text-white/65">{club.city || "Venue belum diisi"}</p>
+              <p className="mt-2 text-sm leading-5 text-white/65">{club.city || "Venue not set yet"}</p>
             </div>
           </div>
         </header>

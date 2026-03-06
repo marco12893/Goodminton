@@ -97,7 +97,7 @@ export default async function Home() {
           <div className="mt-5 space-y-5">
             {data.clubs.length === 0 ? (
               <div className="rounded-[2rem] border border-dashed border-white/20 bg-white/6 px-5 py-8 text-center text-white/70">
-                Anda belum mengikuti klub mana pun.
+                You are not a member of any clubs yet.
               </div>
             ) : (
               data.clubs.map((club) => (
@@ -117,7 +117,7 @@ export default async function Home() {
                       </h3>
                       <div className="mt-3 h-[2px] w-full rounded-full bg-[#0d7d87]/35" />
                       <div className="mt-3 text-[1rem] leading-none text-[#08222f]/84">
-                        <p>{club.city || "Venue belum diisi"}</p>
+                        <p>{club.city || "Venue not set yet"}</p>
                       </div>
                     </div>
                   </div>

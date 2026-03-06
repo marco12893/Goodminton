@@ -4,7 +4,7 @@ export default function ClubMatchLogPage() {
   return (
     <ClubComingSoon
       title="Match Log"
-      description="Daftar pertandingan klub dan input log match akan hadir di halaman ini."
+      description="The club match list and match log input will live on this page."
     />
   );
 }

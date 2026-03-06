@@ -13,7 +13,7 @@ export async function loginAction(formData) {
   const password = getString(formData, "password");
 
   if (!email || !password) {
-    redirect("/login?error=Email dan password wajib diisi.");
+    redirect("/login?error=Email and password are required.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -35,7 +35,7 @@ export async function registerAction(formData) {
   const password = getString(formData, "password");
 
   if (!fullName || !email || !password) {
-    redirect("/register?error=Nama lengkap, email, dan password wajib diisi.");
+    redirect("/register?error=Full name, email, and password are required.");
   }
 
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -53,7 +53,7 @@ export async function registerAction(formData) {
 
   const createdUser = data.user;
   if (!createdUser) {
-    redirect("/register?error=Gagal membuat akun.");
+    redirect("/register?error=Failed to create account.");
   }
 
   const playerInsert = await supabaseAdmin.from("players").upsert(
@@ -79,7 +79,7 @@ export async function registerAction(formData) {
   });
 
   if (signInResult.error) {
-    redirect("/login?message=Akun berhasil dibuat. Silakan login.");
+    redirect("/login?message=Account created successfully. Please sign in.");
   }
 
   redirect("/");
