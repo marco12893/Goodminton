@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import {
   addClubPlayerAction,
   linkClubPlayerAction,
+  promoteClubMemberAction,
   removeClubPlayerAction,
   updateClubSettingsAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
@@ -16,6 +17,15 @@ function ErrorMessage({ value }) {
     <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
       {value}
     </div>
+  );
+}
+
+function AdminBadge() {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
+      <span>★</span>
+      <span>Admin</span>
+    </span>
   );
 }
 
@@ -65,6 +75,24 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   if (membersError) {
     throw new Error(membersError.message);
   }
+
+  const linkedUserIds = (members ?? [])
+    .map((member) => member.player?.user_id)
+    .filter(Boolean);
+
+  const { data: memberships, error: membershipsError } = linkedUserIds.length
+    ? await supabase
+        .from("club_members")
+        .select("user_id, role")
+        .eq("club_id", club.id)
+        .in("user_id", linkedUserIds)
+    : { data: [], error: null };
+
+  if (membershipsError) {
+    throw new Error(membershipsError.message);
+  }
+
+  const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
 
   return (
     <section className="space-y-5">
@@ -167,7 +195,10 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
               className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/7 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
-                <p className="font-medium text-white">{member.player?.full_name}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium text-white">{member.player?.full_name}</p>
+                  {roleMap.get(member.player?.user_id) === "admin" ? <AdminBadge /> : null}
+                </div>
                 <p className="text-sm text-white/60">
                   {member.player?.user_id ? "Linked account" : "Manual player"}
                 </p>
@@ -191,6 +222,17 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                     />
                     <button className="rounded-full bg-[#16d4c1] px-4 py-2 text-sm font-semibold text-[#082032]">
                       Link
+                    </button>
+                  </form>
+                ) : null}
+
+                {member.player?.user_id &&
+                roleMap.get(member.player?.user_id) !== "admin" ? (
+                  <form action={promoteClubMemberAction} className="sm:self-end">
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="club_player_id" value={member.id} />
+                    <button className="w-full rounded-full bg-amber-300 px-3 py-2 text-sm font-semibold text-[#082032] sm:w-auto">
+                      Promote to admin
                     </button>
                   </form>
                 ) : null}

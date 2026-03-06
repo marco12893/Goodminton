@@ -357,3 +357,74 @@ export async function removeClubPlayerAction(formData) {
 
   redirect(`/clubs/${clubSlug}/settings/edit`);
 }
+
+export async function promoteClubMemberAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const clubPlayerId = getString(formData, "club_player_id");
+
+  if (!clubSlug || !clubPlayerId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid player data.`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let club;
+  try {
+    club = await getAuthorizedClub(clubSlug, user.id);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const clubPlayerLookup = await supabaseAdmin
+    .from("club_players")
+    .select(
+      `
+        id,
+        player:players (
+          id,
+          user_id
+        )
+      `
+    )
+    .eq("id", clubPlayerId)
+    .eq("club_id", club.id)
+    .maybeSingle();
+
+  if (clubPlayerLookup.error || !clubPlayerLookup.data) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Club player was not found.`);
+  }
+
+  const linkedUserId = clubPlayerLookup.data.player?.user_id;
+
+  if (!linkedUserId) {
+    redirect(
+      `/clubs/${clubSlug}/settings/edit?error=Only linked accounts can be promoted to admin.`
+    );
+  }
+
+  const membershipUpsert = await supabaseAdmin.from("club_members").upsert(
+    [
+      {
+        club_id: club.id,
+        user_id: linkedUserId,
+        role: "admin",
+      },
+    ],
+    {
+      onConflict: "club_id,user_id",
+    }
+  );
+
+  if (membershipUpsert.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipUpsert.error.message)}`);
+  }
+
+  redirect(`/clubs/${clubSlug}/settings/edit`);
+}

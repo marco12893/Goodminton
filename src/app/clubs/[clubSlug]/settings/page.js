@@ -3,6 +3,18 @@ import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function AdminStar() {
+  return (
+    <span
+      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/12 text-sm text-[#ffe27a]"
+      aria-label="Admin"
+      title="Admin"
+    >
+      ★
+    </span>
+  );
+}
+
 function PencilButton({ clubSlug }) {
   return (
     <Link
@@ -41,7 +53,8 @@ export default async function ClubSettingsPage({ params, searchParams }) {
         id,
         player:players (
           id,
-          full_name
+          full_name,
+          user_id
         )
       `
     )
@@ -51,6 +64,24 @@ export default async function ClubSettingsPage({ params, searchParams }) {
   if (membersError) {
     throw new Error(membersError.message);
   }
+
+  const linkedUserIds = (members ?? [])
+    .map((member) => member.player?.user_id)
+    .filter(Boolean);
+
+  const { data: memberships, error: membershipsError } = linkedUserIds.length
+    ? await supabase
+        .from("club_members")
+        .select("user_id, role")
+        .eq("club_id", club.id)
+        .in("user_id", linkedUserIds)
+    : { data: [], error: null };
+
+  if (membershipsError) {
+    throw new Error(membershipsError.message);
+  }
+
+  const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
 
   return (
     <section className="space-y-5">
@@ -114,7 +145,10 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                   key={member.id}
                   className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(135deg,rgba(21,196,189,0.94),rgba(16,148,188,0.92))] px-5 py-4 text-xl font-semibold text-white shadow-[0_14px_30px_rgba(19,210,193,0.16)] sm:text-[1.55rem]"
                 >
-                  {member.player?.full_name}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="min-w-0 break-words">{member.player?.full_name}</span>
+                    {roleMap.get(member.player?.user_id) === "admin" ? <AdminStar /> : null}
+                  </div>
                 </div>
               ))
             )}
