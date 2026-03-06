@@ -78,6 +78,7 @@ create table public.matches (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null references public.clubs(id) on delete cascade,
   match_date date not null,
+  played_at timestamptz not null default timezone('utc', now()),
   team1_score integer not null check (team1_score >= 0),
   team2_score integer not null check (team2_score >= 0),
   winning_team smallint generated always as (
@@ -87,8 +88,12 @@ create table public.matches (
       else null
     end
   ) stored,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   notes text,
   created_by uuid references auth.users(id) on delete set null,
+  reviewed_by uuid references auth.users(id) on delete set null,
+  reviewed_at timestamptz,
+  rejection_reason text,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   constraint matches_non_draw check (team1_score <> team2_score)
@@ -102,9 +107,9 @@ create table public.match_participants (
   slot smallint not null check (slot in (1, 2)),
   points_scored integer not null default 0 check (points_scored >= 0),
   points_allowed integer not null default 0 check (points_allowed >= 0),
-  elo_before integer not null,
-  elo_after integer not null,
-  elo_delta integer not null,
+  elo_before integer not null default 0,
+  elo_after integer not null default 0,
+  elo_delta integer not null default 0,
   created_at timestamptz not null default timezone('utc', now()),
   unique (match_id, club_player_id),
   unique (match_id, team, slot)
