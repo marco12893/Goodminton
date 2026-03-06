@@ -1,7 +1,8 @@
 insert into public.clubs (id, name, slug, city)
 values
-  ('11111111-1111-1111-1111-111111111111', 'PB Rajawali Utama', 'pb-rajawali-utama', 'Jakarta'),
-  ('22222222-2222-2222-2222-222222222222', 'PB Garuda Muda', 'pb-garuda-muda', 'Bandung')
+  ('11111111-1111-1111-1111-111111111111', 'Infor Gacor', 'infor-gacor', 'GOR Surabaya'),
+  ('22222222-2222-2222-2222-222222222222', 'UKM Badminton', 'ukm-badminton', 'GOR Talenta'),
+  ('33333333-3333-3333-3333-333333333333', 'Badminton Club RKT', 'badminton-club-rkt', 'MERR Arena')
 on conflict (id) do update
 set
   name = excluded.name,
@@ -13,7 +14,9 @@ values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'Raka Pratama', 'M', 'right'),
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 'Dimas Arta', 'M', 'left'),
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'Fikri Mahesa', 'M', 'right'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 'Bagas Saputra', 'M', 'right')
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 'Bagas Saputra', 'M', 'right'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 'Nino Prakoso', 'M', 'right'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', 'Alif Ramadhan', 'M', 'left')
 on conflict (id) do update
 set
   full_name = excluded.full_name,
@@ -85,6 +88,32 @@ values
     8,
     2,
     6
+  ),
+  (
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb5',
+    '22222222-2222-2222-2222-222222222222',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5',
+    '2026-01-15',
+    '21',
+    'active',
+    1200,
+    1289,
+    11,
+    8,
+    3
+  ),
+  (
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb6',
+    '33333333-3333-3333-3333-333333333333',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6',
+    '2026-01-17',
+    '08',
+    'active',
+    1200,
+    1236,
+    9,
+    5,
+    4
   )
 on conflict (id) do update
 set
@@ -252,8 +281,7 @@ set
   elo_after = excluded.elo_after,
   elo_delta = excluded.elo_delta;
 
--- Isi club_members setelah Anda punya user auth nyata.
--- Contoh:
--- insert into public.club_members (club_id, user_id, role)
--- values ('11111111-1111-1111-1111-111111111111', '<AUTH_USER_UUID>', 'admin')
--- on conflict (club_id, user_id) do update set role = excluded.role;
+-- Untuk cloud seeding penuh, pakai scripts/seed-cloud.mjs.
+-- Script tersebut juga membuat user demo:
+-- kent@goodminton.app / Kent12345!
+-- lalu menghubungkannya ke tiga klub di atas.
