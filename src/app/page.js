@@ -1,4 +1,8 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { logoutAction } from "@/app/auth/actions";
 import { getHomepageData } from "@/lib/homepageData";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +16,16 @@ function RoleBadge({ role }) {
 }
 
 export default async function Home() {
-  const data = await getHomepageData();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const data = await getHomepageData(supabase, user);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
@@ -28,11 +41,13 @@ export default async function Home() {
             <div className="mt-3 h-1 w-44 rounded-full bg-gradient-to-r from-[#1be2cf] to-[#2cb7ff]" />
           </div>
 
-          <div className="mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-white/14 bg-white/8 shadow-[0_12px_30px_rgba(2,14,28,0.35)] backdrop-blur-xl">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#16d4c1] text-xl text-[#082032] shadow-[0_0_0_4px_rgba(255,255,255,0.08)]">
-              <span>◎</span>
-            </div>
-          </div>
+          <form action={logoutAction} className="mt-6">
+            <button className="flex h-16 w-16 items-center justify-center rounded-full border border-white/14 bg-white/8 shadow-[0_12px_30px_rgba(2,14,28,0.35)] backdrop-blur-xl">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#16d4c1] text-sm font-semibold text-[#082032] shadow-[0_0_0_4px_rgba(255,255,255,0.08)]">
+                OUT
+              </div>
+            </button>
+          </form>
         </header>
 
         <section className="mt-8 rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] px-5 py-6 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
@@ -47,8 +62,8 @@ export default async function Home() {
         <section className="mt-9 rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(60,68,92,0.78),rgba(31,39,59,0.72))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.38)] backdrop-blur-xl">
           <div className="flex items-center gap-4">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-white/8">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#16d4c1] text-3xl text-[#0a2231]">
-                <span>◉</span>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#16d4c1] text-sm font-semibold text-[#0a2231]">
+                NEW
               </div>
             </div>
 
@@ -69,14 +84,17 @@ export default async function Home() {
 
         <section className="mt-10 flex-1 rounded-t-[2.5rem] border border-white/10 bg-[linear-gradient(180deg,rgba(62,69,90,0.8),rgba(38,45,66,0.9))] px-5 pb-7 pt-4 shadow-[0_-8px_40px_rgba(2,10,20,0.22)] backdrop-blur-xl">
           <div className="mx-auto h-1 w-20 rounded-full bg-white/70" />
-          <div className="mt-4 flex items-center justify-center">
+          <div className="mt-4 flex items-center justify-between">
             <h2 className="font-mono text-[2rem] font-semibold text-white">My Clubs</h2>
+            <Link href="/register" className="text-sm font-medium text-[#17dccb]">
+              Invite player
+            </Link>
           </div>
 
           <div className="mt-5 space-y-5">
             {data.clubs.length === 0 ? (
               <div className="rounded-[2rem] border border-dashed border-white/20 bg-white/6 px-5 py-8 text-center text-white/70">
-                Seeder belum dijalankan atau user demo belum tergabung ke klub.
+                Anda belum mengikuti klub mana pun.
               </div>
             ) : (
               data.clubs.map((club) => (
@@ -101,12 +119,9 @@ export default async function Home() {
                       </div>
 
                       <div className="mt-3 space-y-2 text-[1rem] leading-none text-[#08222f]/84">
-                        <p className="flex items-center gap-2">
-                          <span className="text-lg">◉</span>
-                          <span>{club.city || "Venue belum diisi"}</span>
-                        </p>
+                        <p>{club.city || "Venue belum diisi"}</p>
                         <div className="inline-flex rounded-full bg-white/45 px-3 py-2 text-sm font-medium text-[#0b2c3b]">
-                          {club.rosterCount} pemain aktif • {club.matchCount} match
+                          {club.rosterCount} pemain aktif - {club.matchCount} match
                         </div>
                       </div>
                     </div>

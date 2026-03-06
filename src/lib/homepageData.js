@@ -1,7 +1,3 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
-const DEMO_EMAIL = "kent@goodminton.app";
-
 function getGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return "Good Morning";
@@ -23,23 +19,14 @@ const gradients = [
   "from-[#22d0b5] via-[#17bebb] to-[#1b9bd1]",
 ];
 
-export async function getHomepageData() {
-  const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-  if (usersError) {
-    throw new Error(usersError.message);
-  }
+export async function getHomepageData(supabase, user) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  const currentUser = usersData.users.find((user) => user.email === DEMO_EMAIL);
-
-  if (!currentUser) {
-    return {
-      greeting: `${getGreeting()}, Player`,
-      subtitle: "Seeder belum dijalankan untuk user demo Goodminton.",
-      clubs: [],
-    };
-  }
-
-  const { data: memberships, error: membershipsError } = await supabaseAdmin
+  const { data: memberships, error: membershipsError } = await supabase
     .from("club_members")
     .select(
       `
@@ -52,7 +39,7 @@ export async function getHomepageData() {
         )
       `
     )
-    .eq("user_id", currentUser.id);
+    .eq("user_id", user.id);
 
   if (membershipsError) {
     throw new Error(membershipsError.message);
@@ -62,11 +49,11 @@ export async function getHomepageData() {
     (memberships ?? []).map(async (membership, index) => {
       const club = membership.club;
       const [{ count: rosterCount }, { count: matchCount }] = await Promise.all([
-        supabaseAdmin
+        supabase
           .from("club_players")
           .select("*", { count: "exact", head: true })
           .eq("club_id", club.id),
-        supabaseAdmin
+        supabase
           .from("matches")
           .select("*", { count: "exact", head: true })
           .eq("club_id", club.id),
@@ -87,7 +74,10 @@ export async function getHomepageData() {
   );
 
   const displayName =
-    currentUser.user_metadata?.full_name?.split(" ")[0] ?? currentUser.email?.split("@")[0] ?? "Player";
+    profile?.full_name?.split(" ")[0] ??
+    user.user_metadata?.full_name?.split(" ")[0] ??
+    user.email?.split("@")[0] ??
+    "Player";
 
   return {
     greeting: `${getGreeting()}, ${displayName}`,

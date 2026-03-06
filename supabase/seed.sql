@@ -284,4 +284,5 @@ set
 -- Untuk cloud seeding penuh, pakai scripts/seed-cloud.mjs.
 -- Script tersebut juga membuat user demo:
 -- kent@goodminton.app / Kent12345!
--- lalu menghubungkannya ke tiga klub di atas.
+-- lalu membuat profile + player account yang terhubung ke auth user,
+-- dan menghubungkannya ke tiga klub di atas.

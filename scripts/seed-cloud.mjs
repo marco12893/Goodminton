@@ -120,12 +120,62 @@ async function getOrCreateDemoUser() {
 }
 
 async function upsert(table, values, onConflict) {
-  const { error } = await supabase.from(table).upsert(values, { onConflict });
-  if (error) throw error;
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const { error } = await supabase.from(table).upsert(values, { onConflict });
+    if (!error) return;
+
+    if (!["PGRST204", "PGRST205"].includes(error.code) || attempt === 5) {
+      throw error;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 2000);
+    });
+  }
+}
+
+async function tryUpsertProfile(profile) {
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const { error } = await supabase.from("profiles").upsert([profile], {
+      onConflict: "id",
+    });
+
+    if (!error || error.code === "PGRST205") {
+      return;
+    }
+
+    if (error.code !== "PGRST204" || attempt === 5) {
+      throw error;
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 2000);
+    });
+  }
 }
 
 async function main() {
   const demoUser = await getOrCreateDemoUser();
+
+  await tryUpsertProfile({
+    id: demoUser.id,
+    full_name: "Kent Aditya",
+    email: demoUser.email,
+  });
+
+  await upsert(
+    "players",
+    [
+      {
+        id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7",
+        user_id: demoUser.id,
+        full_name: "Kent Aditya",
+        gender: "M",
+        handedness: "right",
+      },
+    ],
+    "user_id"
+  );
 
   await upsert("clubs", clubs, "id");
   await upsert("players", players, "id");
