@@ -44,6 +44,17 @@ async function getClubMembership(clubSlug, userId) {
   };
 }
 
+async function approveMatchWithElo({ matchId, reviewerId }) {
+  const { error } = await supabaseAdmin.rpc("process_match_approval", {
+    target_match_id: matchId,
+    reviewer_user_id: reviewerId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 function buildParticipants(formData) {
   return [
     { club_player_id: getString(formData, "team1_player1"), team: 1, slot: 1 },
@@ -108,7 +119,6 @@ export async function createMatchLogAction(formData) {
   }
 
   const isAdmin = membership.role === "admin";
-  const nowIso = new Date().toISOString();
 
   const matchInsert = await supabaseAdmin
     .from("matches")
@@ -118,10 +128,8 @@ export async function createMatchLogAction(formData) {
       played_at: new Date(playedAt).toISOString(),
       team1_score: team1Score,
       team2_score: team2Score,
-      status: isAdmin ? "approved" : "pending",
+      status: "pending",
       created_by: user.id,
-      reviewed_by: isAdmin ? user.id : null,
-      reviewed_at: isAdmin ? nowIso : null,
     })
     .select("id")
     .single();
@@ -144,6 +152,18 @@ export async function createMatchLogAction(formData) {
   if (participantInsert.error) {
     await supabaseAdmin.from("matches").delete().eq("id", matchInsert.data.id);
     redirect(`/clubs/${clubSlug}/match-log/new?error=${encodeURIComponent(participantInsert.error.message)}`);
+  }
+
+  if (isAdmin) {
+    try {
+      await approveMatchWithElo({
+        matchId: matchInsert.data.id,
+        reviewerId: user.id,
+      });
+    } catch (error) {
+      await supabaseAdmin.from("matches").delete().eq("id", matchInsert.data.id);
+      redirect(`/clubs/${clubSlug}/match-log/new?error=${encodeURIComponent(error.message)}`);
+    }
   }
 
   redirect(`/clubs/${clubSlug}/match-log`);
@@ -177,18 +197,28 @@ export async function approveMatchLogAction(formData) {
     redirect(`/clubs/${clubSlug}/match-log?error=Only admins can review submitted matches.`);
   }
 
-  const { error } = await supabaseAdmin
+  const { data: match, error: matchError } = await supabaseAdmin
     .from("matches")
-    .update({
-      status: "approved",
-      reviewed_by: user.id,
-      reviewed_at: new Date().toISOString(),
-      rejection_reason: null,
-    })
+    .select("id")
     .eq("id", matchId)
-    .eq("club_id", membership.club.id);
+    .eq("club_id", membership.club.id)
+    .eq("status", "pending")
+    .maybeSingle();
 
-  if (error) {
+  if (matchError) {
+    redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(matchError.message)}`);
+  }
+
+  if (!match) {
+    redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent("Only pending matches can be approved.")}`);
+  }
+
+  try {
+    await approveMatchWithElo({
+      matchId,
+      reviewerId: user.id,
+    });
+  } catch (error) {
     redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);
   }
 
@@ -232,7 +262,8 @@ export async function rejectMatchLogAction(formData) {
       rejection_reason: "Rejected by club admin.",
     })
     .eq("id", matchId)
-    .eq("club_id", membership.club.id);
+    .eq("club_id", membership.club.id)
+    .eq("status", "pending");
 
   if (error) {
     redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);

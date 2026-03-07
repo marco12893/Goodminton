@@ -64,8 +64,8 @@ export async function POST(request) {
       joined_at: optionalDate(body.joined_at, "joined_at"),
       jersey_number: optionalString(body.jersey_number),
       status: optionalString(body.status) ?? "active",
-      elo_initial: body.elo_initial ?? 1200,
-      elo_current: body.elo_current ?? body.elo_initial ?? 1200,
+      elo_initial: body.elo_initial ?? 1000,
+      elo_current: body.elo_current ?? body.elo_initial ?? 1000,
     };
 
     const playerInsert = await supabaseAdmin

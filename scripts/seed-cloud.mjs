@@ -65,12 +65,12 @@ const players = [
 ];
 
 const clubPlayers = [
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1", club_id: clubs[0].id, player_id: players[0].id, joined_at: "2026-01-10", jersey_number: "07", status: "active", elo_initial: 1200, elo_current: 1264, total_matches: 8, total_wins: 6, total_losses: 2 },
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2", club_id: clubs[0].id, player_id: players[1].id, joined_at: "2026-01-10", jersey_number: "11", status: "active", elo_initial: 1200, elo_current: 1241, total_matches: 8, total_wins: 5, total_losses: 3 },
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3", club_id: clubs[0].id, player_id: players[2].id, joined_at: "2026-01-11", jersey_number: "03", status: "active", elo_initial: 1200, elo_current: 1182, total_matches: 8, total_wins: 3, total_losses: 5 },
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4", club_id: clubs[0].id, player_id: players[3].id, joined_at: "2026-01-11", jersey_number: "09", status: "active", elo_initial: 1200, elo_current: 1173, total_matches: 8, total_wins: 2, total_losses: 6 },
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb5", club_id: clubs[1].id, player_id: players[4].id, joined_at: "2026-01-15", jersey_number: "21", status: "active", elo_initial: 1200, elo_current: 1289, total_matches: 11, total_wins: 8, total_losses: 3 },
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb6", club_id: clubs[2].id, player_id: players[5].id, joined_at: "2026-01-17", jersey_number: "08", status: "active", elo_initial: 1200, elo_current: 1236, total_matches: 9, total_wins: 5, total_losses: 4 },
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1", club_id: clubs[0].id, player_id: players[0].id, joined_at: "2026-01-10", jersey_number: "07", status: "active", elo_initial: 1000, elo_current: 1264, total_matches: 8, total_wins: 6, total_losses: 2 },
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2", club_id: clubs[0].id, player_id: players[1].id, joined_at: "2026-01-10", jersey_number: "11", status: "active", elo_initial: 1000, elo_current: 1241, total_matches: 8, total_wins: 5, total_losses: 3 },
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3", club_id: clubs[0].id, player_id: players[2].id, joined_at: "2026-01-11", jersey_number: "03", status: "active", elo_initial: 1000, elo_current: 1182, total_matches: 8, total_wins: 3, total_losses: 5 },
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4", club_id: clubs[0].id, player_id: players[3].id, joined_at: "2026-01-11", jersey_number: "09", status: "active", elo_initial: 1000, elo_current: 1173, total_matches: 8, total_wins: 2, total_losses: 6 },
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb5", club_id: clubs[1].id, player_id: players[4].id, joined_at: "2026-01-15", jersey_number: "21", status: "active", elo_initial: 1000, elo_current: 1289, total_matches: 11, total_wins: 8, total_losses: 3 },
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb6", club_id: clubs[2].id, player_id: players[5].id, joined_at: "2026-01-17", jersey_number: "08", status: "active", elo_initial: 1000, elo_current: 1236, total_matches: 9, total_wins: 5, total_losses: 4 },
 ];
 
 const matches = [
