@@ -30,6 +30,38 @@ function getRangeConfig(value) {
   return RANGE_OPTIONS.find((option) => option.value === value) ?? RANGE_OPTIONS[RANGE_OPTIONS.length - 1];
 }
 
+function formatGender(value) {
+  if (!value) return null;
+  if (value === "male") return "Male";
+  if (value === "female") return "Female";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatHandedness(value) {
+  if (!value) return null;
+  if (value === "right") return "Right-handed";
+  if (value === "left") return "Left-handed";
+  if (value === "ambidextrous") return "Ambidextrous";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function getAgeLabel(value) {
+  if (!value) return null;
+
+  const birthDate = new Date(value);
+  if (Number.isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age -= 1;
+  }
+
+  return age >= 0 ? `${age} years old` : null;
+}
+
 function getRangeStart(config) {
   if (!config.days) return null;
   const date = new Date();
@@ -781,7 +813,10 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
         elo_current,
         player:players (
           full_name,
-          avatar_url
+          avatar_url,
+          gender,
+          birth_date,
+          handedness
         )
       `
     )
@@ -1032,6 +1067,12 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       return a.name.localeCompare(b.name);
     })[0] ?? null;
 
+  const bioItems = [
+    getAgeLabel(clubPlayer.player?.birth_date),
+    formatGender(clubPlayer.player?.gender),
+    formatHandedness(clubPlayer.player?.handedness),
+  ].filter(Boolean);
+
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between gap-4">
@@ -1058,6 +1099,9 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
             <p className="mt-2 text-2xl text-white/82">
               {displayedElo != null ? `Elo ${displayedElo}` : `No matches in ${activeRange.label.toLowerCase()}`}
             </p>
+            {bioItems.length > 0 ? (
+              <p className="mt-2 text-sm text-white/62">{bioItems.join(" • ")}</p>
+            ) : null}
             <p className="mt-2 text-sm text-white/55">Showing stats for {activeRange.label.toLowerCase()}.</p>
           </div>
         </div>
