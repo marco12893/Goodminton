@@ -23,7 +23,7 @@ function ErrorMessage({ value }) {
 function AdminBadge() {
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-      <span>★</span>
+      <span>*</span>
       <span>Admin</span>
     </span>
   );
@@ -76,9 +76,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
     throw new Error(membersError.message);
   }
 
-  const linkedUserIds = (members ?? [])
-    .map((member) => member.player?.user_id)
-    .filter(Boolean);
+  const linkedUserIds = (members ?? []).map((member) => member.player?.user_id).filter(Boolean);
 
   const { data: memberships, error: membershipsError } = linkedUserIds.length
     ? await supabase
@@ -97,9 +95,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-mono text-3xl font-semibold text-white">
-          Edit Club
-        </h1>
+        <h1 className="font-mono text-3xl font-semibold text-white">Edit Club</h1>
         <Link href={`/clubs/${clubSlug}/settings`} className="text-sm font-medium text-[#17dccb]">
           Back
         </Link>
@@ -108,9 +104,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
       <ErrorMessage value={error} />
 
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <h2 className="font-mono text-[1.5rem] font-semibold text-white">
-          Club Configuration
-        </h2>
+        <h2 className="font-mono text-[1.5rem] font-semibold text-white">Club Configuration</h2>
 
         <form action={updateClubSettingsAction} className="mt-5 space-y-4">
           <input type="hidden" name="club_slug" value={clubSlug} />
@@ -169,12 +163,9 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
       </div>
 
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <h2 className="font-mono text-[1.5rem] font-semibold text-white">
-          Players
-        </h2>
+        <h2 className="font-mono text-[1.5rem] font-semibold text-white">Players</h2>
         <p className="mt-2 text-sm leading-6 text-white/65">
-          Add manual players, then link them to registered accounts by email so the
-          club appears on their homepage automatically.
+          Add manual players, then link them to registered accounts by email so the club appears on their homepage automatically.
         </p>
         <form action={addClubPlayerAction} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input type="hidden" name="club_slug" value={clubSlug} />
@@ -196,16 +187,19 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium text-white">{member.player?.full_name}</p>
+                  <Link
+                    href={`/clubs/${clubSlug}/players/${member.id}`}
+                    className="font-medium text-white underline decoration-white/20 underline-offset-4"
+                  >
+                    {member.player?.full_name}
+                  </Link>
                   {roleMap.get(member.player?.user_id) === "admin" ? <AdminBadge /> : null}
                 </div>
                 <p className="text-sm text-white/60">
                   {member.player?.user_id ? "Linked account" : "Manual player"}
                 </p>
                 {member.player?.profile?.email ? (
-                  <p className="mt-1 text-xs text-[#17dccb]">
-                    {member.player.profile.email}
-                  </p>
+                  <p className="mt-1 text-xs text-[#17dccb]">{member.player.profile.email}</p>
                 ) : null}
               </div>
 
@@ -226,8 +220,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   </form>
                 ) : null}
 
-                {member.player?.user_id &&
-                roleMap.get(member.player?.user_id) !== "admin" ? (
+                {member.player?.user_id && roleMap.get(member.player?.user_id) !== "admin" ? (
                   <form action={promoteClubMemberAction} className="sm:self-end">
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="club_player_id" value={member.id} />

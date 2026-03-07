@@ -10,7 +10,7 @@ function AdminStar() {
       aria-label="Admin"
       title="Admin"
     >
-      ★
+      *
     </span>
   );
 }
@@ -65,9 +65,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
     throw new Error(membersError.message);
   }
 
-  const linkedUserIds = (members ?? [])
-    .map((member) => member.player?.user_id)
-    .filter(Boolean);
+  const linkedUserIds = (members ?? []).map((member) => member.player?.user_id).filter(Boolean);
 
   const { data: memberships, error: membershipsError } = linkedUserIds.length
     ? await supabase
@@ -88,9 +86,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 pb-6 pt-5 text-white shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-3xl font-semibold text-white">
-              Club Settings
-            </p>
+            <p className="font-mono text-3xl font-semibold text-white">Club Settings</p>
             <p className="mt-3 text-sm text-white/65">
               Club profile, schedule, description, and member roster.
             </p>
@@ -141,15 +137,16 @@ export default async function ClubSettingsPage({ params, searchParams }) {
               </div>
             ) : (
               members.map((member) => (
-                <div
+                <Link
                   key={member.id}
-                  className="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(135deg,rgba(21,196,189,0.94),rgba(16,148,188,0.92))] px-5 py-4 text-xl font-semibold text-white shadow-[0_14px_30px_rgba(19,210,193,0.16)] sm:text-[1.55rem]"
+                  href={`/clubs/${clubSlug}/players/${member.id}`}
+                  className="block rounded-[1.6rem] border border-white/10 bg-[linear-gradient(135deg,rgba(21,196,189,0.94),rgba(16,148,188,0.92))] px-5 py-4 text-xl font-semibold text-white shadow-[0_14px_30px_rgba(19,210,193,0.16)] sm:text-[1.55rem]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="min-w-0 break-words">{member.player?.full_name}</span>
                     {roleMap.get(member.player?.user_id) === "admin" ? <AdminStar /> : null}
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>

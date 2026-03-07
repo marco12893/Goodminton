@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -49,14 +50,17 @@ function PodiumCard({ entry, rank, variant }) {
     variant === "gold" ? "h-[20rem]" : variant === "silver" ? "h-[17.5rem]" : "h-[16rem]";
 
   return (
-    <div className={`flex flex-col items-center ${variant === "gold" ? "pt-0" : "pt-8"}`}>
+    <Link
+      href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
+      className={`flex flex-col items-center ${variant === "gold" ? "pt-0" : "pt-8"}`}
+    >
       <div
         className={`flex h-24 w-24 items-center justify-center rounded-full border-[3px] bg-gradient-to-br ${avatarFill} text-2xl font-semibold text-white shadow-[0_18px_40px_rgba(2,14,28,0.35)] ${avatarRing}`}
       >
         {getInitials(entry.fullName)}
       </div>
       <div
-        className={`mt-5 relative w-full max-w-[10rem] flex-col rounded-t-[1.75rem] border px-4 pb-8 pt-7 shadow-[0_22px_50px_rgba(2,14,28,0.3)] ${pillarHeight} ${frameStyles}`}
+        className={`relative mt-5 w-full max-w-[10rem] flex-col rounded-t-[1.75rem] border px-4 pb-8 pt-7 shadow-[0_22px_50px_rgba(2,14,28,0.3)] ${pillarHeight} ${frameStyles}`}
       >
         <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] opacity-65">
           #{rank}
@@ -70,13 +74,16 @@ function PodiumCard({ entry, rank, variant }) {
         </div>
         <p className="absolute bottom-8 left-0 right-0 text-center text-lg font-semibold">Elo {entry.elo}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
 function RankRow({ entry, rank }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[1.7rem] border border-white/12 bg-gradient-to-r from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_18px_40px_rgba(6,28,38,0.28)]">
+    <Link
+      href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
+      className="flex items-center justify-between gap-4 rounded-[1.7rem] border border-white/12 bg-gradient-to-r from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_18px_40px_rgba(6,28,38,0.28)]"
+    >
       <div className="min-w-0">
         <p className="truncate text-xl font-semibold">
           {rank}. {entry.fullName}
@@ -86,7 +93,7 @@ function RankRow({ entry, rank }) {
         </p>
       </div>
       <p className="shrink-0 text-[2rem] font-semibold tracking-tight">{entry.elo}</p>
-    </div>
+    </Link>
   );
 }
 
@@ -131,21 +138,20 @@ export default async function ClubHomePage({ params }) {
     throw new Error(error.message);
   }
 
-  const entries = (leaderboard ?? [])
-    .map((row) => {
-      const totalMatches = row.total_matches ?? 0;
-      const totalWins = row.total_wins ?? 0;
+  const entries = (leaderboard ?? []).map((row) => {
+    const totalMatches = row.total_matches ?? 0;
+    const totalWins = row.total_wins ?? 0;
 
-      return {
-        id: row.id,
-        fullName: row.player?.full_name ?? "Unknown player",
-        elo: row.elo_current ?? 1000,
-        totalMatches,
-        totalWins,
-        winRate:
-          totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : "0.0",
-      };
-    });
+    return {
+      id: row.id,
+      clubSlug,
+      fullName: row.player?.full_name ?? "Unknown player",
+      elo: row.elo_current ?? 1000,
+      totalMatches,
+      totalWins,
+      winRate: totalMatches > 0 ? ((totalWins / totalMatches) * 100).toFixed(1) : "0.0",
+    };
+  });
 
   const topThree = entries.slice(0, 3);
   const remaining = entries.slice(3);
