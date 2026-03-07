@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Share2, PieChart, Settings } from "lucide-react";
+import { Home, Share2, PieChart, Settings, Trophy } from "lucide-react";
 
 const navItems = [
   { label: "Home", href: "", icon: Home },
+  { label: "Tournament", href: "/tournaments", icon: Trophy },
   { label: "Compare", href: "/compare", icon: Share2 },
   { label: "Match Log", href: "/match-log", icon: PieChart },
   { label: "Settings", href: "/settings", icon: Settings },
@@ -16,7 +17,7 @@ export default function ClubBottomNav({ clubSlug }) {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 w-full bg-[#1c1d22] px-3 pb-6 pt-3 shadow-[0_-5px_20px_rgba(0,0,0,0.3)] border-t border-white/10">
-      <div className="mx-auto flex max-w-md items-center justify-between gap-2">
+      <div className="mx-auto flex max-w-md items-center justify-between gap-1.5">
         {navItems.map((item) => {
           const href = `/clubs/${clubSlug}${item.href}`;
           const isActive = pathname === href;
