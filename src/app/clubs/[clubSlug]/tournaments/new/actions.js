@@ -3,10 +3,12 @@
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function getString(formData, key) {
-  return String(formData.get(key) ?? "").trim();
-}
+import {
+  fetchTournamentClubPlayers,
+  getTournamentString,
+  replaceTournamentStructure,
+  validateTournamentInput,
+} from "@/lib/tournamentAdmin";
 
 async function getAuthorizedClub(clubSlug, userId) {
   const { data, error } = await supabaseAdmin
@@ -37,24 +39,26 @@ async function getAuthorizedClub(clubSlug, userId) {
 }
 
 export async function createTournamentAction(formData) {
-  const clubSlug = getString(formData, "club_slug");
-  const name = getString(formData, "name");
-  const scheduledAt = getString(formData, "scheduled_at");
-  const format = getString(formData, "format");
-  const category = getString(formData, "category");
-  const seeding = getString(formData, "seeding");
+  const clubSlug = getTournamentString(formData, "club_slug");
+  const name = getTournamentString(formData, "name");
+  const scheduledAt = getTournamentString(formData, "scheduled_at");
+  const format = getTournamentString(formData, "format");
+  const category = getTournamentString(formData, "category");
+  const seeding = getTournamentString(formData, "seeding");
   const playerIds = formData.getAll("player_ids").map((value) => String(value)).filter(Boolean);
 
-  if (!clubSlug || !name || !scheduledAt || !format || !category || !seeding) {
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent("Please complete all tournament details.")}`);
-  }
+  const validationError = validateTournamentInput({
+    clubSlug,
+    name,
+    scheduledAt,
+    format,
+    category,
+    seeding,
+    playerIds,
+  });
 
-  if (playerIds.length < 2) {
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent("Select at least 2 players for the tournament.")}`);
-  }
-
-  if (category === "doubles" && playerIds.length < 4) {
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent("Doubles tournaments require at least 4 players.")}`);
+  if (validationError) {
+    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(validationError)}`);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -73,57 +77,48 @@ export async function createTournamentAction(formData) {
     redirect(`/clubs/${clubSlug}/tournaments?error=${encodeURIComponent(error.message)}`);
   }
 
-  const { data: clubPlayers, error: clubPlayersError } = await supabaseAdmin
-    .from("club_players")
-    .select("id, elo_current")
-    .eq("club_id", club.id)
-    .in("id", playerIds);
-
-  if (clubPlayersError) {
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(clubPlayersError.message)}`);
+  let clubPlayers;
+  try {
+    clubPlayers = await fetchTournamentClubPlayers(club.id, playerIds);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(error.message)}`);
   }
 
-  if ((clubPlayers ?? []).length !== playerIds.length) {
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent("One or more selected players are invalid.")}`);
-  }
+  const tournamentId = crypto.randomUUID();
 
-  const { data: tournament, error: tournamentError } = await supabaseAdmin
+  const { error: tournamentError } = await supabaseAdmin
     .from("tournaments")
     .insert({
+      id: tournamentId,
       club_id: club.id,
       name,
       scheduled_at: scheduledAt,
       format,
       category,
       seeding,
+      status: "upcoming",
       created_by: user.id,
-    })
-    .select("id")
-    .single();
+    });
 
-  if (tournamentError || !tournament) {
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(tournamentError?.message ?? "Failed to create tournament.")}`);
+  if (tournamentError) {
+    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(tournamentError.message)}`);
   }
 
-  const sortedPlayers =
-    seeding === "elo_based"
-      ? [...clubPlayers].sort((a, b) => (b.elo_current ?? 1000) - (a.elo_current ?? 1000))
-      : clubPlayers;
+  try {
+    const payload = await replaceTournamentStructure({
+      tournamentId,
+      clubPlayers,
+      category,
+      seeding,
+      format,
+      scheduledAt,
+    });
 
-  const participantRows = sortedPlayers.map((player, index) => ({
-    tournament_id: tournament.id,
-    club_player_id: player.id,
-    seed_number: seeding === "elo_based" ? index + 1 : null,
-  }));
-
-  const { error: participantsError } = await supabaseAdmin
-    .from("tournament_players")
-    .insert(participantRows);
-
-  if (participantsError) {
-    await supabaseAdmin.from("tournaments").delete().eq("id", tournament.id);
-    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(participantsError.message)}`);
+    await supabaseAdmin.from("tournaments").update({ status: payload.status }).eq("id", tournamentId);
+  } catch (error) {
+    await supabaseAdmin.from("tournaments").delete().eq("id", tournamentId);
+    redirect(`/clubs/${clubSlug}/tournaments/new?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect(`/clubs/${clubSlug}/tournaments?success=${encodeURIComponent("Tournament created successfully.")}`);
+  redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?success=${encodeURIComponent("Tournament created successfully.")}`);
 }

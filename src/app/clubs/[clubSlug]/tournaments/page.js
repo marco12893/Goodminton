@@ -60,6 +60,9 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
         format,
         category,
         seeding,
+        entries:tournament_entries (
+          id
+        ),
         participants:tournament_players (
           id
         )
@@ -111,10 +114,17 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
             No tournaments have been created for this club yet.
           </div>
         ) : (
-          tournaments.map((tournament, index) => (
-            <article
+          tournaments.map((tournament, index) => {
+            const entrantCount =
+              (tournament.entries ?? []).length > 0
+                ? (tournament.entries ?? []).length
+                : (tournament.participants ?? []).length;
+
+            return (
+            <Link
               key={tournament.id}
-              className="rounded-[2rem] bg-gradient-to-br from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_22px_50px_rgba(0,0,0,0.2)]"
+              href={`/clubs/${clubSlug}/tournaments/${tournament.id}`}
+              className="block rounded-[2rem] bg-gradient-to-br from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_22px_50px_rgba(0,0,0,0.2)]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -142,11 +152,12 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
                   {tournament.seeding === "elo_based" ? "Elo Based" : "Random"}
                 </span>
                 <span className="rounded-full bg-white/45 px-3 py-1">
-                  {(tournament.participants ?? []).length} players
+                  {entrantCount} entrants
                 </span>
               </div>
-            </article>
-          ))
+            </Link>
+            );
+          })
         )}
       </div>
     </section>
