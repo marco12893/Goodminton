@@ -100,7 +100,8 @@ function RankRow({ entry, rank }) {
 
 export default async function ClubHomePage({ params, searchParams }) {
   const { clubSlug } = await params;
-  const playerSearch = String(searchParams?.player ?? "").trim();
+  const query = await searchParams;
+  const playerSearch = String(query?.player ?? "").trim();
 
   const supabase = await createSupabaseServerClient();
   const {
