@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const singlesSlots = [
   { key: "player1", label: "Player 1" },
@@ -140,7 +141,8 @@ function PlayerSelect({ label, value, options, onChange }) {
   );
 }
 
-export default function ClubCompareBuilder({ players }) {
+export default function ClubCompareBuilder({ clubSlug, players }) {
+  const router = useRouter();
   const [mode, setMode] = useState("singles");
   const [selected, setSelected] = useState({
     player1: "",
@@ -194,6 +196,25 @@ export default function ClubCompareBuilder({ players }) {
 
       return !selectedIds.includes(player.id);
     });
+  }
+
+  function handleCompare() {
+    if (!isComplete) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      mode,
+      player1: selected.player1,
+      player2: selected.player2,
+    });
+
+    if (mode === "doubles") {
+      query.set("player3", selected.player3);
+      query.set("player4", selected.player4);
+    }
+
+    router.push(`/clubs/${clubSlug}/compare/result?${query.toString()}`);
   }
 
   function renderSingles() {
@@ -326,6 +347,7 @@ export default function ClubCompareBuilder({ players }) {
 
         <button
           type="button"
+          onClick={handleCompare}
           disabled={!isComplete || players.length === 0}
           className={`mt-6 w-full rounded-[1.6rem] px-5 py-4 text-xl font-semibold transition ${
             isComplete && players.length > 0
