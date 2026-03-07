@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import ClubPlayerSearch from "@/components/ClubPlayerSearch";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -97,8 +98,9 @@ function RankRow({ entry, rank }) {
   );
 }
 
-export default async function ClubHomePage({ params }) {
+export default async function ClubHomePage({ params, searchParams }) {
   const { clubSlug } = await params;
+  const playerSearch = String(searchParams?.player ?? "").trim();
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -153,6 +155,12 @@ export default async function ClubHomePage({ params }) {
     };
   });
 
+  const searchResults = playerSearch
+    ? entries
+        .filter((entry) => entry.fullName.toLowerCase().includes(playerSearch.toLowerCase()))
+        .slice(0, 8)
+    : [];
+
   const topThree = entries.slice(0, 3);
   const remaining = entries.slice(3);
   const podiumCenter = topThree[0] ?? null;
@@ -168,6 +176,30 @@ export default async function ClubHomePage({ params }) {
         <p className="mt-3 text-center text-sm leading-6 text-white/65">
           Live rankings based on each player&apos;s current Elo inside {club.name}.
         </p>
+      </div>
+
+      <div className="space-y-4">
+        <ClubPlayerSearch defaultValue={playerSearch} />
+        {playerSearch ? (
+          searchResults?.length ? (
+            <div className="space-y-3">
+              {searchResults.map((result) => (
+                <Link
+                  key={result.id}
+                  href={`/clubs/${clubSlug}/players/${result.id}`}
+                  className="flex items-center justify-between gap-4 rounded-[1.4rem] border border-white/10 bg-white/6 px-4 py-4 text-white"
+                >
+                  <span className="min-w-0 truncate font-semibold">{result.fullName}</span>
+                  <span className="shrink-0 text-sm text-[#17dccb]">Elo {result.elo}</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[1.4rem] border border-dashed border-white/15 px-4 py-5 text-center text-white/65">
+              No players matched &quot;{playerSearch}&quot;.
+            </div>
+          )
+        ) : null}
       </div>
 
       {entries.length === 0 ? (

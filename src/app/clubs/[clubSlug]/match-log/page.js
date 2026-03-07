@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   approveMatchLogAction,
+  deleteMatchLogAction,
   rejectMatchLogAction,
 } from "@/app/clubs/[clubSlug]/match-log/actions";
 import { getClubPageData } from "@/lib/clubPageData";
@@ -49,10 +50,32 @@ function ScorePill({ score, tone }) {
   );
 }
 
+function EloDeltaBadge({ value }) {
+  const styles =
+    value > 0
+      ? "border-emerald-300/20 bg-emerald-300/12 text-emerald-200"
+      : value < 0
+        ? "border-rose-300/20 bg-rose-300/12 text-rose-200"
+        : "border-white/12 bg-white/7 text-white/65";
+
+  const label = value > 0 ? `+${value}` : `${value}`;
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold tracking-[0.08em] ${styles}`}
+    >
+      {label} Elo
+    </span>
+  );
+}
+
 export default async function ClubMatchLogPage({ params, searchParams }) {
   const { clubSlug } = await params;
   const query = await searchParams;
   const error = query?.error;
+  const success = query?.success;
+  const dateFrom = query?.date_from ?? "";
+  const dateTo = query?.date_to ?? "";
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -69,11 +92,12 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
     notFound();
   }
 
-  const { data: matches, error: matchesError } = await supabase
+  let matchesQuery = supabase
     .from("matches")
     .select(
       `
         id,
+        match_date,
         played_at,
         team1_score,
         team2_score,
@@ -82,6 +106,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
         participants:match_participants (
           team,
           slot,
+          elo_delta,
           club_player:club_players (
             id,
             player:players (
@@ -94,6 +119,15 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
     .eq("club_id", club.id)
     .order("played_at", { ascending: false });
 
+  if (dateFrom) {
+    matchesQuery = matchesQuery.gte("match_date", dateFrom);
+  }
+  if (dateTo) {
+    matchesQuery = matchesQuery.lte("match_date", dateTo);
+  }
+
+  const { data: matches, error: matchesError } = await matchesQuery;
+
   if (matchesError) {
     throw new Error(matchesError.message);
   }
@@ -102,19 +136,27 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
     const team1 = match.participants
       ?.filter((participant) => participant.team === 1)
       .sort((a, b) => a.slot - b.slot)
-      .map((participant) => participant.club_player?.player?.full_name)
-      .filter(Boolean) ?? [];
+      .map((participant) => ({
+        fullName: participant.club_player?.player?.full_name,
+        eloDelta: participant.elo_delta ?? 0,
+      }))
+      .filter((participant) => participant.fullName) ?? [];
 
     const team2 = match.participants
       ?.filter((participant) => participant.team === 2)
       .sort((a, b) => a.slot - b.slot)
-      .map((participant) => participant.club_player?.player?.full_name)
-      .filter(Boolean) ?? [];
+      .map((participant) => ({
+        fullName: participant.club_player?.player?.full_name,
+        eloDelta: participant.elo_delta ?? 0,
+      }))
+      .filter((participant) => participant.fullName) ?? [];
 
     return {
       ...match,
       team1,
       team2,
+      team1EloDelta: team1[0]?.eloDelta ?? 0,
+      team2EloDelta: team2[0]?.eloDelta ?? 0,
     };
   });
 
@@ -137,9 +179,58 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
         </div>
       </div>
 
+      <form
+        method="get"
+        className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.9),rgba(5,12,22,0.94))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.28)] backdrop-blur-xl"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-xs uppercase tracking-[0.22em] text-white/45">
+              From
+            </span>
+            <input
+              type="date"
+              name="date_from"
+              defaultValue={dateFrom}
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-xs uppercase tracking-[0.22em] text-white/45">
+              To
+            </span>
+            <input
+              type="date"
+              name="date_to"
+              defaultValue={dateTo}
+              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <button className="rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-sm font-semibold text-[#062232]">
+            Apply filters
+          </button>
+          <Link
+            href={`/clubs/${clubSlug}/match-log`}
+            className="rounded-full border border-white/15 px-5 py-3 text-center text-sm font-semibold text-white/85"
+          >
+            Clear filters
+          </Link>
+        </div>
+      </form>
+
       {error ? (
         <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {error}
+        </div>
+      ) : null}
+
+      {success ? (
+        <div className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          {success}
         </div>
       ) : null}
 
@@ -163,8 +254,17 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
 
               <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
                 <div className="rounded-2xl border border-white/8 bg-white/6 px-4 py-4">
-                  <p className="text-sm uppercase tracking-[0.18em] text-white/45">Team 1</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{match.team1.join(" / ")}</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm uppercase tracking-[0.18em] text-white/45">Team 1</p>
+                    {match.status === "approved" ? <EloDeltaBadge value={match.team1EloDelta} /> : null}
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {match.team1.map((player) => (
+                      <p key={player.fullName} className="text-base font-semibold text-white">
+                        {player.fullName}
+                      </p>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex flex-col items-center gap-2 py-2">
@@ -197,8 +297,17 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
                 </div>
 
                 <div className="rounded-2xl border border-white/8 bg-white/6 px-4 py-4">
-                  <p className="text-sm uppercase tracking-[0.18em] text-white/45">Team 2</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{match.team2.join(" / ")}</p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm uppercase tracking-[0.18em] text-white/45">Team 2</p>
+                    {match.status === "approved" ? <EloDeltaBadge value={match.team2EloDelta} /> : null}
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {match.team2.map((player) => (
+                      <p key={player.fullName} className="text-base font-semibold text-white">
+                        {player.fullName}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -216,6 +325,18 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
                     <input type="hidden" name="match_id" value={match.id} />
                     <button className="w-full rounded-full border border-white/15 px-4 py-3 text-sm font-semibold text-white/85">
                       Reject match
+                    </button>
+                  </form>
+                </div>
+              ) : null}
+
+              {club.role === "admin" ? (
+                <div className="mt-4">
+                  <form action={deleteMatchLogAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="match_id" value={match.id} />
+                    <button className="w-full rounded-full border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100">
+                      Delete match
                     </button>
                   </form>
                 </div>

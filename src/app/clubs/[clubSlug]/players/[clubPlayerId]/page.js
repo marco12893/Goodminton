@@ -3,6 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const RANGE_OPTIONS = [
+  { value: "30d", label: "30 days", days: 30 },
+  { value: "90d", label: "90 days", days: 90 },
+  { value: "1y", label: "1 year", days: 365 },
+  { value: "all", label: "All time", days: null },
+];
+
 function getInitials(name) {
   return name
     .split(" ")
@@ -17,6 +24,19 @@ function formatDecimal(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function getRangeConfig(value) {
+  return RANGE_OPTIONS.find((option) => option.value === value) ?? RANGE_OPTIONS[RANGE_OPTIONS.length - 1];
+}
+
+function getRangeStart(config) {
+  if (!config.days) return null;
+  const date = new Date();
+  date.setHours(23, 59, 59, 999);
+  date.setDate(date.getDate() - config.days + 1);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 function buildPerformanceSummary(results) {
@@ -81,11 +101,36 @@ function StatCard({ label, value }) {
   );
 }
 
-function EloChart({ points }) {
+function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
+  return (
+    <div className="overflow-x-auto rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.92),rgba(5,12,22,0.94))] p-3 shadow-[0_20px_50px_rgba(3,12,22,0.28)]">
+      <div className="flex min-w-max flex-nowrap gap-3">
+        {RANGE_OPTIONS.map((option) => {
+          const isActive = option.value === activeRange;
+          return (
+            <Link
+              key={option.value}
+              href={`/clubs/${clubSlug}/players/${clubPlayerId}?range=${option.value}`}
+              className={`rounded-full px-4 py-3 text-center text-sm font-semibold whitespace-nowrap transition ${
+                isActive
+                  ? "bg-white/85 text-[#11151a]"
+                  : "bg-transparent text-white/62 hover:bg-white/8 hover:text-white"
+              }`}
+            >
+              {option.label}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function EloChart({ points, rangeLabel }) {
   if (points.length === 0) {
     return (
       <div className="rounded-[1.7rem] border border-dashed border-white/12 bg-white/5 px-5 py-8 text-center text-white/65">
-        Elo history will appear after this player&apos;s first approved match.
+        No Elo history is available for the {rangeLabel.toLowerCase()} range.
       </div>
     );
   }
@@ -106,26 +151,18 @@ function EloChart({ points }) {
   const coordinates = points.map((point, index) => {
     const x = points.length === 1 ? width / 2 : (index / (points.length - 1)) * width;
     const y = chartBottom - ((point.elo - min) / range) * chartHeight;
-
-    return {
-      ...point,
-      x,
-      y,
-    };
+    return { ...point, x, y };
   });
 
   const path = coordinates
-    .map((point, index) => {
-      return `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
-    })
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
     .join(" ");
-
-  const areaPath = `${path} L ${coordinates[coordinates.length - 1].x.toFixed(2)} ${chartBottom} L ${coordinates[0].x.toFixed(2)} ${chartBottom} Z`;
+  const areaPath = `${path} L ${coordinates.at(-1).x.toFixed(2)} ${chartBottom} L ${coordinates[0].x.toFixed(2)} ${chartBottom} Z`;
   const yTicks = [max, Math.round((max + min) / 2), min];
   const bottomLabels = [
     points[0]?.label ?? "Start",
     points[Math.floor((points.length - 1) / 2)]?.label ?? "Mid",
-    points[points.length - 1]?.label ?? "Now",
+    points.at(-1)?.label ?? "Now",
   ];
 
   return (
@@ -134,7 +171,7 @@ function EloChart({ points }) {
         <div>
           <p className="font-mono text-2xl font-semibold text-white">Career Elo Chart</p>
           <p className="mt-2 text-sm text-white/60">
-            {points.length} recorded point{points.length === 1 ? "" : "s"}
+            {points.length} recorded point{points.length === 1 ? "" : "s"} in {rangeLabel.toLowerCase()}
           </p>
         </div>
         <div className="text-right text-sm text-white/55">
@@ -178,9 +215,6 @@ function EloChart({ points }) {
               })}
               <path d={areaPath} fill="url(#elo-fill)" />
               <path d={path} fill="none" stroke="url(#elo-stroke)" strokeWidth="2.2" strokeLinecap="round" />
-              {coordinates.map((point, index) => (
-                <circle key={`${point.label}-${index}`} cx={point.x} cy={point.y} r="1.5" fill="#ffffff" />
-              ))}
             </svg>
           </div>
         </div>
@@ -200,8 +234,11 @@ function EloChart({ points }) {
   );
 }
 
-export default async function ClubPlayerProfilePage({ params }) {
+export default async function ClubPlayerProfilePage({ params, searchParams }) {
   const { clubSlug, clubPlayerId } = await params;
+  const query = await searchParams;
+  const activeRange = getRangeConfig(query?.range ?? "all");
+  const rangeStart = getRangeStart(activeRange);
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -226,9 +263,6 @@ export default async function ClubPlayerProfilePage({ params }) {
         club_id,
         elo_initial,
         elo_current,
-        total_matches,
-        total_wins,
-        total_losses,
         player:players (
           full_name,
           avatar_url
@@ -276,9 +310,15 @@ export default async function ClubPlayerProfilePage({ params }) {
         new Date(b.match?.played_at ?? b.created_at).getTime()
     );
 
-  const totalPointsScored = approvedParticipants.reduce((sum, row) => sum + (row.points_scored ?? 0), 0);
-  const totalPointsConceded = approvedParticipants.reduce((sum, row) => sum + (row.points_allowed ?? 0), 0);
-  const results = approvedParticipants.map((row) => (row.team === row.match?.winning_team ? "W" : "L"));
+  const filteredParticipants = rangeStart
+    ? approvedParticipants.filter(
+        (row) => new Date(row.match?.played_at ?? row.created_at).getTime() >= rangeStart.getTime()
+      )
+    : approvedParticipants;
+
+  const totalPointsScored = filteredParticipants.reduce((sum, row) => sum + (row.points_scored ?? 0), 0);
+  const totalPointsConceded = filteredParticipants.reduce((sum, row) => sum + (row.points_allowed ?? 0), 0);
+  const results = filteredParticipants.map((row) => (row.team === row.match?.winning_team ? "W" : "L"));
   const performance = buildPerformanceSummary(results);
 
   const { data: eloRows, error: eloError } = await supabase
@@ -291,12 +331,16 @@ export default async function ClubPlayerProfilePage({ params }) {
     throw new Error(eloError.message);
   }
 
+  const filteredEloRows = rangeStart
+    ? (eloRows ?? []).filter((row) => new Date(row.recorded_on).getTime() >= rangeStart.getTime())
+    : (eloRows ?? []);
+
   const chartPoints = [];
 
-  if ((eloRows ?? []).length > 0) {
-    chartPoints.push({ elo: eloRows[0].elo_before, label: "Start" });
+  if (filteredEloRows.length > 0) {
+    chartPoints.push({ elo: filteredEloRows[0].elo_before, label: "Start" });
 
-    for (const row of eloRows) {
+    for (const row of filteredEloRows) {
       chartPoints.push({
         elo: row.elo_after,
         label: new Intl.DateTimeFormat("en-US", {
@@ -307,15 +351,22 @@ export default async function ClubPlayerProfilePage({ params }) {
     }
   }
 
-  const totalMatches = clubPlayer.total_matches ?? 0;
-  const totalWins = clubPlayer.total_wins ?? 0;
-  const totalLosses = clubPlayer.total_losses ?? 0;
+  const totalMatches = filteredParticipants.length;
+  const totalWins = results.filter((result) => result === "W").length;
+  const totalLosses = results.filter((result) => result === "L").length;
   const winRate = totalMatches > 0 ? (totalWins / totalMatches) * 100 : 0;
-  const peakRating = Math.max(
-    clubPlayer.elo_initial ?? 1000,
-    clubPlayer.elo_current ?? 1000,
-    ...((eloRows ?? []).flatMap((row) => [row.elo_before, row.elo_after]))
-  );
+  const peakRating =
+    chartPoints.length > 0
+      ? Math.max(...chartPoints.map((point) => point.elo))
+      : activeRange.value === "all"
+        ? Math.max(clubPlayer.elo_initial ?? 1000, clubPlayer.elo_current ?? 1000)
+        : null;
+  const displayedElo =
+    filteredEloRows.length > 0
+      ? filteredEloRows.at(-1).elo_after
+      : activeRange.value === "all"
+        ? clubPlayer.elo_current ?? 1000
+        : null;
 
   return (
     <section className="space-y-5">
@@ -324,6 +375,8 @@ export default async function ClubPlayerProfilePage({ params }) {
           Back to leaderboard
         </Link>
       </div>
+
+      <RangeTabs clubSlug={clubSlug} clubPlayerId={clubPlayerId} activeRange={activeRange.value} />
 
       <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-5 pb-6 pt-6 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -338,9 +391,18 @@ export default async function ClubPlayerProfilePage({ params }) {
             <h1 className="font-mono text-3xl font-semibold text-white">
               {clubPlayer.player?.full_name ?? "Unknown player"}
             </h1>
-            <p className="mt-2 text-2xl text-white/82">Elo {clubPlayer.elo_current ?? 1000}</p>
+            <p className="mt-2 text-2xl text-white/82">
+              {displayedElo != null ? `Elo ${displayedElo}` : `No matches in ${activeRange.label.toLowerCase()}`}
+            </p>
+            <p className="mt-2 text-sm text-white/55">Showing stats for {activeRange.label.toLowerCase()}.</p>
           </div>
         </div>
+
+        {totalMatches === 0 ? (
+          <div className="mt-6 rounded-[1.7rem] border border-dashed border-white/12 bg-white/5 px-5 py-8 text-center text-white/65">
+            This player has no approved matches in the selected time range.
+          </div>
+        ) : null}
 
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard label="Total Matches" value={totalMatches} />
@@ -373,7 +435,7 @@ export default async function ClubPlayerProfilePage({ params }) {
           <div className="mt-5 space-y-3 text-lg text-white/88">
             <div className="flex items-center justify-between gap-4">
               <span>Peak Rating</span>
-              <span>{peakRating}</span>
+              <span>{peakRating != null ? peakRating : "-"}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
               <span>Longest Win Streak</span>
@@ -391,7 +453,7 @@ export default async function ClubPlayerProfilePage({ params }) {
         </div>
       </div>
 
-      <EloChart points={chartPoints} />
+      <EloChart points={chartPoints} rangeLabel={activeRange.label} />
     </section>
   );
 }

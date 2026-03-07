@@ -33,6 +33,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   const { clubSlug } = await params;
   const query = await searchParams;
   const error = query?.error;
+  const success = query?.success;
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -102,6 +103,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
       </div>
 
       <ErrorMessage value={error} />
+
+      {success ? (
+        <div className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          {success}
+        </div>
+      ) : null}
 
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
         <h2 className="font-mono text-[1.5rem] font-semibold text-white">Club Configuration</h2>

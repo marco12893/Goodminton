@@ -133,7 +133,7 @@ export async function addClubPlayerAction(formData) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerInsert.error.message)}`);
   }
 
-  redirect(`/clubs/${clubSlug}/settings/edit`);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Player added successfully.")}`);
 }
 
 export async function linkClubPlayerAction(formData) {
@@ -297,7 +297,7 @@ export async function linkClubPlayerAction(formData) {
     }
   }
 
-  redirect(`/clubs/${clubSlug}/settings/edit`);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Player linked successfully.")}`);
 }
 
 export async function removeClubPlayerAction(formData) {
@@ -355,7 +355,7 @@ export async function removeClubPlayerAction(formData) {
       .is("user_id", null);
   }
 
-  redirect(`/clubs/${clubSlug}/settings/edit`);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Player removed successfully.")}`);
 }
 
 export async function promoteClubMemberAction(formData) {
@@ -426,5 +426,5 @@ export async function promoteClubMemberAction(formData) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipUpsert.error.message)}`);
   }
 
-  redirect(`/clubs/${clubSlug}/settings/edit`);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Player promoted to admin successfully.")}`);
 }

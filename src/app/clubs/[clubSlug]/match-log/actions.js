@@ -55,6 +55,16 @@ async function approveMatchWithElo({ matchId, reviewerId }) {
   }
 }
 
+async function rebuildClubElo(clubId) {
+  const { error } = await supabaseAdmin.rpc("rebuild_club_elo", {
+    target_club_id: clubId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 function buildParticipants(formData) {
   return [
     { club_player_id: getString(formData, "team1_player1"), team: 1, slot: 1 },
@@ -270,4 +280,68 @@ export async function rejectMatchLogAction(formData) {
   }
 
   redirect(`/clubs/${clubSlug}/match-log`);
+}
+
+export async function deleteMatchLogAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const matchId = getString(formData, "match_id");
+
+  if (!clubSlug || !matchId) {
+    redirect(`/clubs/${clubSlug}/match-log?error=Invalid match data.`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let membership;
+  try {
+    membership = await getClubMembership(clubSlug, user.id);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);
+  }
+
+  if (membership.role !== "admin") {
+    redirect(`/clubs/${clubSlug}/match-log?error=Only admins can delete matches.`);
+  }
+
+  const { data: match, error: matchError } = await supabaseAdmin
+    .from("matches")
+    .select("id, status, club_id")
+    .eq("id", matchId)
+    .eq("club_id", membership.club.id)
+    .maybeSingle();
+
+  if (matchError) {
+    redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(matchError.message)}`);
+  }
+
+  if (!match) {
+    redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent("Match not found.")}`);
+  }
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("matches")
+    .delete()
+    .eq("id", matchId)
+    .eq("club_id", membership.club.id);
+
+  if (deleteError) {
+    redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(deleteError.message)}`);
+  }
+
+  if (match.status === "approved") {
+    try {
+      await rebuildClubElo(membership.club.id);
+    } catch (error) {
+      redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);
+    }
+  }
+
+  redirect(`/clubs/${clubSlug}/match-log?success=${encodeURIComponent("Match deleted successfully.")}`);
 }
