@@ -29,7 +29,7 @@ export default async function NewClubPage({ searchParams }) {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.18),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.5),rgba(4,18,31,0.98))]" />
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center opacity-20" />
+      <div className="absolute inset-0 bg-[url('/background/photo-1722087642932-9b070e9a066e.webp')] bg-cover bg-center opacity-16" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-10">
         <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] p-6 shadow-[0_28px_70px_rgba(3,12,22,0.45)] backdrop-blur-xl">

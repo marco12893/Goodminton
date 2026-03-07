@@ -30,7 +30,7 @@ export default async function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.95))]" />
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center opacity-25" />
+      <div className="absolute inset-0 bg-[url('/background/photo-1722087642932-9b070e9a066e.webp')] bg-cover bg-center opacity-14 mix-blend-screen" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-5 py-9">
         <header className="flex items-start justify-between">
