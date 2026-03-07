@@ -152,6 +152,50 @@ function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
   );
 }
 
+function RivalSection({ clubSlug, rival, rangeLabel }) {
+  return (
+    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="font-mono text-2xl font-semibold text-white">Rival</p>
+          <p className="mt-2 text-sm text-white/60">
+            A lower-rated opponent who still keeps beating this player in {rangeLabel.toLowerCase()}.
+          </p>
+        </div>
+      </div>
+
+      {!rival ? (
+        <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 px-5 py-6 text-center text-white/65">
+          No rival found in the selected time range.
+        </div>
+      ) : (
+        <Link
+          href={`/clubs/${clubSlug}/players/${rival.id}`}
+          className="mt-5 flex items-center gap-4 rounded-[1.5rem] border border-white/8 bg-white/[0.04] px-4 py-4 transition hover:bg-white/[0.06]"
+        >
+          <div
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-white/70 bg-gradient-to-br from-[#163047] to-[#0f2236] bg-cover bg-center text-2xl font-semibold text-white"
+            style={rival.avatarUrl ? { backgroundImage: `url(${rival.avatarUrl})` } : undefined}
+          >
+            {!rival.avatarUrl ? getInitials(rival.name) : null}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[1.7rem] font-semibold text-white">{rival.name}</p>
+            <p className="mt-2 text-lg">
+              <span className="font-semibold text-[#2cd85b]">{rival.playerWins} wins</span>
+              <span className="mx-2 text-white/35">•</span>
+              <span className="font-semibold text-[#ff5252]">{rival.playerLosses} losses</span>
+            </p>
+            <p className="mt-1 text-sm text-white/55">
+              Elo {rival.elo} • {formatDecimal(rival.playerWinRate)}% win rate across {rival.matches} matches
+            </p>
+          </div>
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
   return (
     <div className="overflow-x-auto rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.92),rgba(5,12,22,0.94))] p-3 shadow-[0_20px_50px_rgba(3,12,22,0.28)]">
@@ -432,6 +476,7 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
             team,
             club_player:club_players (
               id,
+              elo_current,
               player:players (
                 full_name,
                 avatar_url
@@ -490,6 +535,54 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       return a.name.localeCompare(b.name);
     })
     .slice(0, 5);
+
+  const rivalSummary = new Map();
+
+  for (const row of partnerRows ?? []) {
+    const playerMatch = playerMatchesById.get(row.match_id);
+
+    if (!playerMatch || row.club_player_id === clubPlayerId || row.team === playerMatch.team) {
+      continue;
+    }
+
+    const current = rivalSummary.get(row.club_player_id) ?? {
+      id: row.club_player?.id ?? row.club_player_id,
+      name: row.club_player?.player?.full_name ?? "Unknown player",
+      avatarUrl: row.club_player?.player?.avatar_url ?? "",
+      elo: row.club_player?.elo_current ?? 1000,
+      matches: 0,
+      playerWins: 0,
+      playerLosses: 0,
+    };
+
+    current.matches += 1;
+
+    if (playerMatch.team === playerMatch.match?.winning_team) {
+      current.playerWins += 1;
+    } else {
+      current.playerLosses += 1;
+    }
+
+    rivalSummary.set(row.club_player_id, current);
+  }
+
+  const rival = [...rivalSummary.values()]
+    .map((entry) => ({
+      ...entry,
+      playerWinRate: entry.matches > 0 ? (entry.playerWins / entry.matches) * 100 : 0,
+    }))
+    .filter(
+      (entry) =>
+        entry.matches >= 5 &&
+        entry.playerWinRate < 50 &&
+        entry.elo < (clubPlayer.elo_current ?? clubPlayer.elo_initial ?? 1000),
+    )
+    .sort((a, b) => {
+      if (a.playerWinRate !== b.playerWinRate) return a.playerWinRate - b.playerWinRate;
+      if (b.matches !== a.matches) return b.matches - a.matches;
+      if (b.playerLosses !== a.playerLosses) return b.playerLosses - a.playerLosses;
+      return a.name.localeCompare(b.name);
+    })[0] ?? null;
 
   return (
     <section className="space-y-5">
@@ -577,6 +670,8 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       </div>
 
       <EloChart points={chartPoints} rangeLabel={activeRange.label} />
+
+      <RivalSection clubSlug={clubSlug} rival={rival} rangeLabel={activeRange.label} />
 
       <BestPartnersSection clubSlug={clubSlug} partners={topPartners} rangeLabel={activeRange.label} />
 
