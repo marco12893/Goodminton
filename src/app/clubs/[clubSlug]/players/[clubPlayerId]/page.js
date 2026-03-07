@@ -101,6 +101,57 @@ function StatCard({ label, value }) {
   );
 }
 
+function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
+  return (
+    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="font-mono text-2xl font-semibold text-white">Top 5 Best Partners</p>
+          <p className="mt-2 text-sm text-white/60">
+            Ranked by win rate among partners with at least 5 matches in {rangeLabel.toLowerCase()}.
+          </p>
+        </div>
+      </div>
+
+      {partners.length === 0 ? (
+        <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 px-5 py-6 text-center text-white/65">
+          No partner has reached 5 matches with this player in the selected time range.
+        </div>
+      ) : (
+        <div className="mt-5 space-y-4">
+          {partners.map((partner, index) => (
+            <Link
+              key={partner.id}
+              href={`/clubs/${clubSlug}/players/${partner.id}`}
+              className="flex items-center gap-4 rounded-[1.5rem] border border-white/8 bg-white/[0.04] px-4 py-4 transition hover:bg-white/[0.06]"
+            >
+              <div
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-white/70 bg-gradient-to-br from-[#163047] to-[#0f2236] bg-cover bg-center text-2xl font-semibold text-white"
+                style={partner.avatarUrl ? { backgroundImage: `url(${partner.avatarUrl})` } : undefined}
+              >
+                {!partner.avatarUrl ? getInitials(partner.name) : null}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[1.7rem] font-semibold text-white">
+                  {index + 1}. {partner.name}
+                </p>
+                <p className="mt-2 text-lg">
+                  <span className="font-semibold text-[#2cd85b]">{partner.wins} wins</span>
+                  <span className="mx-2 text-white/35">•</span>
+                  <span className="font-semibold text-[#ff5252]">{partner.losses} losses</span>
+                </p>
+                <p className="mt-1 text-sm text-white/55">
+                  {formatDecimal(partner.winRate)}% win rate across {partner.matches} matches
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
   return (
     <div className="overflow-x-auto rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.92),rgba(5,12,22,0.94))] p-3 shadow-[0_20px_50px_rgba(3,12,22,0.28)]">
@@ -285,6 +336,7 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
     .from("match_participants")
     .select(
       `
+        match_id,
         team,
         points_scored,
         points_allowed,
@@ -367,6 +419,77 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       : activeRange.value === "all"
         ? clubPlayer.elo_current ?? 1000
         : null;
+
+  const filteredMatchIds = [...new Set(filteredParticipants.map((row) => row.match_id).filter(Boolean))];
+
+  const { data: partnerRows, error: partnerError } = filteredMatchIds.length
+    ? await supabase
+        .from("match_participants")
+        .select(
+          `
+            match_id,
+            club_player_id,
+            team,
+            club_player:club_players (
+              id,
+              player:players (
+                full_name,
+                avatar_url
+              )
+            )
+          `
+        )
+        .in("match_id", filteredMatchIds)
+    : { data: [], error: null };
+
+  if (partnerError) {
+    throw new Error(partnerError.message);
+  }
+
+  const playerMatchesById = new Map(filteredParticipants.map((row) => [row.match_id, row]));
+  const partnerSummary = new Map();
+
+  for (const row of partnerRows ?? []) {
+    const playerMatch = playerMatchesById.get(row.match_id);
+
+    if (!playerMatch || row.club_player_id === clubPlayerId || row.team !== playerMatch.team) {
+      continue;
+    }
+
+    const key = row.club_player_id;
+    const current = partnerSummary.get(key) ?? {
+      id: row.club_player?.id ?? row.club_player_id,
+      name: row.club_player?.player?.full_name ?? "Unknown player",
+      avatarUrl: row.club_player?.player?.avatar_url ?? "",
+      matches: 0,
+      wins: 0,
+      losses: 0,
+    };
+
+    current.matches += 1;
+
+    if (playerMatch.team === playerMatch.match?.winning_team) {
+      current.wins += 1;
+    } else {
+      current.losses += 1;
+    }
+
+    partnerSummary.set(key, current);
+  }
+
+  const topPartners = [...partnerSummary.values()]
+    .map((partner) => ({
+      ...partner,
+      winRate: partner.matches > 0 ? (partner.wins / partner.matches) * 100 : 0,
+    }))
+    .filter((partner) => partner.matches >= 5)
+    .sort((a, b) => {
+      if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+      if (b.matches !== a.matches) return b.matches - a.matches;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 5);
 
   return (
     <section className="space-y-5">
@@ -454,6 +577,8 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       </div>
 
       <EloChart points={chartPoints} rangeLabel={activeRange.label} />
+
+      <BestPartnersSection clubSlug={clubSlug} partners={topPartners} rangeLabel={activeRange.label} />
 
       <Link
         href={`/clubs/${clubSlug}/players/${clubPlayerId}/match-log`}
