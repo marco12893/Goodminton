@@ -204,24 +204,30 @@ export default function ClubCompareBuilder({ players }) {
             const currentPlayer = playerMap.get(selected[slot.key]);
 
             return (
-              <div key={slot.key} className="space-y-5">
+              <div key={slot.key}>
                 <PlayerAvatar
                   playerName={currentPlayer?.name ?? ""}
                   avatarUrl={currentPlayer?.avatarUrl ?? ""}
-                />
-                <PlayerSelect
-                  label={slot.label}
-                  value={selected[slot.key]}
-                  options={getOptionsFor(slot.key)}
-                  onChange={(playerId) => handleSelectChange(slot.key, playerId)}
                 />
               </div>
             );
           })}
         </div>
 
-        <div className="pb-2 pt-0 text-center text-[3.4rem] font-semibold leading-none tracking-wide text-white">
+        <div className="-mt-4 text-center text-[2rem] font-semibold leading-none tracking-wide text-white">
           VS
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          {singlesSlots.map((slot) => (
+            <PlayerSelect
+              key={slot.key}
+              label={slot.label}
+              value={selected[slot.key]}
+              options={getOptionsFor(slot.key)}
+              onChange={(playerId) => handleSelectChange(slot.key, playerId)}
+            />
+          ))}
         </div>
       </>
     );
