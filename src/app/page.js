@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { logoutAction } from "@/app/auth/actions";
 import { getHomepageData } from "@/lib/homepageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -26,6 +25,12 @@ export default async function Home() {
   }
 
   const data = await getHomepageData(supabase, user);
+  const profileInitials = (data.fullName ?? user.email ?? "GM")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "GM";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
@@ -41,13 +46,14 @@ export default async function Home() {
             <div className="mt-3 h-1 w-44 rounded-full bg-gradient-to-r from-[#1be2cf] to-[#2cb7ff]" />
           </div>
 
-          <form action={logoutAction} className="mt-6">
-            <button className="flex h-16 w-16 items-center justify-center rounded-full border border-white/14 bg-white/8 shadow-[0_12px_30px_rgba(2,14,28,0.35)] backdrop-blur-xl">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#16d4c1] text-sm font-semibold text-[#082032] shadow-[0_0_0_4px_rgba(255,255,255,0.08)]">
-                OUT
-              </div>
-            </button>
-          </form>
+          <Link
+            href="/profile"
+            className="mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-white/14 bg-white/8 shadow-[0_12px_30px_rgba(2,14,28,0.35)] backdrop-blur-xl"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#16d4c1] text-sm font-semibold text-[#082032] shadow-[0_0_0_4px_rgba(255,255,255,0.08)]">
+              {profileInitials}
+            </div>
+          </Link>
         </header>
 
         <section className="mt-8 rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] px-5 py-6 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
