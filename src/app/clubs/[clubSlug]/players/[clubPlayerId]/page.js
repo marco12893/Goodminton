@@ -152,6 +152,94 @@ function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
   );
 }
 
+function AchievementSection({ achievements, rangeLabel }) {
+  if (Array.isArray(achievements)) {
+    return (
+      <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-mono text-2xl font-semibold text-white">Achievements</p>
+            <p className="mt-2 text-sm text-white/60">
+              Unlocked milestones for {rangeLabel.toLowerCase()}. Locked achievements stay on the right.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 -mx-1 overflow-x-auto pb-2">
+          <div className="flex min-w-max gap-3 px-1">
+            {achievements.map((achievement) => (
+              <div
+                key={achievement.id}
+                className={`w-[10.5rem] shrink-0 rounded-[1.35rem] border px-3 py-3 ${
+                  achievement.unlocked
+                    ? "border-white/8 bg-white/[0.04]"
+                    : "border-white/6 bg-white/[0.02] opacity-55 grayscale"
+                }`}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div
+                    className={`flex h-20 w-20 items-center justify-center rounded-[1.4rem] text-[2.35rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ${
+                      achievement.unlocked
+                        ? "bg-gradient-to-br from-[#13d8c8] via-[#18b8df] to-[#1d86d4]"
+                        : "bg-white/10 text-white/55"
+                    }`}
+                  >
+                    <span aria-hidden="true">{achievement.icon}</span>
+                  </div>
+                  <p className={`mt-3 line-clamp-2 text-[1.02rem] font-semibold leading-5 ${achievement.unlocked ? "text-white" : "text-white/72"}`}>
+                    {achievement.title}
+                  </p>
+                  <p className={`mt-2 line-clamp-3 text-xs leading-5 ${achievement.unlocked ? "text-white/65" : "text-white/42"}`}>
+                    {achievement.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="font-mono text-2xl font-semibold text-white">Achievements</p>
+          <p className="mt-2 text-sm text-white/60">
+            Unlocked milestones for {rangeLabel.toLowerCase()}.
+          </p>
+        </div>
+      </div>
+
+      {achievements.length === 0 ? (
+        <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 px-5 py-6 text-center text-white/65">
+          No achievements unlocked in the selected time range yet.
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-4">
+          {achievements.map((achievement) => (
+            <div
+              key={achievement.id}
+              className="rounded-[1.5rem] border border-white/8 bg-white/[0.04] px-4 py-4"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#12d8c9] to-[#18c3e5] text-2xl">
+                  {achievement.icon}
+                </div>
+                <div>
+                  <p className="text-xl font-semibold text-white">{achievement.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-white/65">{achievement.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RivalSection({ clubSlug, rival, rangeLabel }) {
   return (
     <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
@@ -194,6 +282,339 @@ function RivalSection({ clubSlug, rival, rangeLabel }) {
       )}
     </div>
   );
+}
+
+function buildAchievements({
+  totalMatches,
+  totalWins,
+  totalLosses,
+  totalPointsScored,
+  totalPointsConceded,
+  participants,
+  results,
+  performance,
+  displayedElo,
+  peakRating,
+  initialElo,
+}) {
+  if (Array.isArray(participants)) {
+    const perfectWin = participants.some(
+      (row) =>
+        row.team === row.match?.winning_team &&
+        row.points_scored === 21 &&
+        row.points_allowed === 0,
+    );
+
+    const closeWins = participants.filter((row) => {
+      if (row.team !== row.match?.winning_team) {
+        return false;
+      }
+
+      return Math.abs((row.points_scored ?? 0) - (row.points_allowed ?? 0)) <= 2;
+    }).length;
+
+    const dominantWins = participants.filter((row) => {
+      if (row.team !== row.match?.winning_team) {
+        return false;
+      }
+
+      return (row.points_scored ?? 0) - (row.points_allowed ?? 0) >= 10;
+    }).length;
+
+    const averageScored = totalMatches > 0 ? totalPointsScored / totalMatches : 0;
+    const averageConceded = totalMatches > 0 ? totalPointsConceded / totalMatches : 0;
+
+    const achievementCatalog = [
+      {
+        id: "streak-5",
+        icon: "⚡",
+        title: "Hot Streak",
+        description: "Win 5 matches in a row.",
+        unlocked: performance.longestWinStreak >= 5,
+      },
+      {
+        id: "streak-10",
+        icon: "🔥",
+        title: "Unstoppable",
+        description: "Win 10 matches in a row.",
+        unlocked: performance.longestWinStreak >= 10,
+      },
+      {
+        id: "wins-50",
+        icon: "🥉",
+        title: "Half-Century",
+        description: "Reach 50 wins.",
+        unlocked: totalWins >= 50,
+      },
+      {
+        id: "wins-100",
+        icon: "🥈",
+        title: "Century Winner",
+        description: "Reach 100 wins.",
+        unlocked: totalWins >= 100,
+      },
+      {
+        id: "wins-500",
+        icon: "🏆",
+        title: "Legendary Grind",
+        description: "Reach 500 wins.",
+        unlocked: totalWins >= 500,
+      },
+      {
+        id: "wins-1000",
+        icon: "👑",
+        title: "Immortal Winner",
+        description: "Reach 1000 wins.",
+        unlocked: totalWins >= 1000,
+      },
+      {
+        id: "matches-100",
+        icon: "🎯",
+        title: "Iron Player",
+        description: "Play 100 recorded matches.",
+        unlocked: totalMatches >= 100,
+      },
+      {
+        id: "matches-250",
+        icon: "🧱",
+        title: "Club Marathoner",
+        description: "Play 250 recorded matches.",
+        unlocked: totalMatches >= 250,
+      },
+      {
+        id: "perfect-21-0",
+        icon: "💎",
+        title: "Perfect Sweep",
+        description: "Win a match by 21-0.",
+        unlocked: perfectWin,
+      },
+      {
+        id: "clutch-5",
+        icon: "🧠",
+        title: "Clutch Performer",
+        description: "Win 5 matches by 2 points or fewer.",
+        unlocked: closeWins >= 5,
+      },
+      {
+        id: "dominant-10",
+        icon: "🚀",
+        title: "Dominant Force",
+        description: "Win 10 matches by 10 points or more.",
+        unlocked: dominantWins >= 10,
+      },
+      {
+        id: "high-scorer",
+        icon: "🎯",
+        title: "High Scorer",
+        description: "Average at least 18 points scored across 10 or more matches.",
+        unlocked: averageScored >= 18 && totalMatches >= 10,
+      },
+      {
+        id: "stonewall",
+        icon: "🛡️",
+        title: "Stonewall",
+        description: "Concede 12 points or fewer on average across 10 or more matches.",
+        unlocked: averageConceded <= 12 && totalMatches >= 10,
+      },
+      {
+        id: "points-1000",
+        icon: "🔢",
+        title: "Point Machine",
+        description: "Score 1000 total points.",
+        unlocked: totalPointsScored >= 1000,
+      },
+      {
+        id: "points-2000",
+        icon: "💥",
+        title: "Score Engine",
+        description: "Score 2000 total points.",
+        unlocked: totalPointsScored >= 2000,
+      },
+      {
+        id: "win-rate-70",
+        icon: "📊",
+        title: "Reliable Winner",
+        description: "Maintain at least 70% win rate across 30 or more matches.",
+        unlocked: totalMatches >= 30 && totalWins / totalMatches >= 0.7,
+      },
+      {
+        id: "elo-plus-100",
+        icon: "📈",
+        title: "Rating Climber",
+        description: "Improve Elo by at least 100 points.",
+        unlocked: displayedElo != null && initialElo != null && displayedElo - initialElo >= 100,
+      },
+      {
+        id: "peak-1200",
+        icon: "🌟",
+        title: "1200 Club",
+        description: "Reach a peak Elo of 1200 or higher.",
+        unlocked: peakRating != null && peakRating >= 1200,
+      },
+      {
+        id: "peak-1400",
+        icon: "⭐",
+        title: "Elite Tier",
+        description: "Reach a peak Elo of 1400 or higher.",
+        unlocked: peakRating != null && peakRating >= 1400,
+      },
+      {
+        id: "undefeated-25",
+        icon: "✨",
+        title: "Untouched Run",
+        description: "Stay undefeated across at least 25 matches.",
+        unlocked: totalLosses === 0 && totalMatches >= 25,
+      },
+    ];
+
+    const availableAchievements = achievementCatalog.filter(
+      (achievement) => achievement.id !== "elo-plus-100",
+    );
+    const unlocked = availableAchievements.filter((achievement) => achievement.unlocked);
+    const locked = availableAchievements.filter((achievement) => !achievement.unlocked);
+
+    return [...unlocked, ...locked];
+  }
+
+  const achievements = [];
+
+  const perfectWin = participants.some(
+    (row) =>
+      row.team === row.match?.winning_team &&
+      row.points_scored === 21 &&
+      row.points_allowed === 0,
+  );
+
+  const closeWins = participants.filter((row) => {
+    if (row.team !== row.match?.winning_team) {
+      return false;
+    }
+
+    return Math.abs((row.points_scored ?? 0) - (row.points_allowed ?? 0)) <= 2;
+  }).length;
+
+  const averageScored = totalMatches > 0 ? totalPointsScored / totalMatches : 0;
+  const averageConceded = totalMatches > 0 ? totalPointsConceded / totalMatches : 0;
+  const comebackStreak = results.slice(-3).every((result) => result === "W");
+
+  if (performance.longestWinStreak >= 10) {
+    achievements.push({
+      id: "streak-10",
+      icon: "🔥",
+      title: "Unstoppable",
+      description: "Won 10 matches in a row.",
+    });
+  }
+
+  if (performance.longestWinStreak >= 5) {
+    achievements.push({
+      id: "streak-5",
+      icon: "⚡",
+      title: "Hot Streak",
+      description: "Won 5 matches in a row.",
+    });
+  }
+
+  if (totalWins >= 100) {
+    achievements.push({
+      id: "wins-100",
+      icon: "👑",
+      title: "Century Winner",
+      description: "Reached 100 wins.",
+    });
+  }
+
+  if (totalWins >= 50) {
+    achievements.push({
+      id: "wins-50",
+      icon: "🏆",
+      title: "Half-Century",
+      description: "Reached 50 wins.",
+    });
+  }
+
+  if (totalMatches >= 100) {
+    achievements.push({
+      id: "matches-100",
+      icon: "🎯",
+      title: "Iron Player",
+      description: "Played 100 recorded matches.",
+    });
+  }
+
+  if (perfectWin) {
+    achievements.push({
+      id: "perfect-21-0",
+      icon: "💎",
+      title: "Perfect Sweep",
+      description: "Won a match by 21-0.",
+    });
+  }
+
+  if (closeWins >= 5) {
+    achievements.push({
+      id: "clutch",
+      icon: "🧠",
+      title: "Clutch Performer",
+      description: "Won at least 5 matches by a margin of 2 points or fewer.",
+    });
+  }
+
+  if (averageScored >= 18 && totalMatches >= 10) {
+    achievements.push({
+      id: "high-scorer",
+      icon: "🚀",
+      title: "High Scorer",
+      description: "Averaged at least 18 points scored across 10 or more matches.",
+    });
+  }
+
+  if (averageConceded <= 12 && totalMatches >= 10) {
+    achievements.push({
+      id: "stonewall",
+      icon: "🛡️",
+      title: "Stonewall",
+      description: "Conceded 12 points or fewer on average across 10 or more matches.",
+    });
+  }
+
+  if (displayedElo != null && initialElo != null && displayedElo - initialElo >= 100) {
+    achievements.push({
+      id: "elo-plus-100",
+      icon: "📈",
+      title: "Rating Climber",
+      description: "Improved Elo by at least 100 points.",
+    });
+  }
+
+  if (peakRating != null && peakRating >= 1200) {
+    achievements.push({
+      id: "peak-1200",
+      icon: "🌟",
+      title: "1200 Club",
+      description: "Reached a peak Elo of 1200 or higher.",
+    });
+  }
+
+  if (comebackStreak && totalWins >= 3) {
+    achievements.push({
+      id: "on-a-roll",
+      icon: "🎮",
+      title: "On a Roll",
+      description: "Ended the selected range with a 3-match winning streak.",
+    });
+  }
+
+  if (totalLosses === 0 && totalMatches >= 10) {
+    achievements.push({
+      id: "untouched",
+      icon: "✨",
+      title: "Untouched",
+      description: "Stayed undefeated across at least 10 matches.",
+    });
+  }
+
+  return achievements;
 }
 
 function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
@@ -388,7 +809,9 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
         match:matches (
           played_at,
           status,
-          winning_team
+          winning_team,
+          team1_score,
+          team2_score
         )
       `
     )
@@ -463,6 +886,31 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       : activeRange.value === "all"
         ? clubPlayer.elo_current ?? 1000
         : null;
+  const allTimeTotalMatches = approvedParticipants.length;
+  const allTimeTotalWins = approvedParticipants.filter((row) => row.team === row.match?.winning_team).length;
+  const allTimeTotalLosses = allTimeTotalMatches - allTimeTotalWins;
+  const allTimeTotalPointsScored = approvedParticipants.reduce((sum, row) => sum + (row.points_scored ?? 0), 0);
+  const allTimeTotalPointsConceded = approvedParticipants.reduce((sum, row) => sum + (row.points_allowed ?? 0), 0);
+  const allTimeResults = approvedParticipants.map((row) => (row.team === row.match?.winning_team ? "W" : "L"));
+  const allTimePerformance = buildPerformanceSummary(allTimeResults);
+  const allTimePeakRating =
+    (eloRows ?? []).length > 0
+      ? Math.max(clubPlayer.elo_initial ?? 1000, ...(eloRows ?? []).map((row) => row.elo_after))
+      : Math.max(clubPlayer.elo_initial ?? 1000, clubPlayer.elo_current ?? 1000);
+
+  const achievements = buildAchievements({
+    totalMatches: allTimeTotalMatches,
+    totalWins: allTimeTotalWins,
+    totalLosses: allTimeTotalLosses,
+    totalPointsScored: allTimeTotalPointsScored,
+    totalPointsConceded: allTimeTotalPointsConceded,
+    participants: approvedParticipants,
+    results: allTimeResults,
+    performance: allTimePerformance,
+    displayedElo: clubPlayer.elo_current ?? 1000,
+    peakRating: allTimePeakRating,
+    initialElo: clubPlayer.elo_initial ?? 1000,
+  });
 
   const filteredMatchIds = [...new Set(filteredParticipants.map((row) => row.match_id).filter(Boolean))];
 
@@ -670,6 +1118,8 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       </div>
 
       <EloChart points={chartPoints} rangeLabel={activeRange.label} />
+
+      <AchievementSection achievements={achievements} rangeLabel={activeRange.label} />
 
       <RivalSection clubSlug={clubSlug} rival={rival} rangeLabel={activeRange.label} />
 

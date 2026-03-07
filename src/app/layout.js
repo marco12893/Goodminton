@@ -17,8 +17,12 @@ export const metadata = {
   description: "Badminton club stats platform for leaderboards, Elo ratings, and player performance analysis.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: [
+      { url: "/favicon.png", type: "image/png", sizes: "1536x1536" },
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
+    ],
+    shortcut: "/favicon.png",
+    apple: [{ url: "/favicon.png", sizes: "1536x1536", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,
