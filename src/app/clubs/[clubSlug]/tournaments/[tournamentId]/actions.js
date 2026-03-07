@@ -253,3 +253,39 @@ export async function updateTournamentAction(formData) {
 
   redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?success=${encodeURIComponent("Tournament settings updated successfully.")}`);
 }
+
+export async function updateTournamentStatusAction(formData) {
+  const clubSlug = getTournamentString(formData, "club_slug");
+  const tournamentId = getTournamentString(formData, "tournament_id");
+  const status = getTournamentString(formData, "status");
+
+  if (!["upcoming", "in_progress", "completed"].includes(status)) {
+    redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?error=${encodeURIComponent("Please choose a valid tournament status.")}`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  try {
+    await getAuthorizedTournament(clubSlug, tournamentId, user.id);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const { error } = await supabaseAdmin
+    .from("tournaments")
+    .update({ status })
+    .eq("id", tournamentId);
+
+  if (error) {
+    redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?success=${encodeURIComponent("Tournament status updated successfully.")}`);
+}

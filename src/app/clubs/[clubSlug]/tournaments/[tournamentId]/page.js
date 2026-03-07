@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CalendarDays, Pencil, Trophy } from "lucide-react";
-import { deleteTournamentAction, saveTournamentMatchAction } from "@/app/clubs/[clubSlug]/tournaments/[tournamentId]/actions";
+import {
+  deleteTournamentAction,
+  saveTournamentMatchAction,
+  updateTournamentStatusAction,
+} from "@/app/clubs/[clubSlug]/tournaments/[tournamentId]/actions";
 import { getClubPageData } from "@/lib/clubPageData";
 import {
   getCategoryLabel,
@@ -452,6 +456,22 @@ export default async function TournamentDetailPage({ params, searchParams }) {
           </Link>
           {club.role === "admin" ? (
             <div className="flex flex-col gap-3 sm:ml-auto sm:flex-row">
+              <form action={updateTournamentStatusAction} className="flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-2">
+                <input type="hidden" name="club_slug" value={clubSlug} />
+                <input type="hidden" name="tournament_id" value={tournamentId} />
+                <select
+                  name="status"
+                  defaultValue={tournament.status}
+                  className="rounded-full border border-white/12 bg-[#0e1b2a] px-3 py-2 text-sm font-semibold text-white outline-none"
+                >
+                  <option value="upcoming">Upcoming</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <button className="rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-4 py-2 text-sm font-semibold text-[#062232]">
+                  Save status
+                </button>
+              </form>
               <Link
                 href={`/clubs/${clubSlug}/tournaments/${tournamentId}/edit`}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-3 text-sm font-semibold text-white/90"
