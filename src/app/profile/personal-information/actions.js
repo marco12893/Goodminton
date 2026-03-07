@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { deleteStorageObject, parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
@@ -14,6 +15,10 @@ export async function updatePersonalInformationAction(formData) {
   const birthDate = getString(formData, "birth_date") || null;
   const handedness = getString(formData, "handedness") || null;
   const avatarUrl = getString(formData, "avatar_url") || null;
+  const avatarStoragePath = getString(formData, "avatar_storage_path") || null;
+  const currentAvatarUrl = getString(formData, "current_avatar_url") || null;
+  const currentAvatarStoragePath =
+    getString(formData, "current_avatar_storage_path") || parseStoragePathFromPublicUrl(currentAvatarUrl);
 
   if (!fullName) {
     redirect("/profile/personal-information?error=Full name is required.");
@@ -68,6 +73,14 @@ export async function updatePersonalInformationAction(formData) {
 
   if (authResult.error) {
     redirect(`/profile/personal-information?error=${encodeURIComponent(authResult.error.message)}`);
+  }
+
+  if (currentAvatarStoragePath && avatarStoragePath !== currentAvatarStoragePath) {
+    try {
+      await deleteStorageObject(currentAvatarStoragePath);
+    } catch {
+      // Ignore storage cleanup failures after the profile is saved.
+    }
   }
 
   redirect("/profile/personal-information?success=Personal information updated successfully.");

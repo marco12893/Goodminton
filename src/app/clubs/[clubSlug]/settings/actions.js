@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { deleteStorageObject, parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
@@ -42,7 +43,11 @@ export async function updateClubSettingsAction(formData) {
   const location = getString(formData, "location");
   const playSchedule = getString(formData, "play_schedule");
   const description = getString(formData, "description");
-  const imageUrl = getString(formData, "image_url");
+  const imageUrl = getString(formData, "image_url") || null;
+  const imageStoragePath = getString(formData, "image_storage_path") || null;
+  const currentImageUrl = getString(formData, "current_image_url") || null;
+  const currentImageStoragePath =
+    getString(formData, "current_image_storage_path") || parseStoragePathFromPublicUrl(currentImageUrl);
 
   if (!clubSlug || !name) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=Club name is required.`);
@@ -78,6 +83,14 @@ export async function updateClubSettingsAction(formData) {
 
   if (error) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(error.message)}`);
+  }
+
+  if (imageStoragePath && currentImageStoragePath && imageStoragePath !== currentImageStoragePath) {
+    try {
+      await deleteStorageObject(currentImageStoragePath);
+    } catch {
+      // Ignore storage cleanup failures after settings are saved.
+    }
   }
 
   redirect(`/clubs/${clubSlug}/settings`);

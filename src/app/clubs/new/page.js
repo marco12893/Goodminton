@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClubAction } from "@/app/clubs/new/actions";
+import SignedImageUploadField from "@/components/SignedImageUploadField";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function ErrorMessage({ value }) {
@@ -54,6 +55,19 @@ export default async function NewClubPage({ searchParams }) {
           </div>
 
           <form action={createClubAction} className="mt-5 space-y-4">
+            <SignedImageUploadField
+              label="Club icon"
+              folder="clubs-temp"
+              objectId={user.id}
+              initialUrl=""
+              initialPath=""
+              initialsLabel="Club"
+              urlInputName="image_url"
+              pathInputName="image_storage_path"
+              currentUrlInputName="current_image_url"
+              currentPathInputName="current_image_storage_path"
+            />
+
             <label className="block">
               <span className="mb-2 block text-sm text-white/70">Club name</span>
               <input

@@ -44,6 +44,16 @@ export default async function ProfilePage() {
     throw new Error(error.message);
   }
 
+  const { data: player, error: playerError } = await supabase
+    .from("players")
+    .select("avatar_url")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (playerError) {
+    throw new Error(playerError.message);
+  }
+
   const fullName = profile?.full_name ?? user.user_metadata?.full_name ?? "Goodminton User";
   const email = profile?.email ?? user.email ?? "";
   const initials =
@@ -53,6 +63,7 @@ export default async function ProfilePage() {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase() ?? "")
       .join("") || "GM";
+  const avatarUrl = player?.avatar_url ?? "";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
@@ -70,8 +81,11 @@ export default async function ProfilePage() {
           </div>
 
           <div className="mt-8 flex items-center gap-4">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white/70 bg-[#083042] text-3xl font-semibold text-white">
-              {initials}
+            <div
+              className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white/70 bg-[#083042] bg-cover bg-center text-3xl font-semibold text-white"
+              style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined}
+            >
+              {!avatarUrl ? initials : null}
             </div>
             <div className="min-w-0">
               <p className="text-[1.8rem] font-semibold leading-tight text-white">{fullName}</p>

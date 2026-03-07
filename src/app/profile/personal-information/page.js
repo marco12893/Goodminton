@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updatePersonalInformationAction } from "@/app/profile/personal-information/actions";
+import SignedImageUploadField from "@/components/SignedImageUploadField";
+import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +40,14 @@ export default async function PersonalInformationPage({ searchParams }) {
 
   const fullName = profile?.full_name ?? player?.full_name ?? user.user_metadata?.full_name ?? "";
   const email = profile?.email ?? user.email ?? "";
+  const avatarUrl = player?.avatar_url ?? "";
+  const initials =
+    fullName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "GM";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
@@ -65,6 +75,21 @@ export default async function PersonalInformationPage({ searchParams }) {
           ) : null}
 
           <form action={updatePersonalInformationAction} className="mt-6 space-y-5">
+            <SignedImageUploadField
+              label="Profile Photo"
+              folder="avatars"
+              objectId={user.id}
+              initialUrl={avatarUrl}
+              initialPath={parseStoragePathFromPublicUrl(avatarUrl) ?? ""}
+              initialsLabel={fullName || initials}
+              urlInputName="avatar_url"
+              pathInputName="avatar_storage_path"
+              currentUrlInputName="current_avatar_url"
+              currentPathInputName="current_avatar_storage_path"
+              allowRemove
+              removeLabel="Remove photo"
+            />
+
             <label className="block">
               <span className="mb-2 block text-sm text-white/70">Full Name</span>
               <input
@@ -93,6 +118,7 @@ export default async function PersonalInformationPage({ searchParams }) {
                   defaultValue={player?.gender ?? ""}
                   className="w-full rounded-2xl border border-white/12 bg-[#0e1b2a] px-4 py-3 text-base text-white outline-none"
                 >
+                  <option value="">Prefer not to say</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                 </select>
@@ -121,20 +147,6 @@ export default async function PersonalInformationPage({ searchParams }) {
                 defaultValue={player?.birth_date ?? ""}
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
               />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Avatar URL</span>
-              <input
-                name="avatar_url"
-                type="url"
-                defaultValue={player?.avatar_url ?? ""}
-                placeholder="https://example.com/avatar.jpg"
-                className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
-              />
-              <p className="mt-2 text-xs leading-5 text-white/45">
-                Storage-based uploads can be connected later. For now this field stores a direct image URL.
-              </p>
             </label>
 
             <button className="w-full rounded-[1.2rem] bg-gradient-to-r from-[#4ad6b7] to-[#3cc7d8] px-5 py-4 text-lg font-semibold text-[#062232] shadow-[0_16px_34px_rgba(18,216,201,0.28)]">

@@ -20,11 +20,18 @@ const gradients = [
 ];
 
 export async function getHomepageData(supabase, user) {
-  const { data: profile } = await supabase
+  const [{ data: profile }, { data: player }] = await Promise.all([
+    supabase
     .from("profiles")
     .select("full_name")
     .eq("id", user.id)
-    .maybeSingle();
+    .maybeSingle(),
+    supabase
+      .from("players")
+      .select("avatar_url")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
 
   const { data: memberships, error: membershipsError } = await supabase
     .from("club_members")
@@ -36,7 +43,8 @@ export async function getHomepageData(supabase, user) {
           name,
           slug,
           city,
-          location
+          location,
+          image_url
         )
       `
     )
@@ -70,6 +78,7 @@ export async function getHomepageData(supabase, user) {
         matchCount: matchCount ?? 0,
         initials: getInitials(club.name),
         gradient: gradients[index % gradients.length],
+        imageUrl: club.image_url ?? "",
       };
     })
   );
@@ -83,6 +92,8 @@ export async function getHomepageData(supabase, user) {
   return {
     greeting: `${getGreeting()}, ${displayName}`,
     subtitle: "What would you like to do today?",
+    fullName: profile?.full_name ?? user.user_metadata?.full_name ?? "",
+    avatarUrl: player?.avatar_url ?? "",
     clubs,
   };
 }

@@ -50,8 +50,11 @@ export default async function Home() {
             href="/profile"
             className="mt-6 flex h-16 w-16 items-center justify-center rounded-full border border-white/14 bg-white/8 shadow-[0_12px_30px_rgba(2,14,28,0.35)] backdrop-blur-xl"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#16d4c1] text-sm font-semibold text-[#082032] shadow-[0_0_0_4px_rgba(255,255,255,0.08)]">
-              {profileInitials}
+            <div
+              className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#16d4c1] bg-cover bg-center text-sm font-semibold text-[#082032] shadow-[0_0_0_4px_rgba(255,255,255,0.08)]"
+              style={data.avatarUrl ? { backgroundImage: `url(${data.avatarUrl})` } : undefined}
+            >
+              {!data.avatarUrl ? profileInitials : null}
             </div>
           </Link>
         </header>
@@ -111,7 +114,12 @@ export default async function Home() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#f3f8f8] text-[1.6rem] font-bold tracking-tight text-[#0d2433] shadow-inner">
-                      {club.initials}
+                      <div
+                        className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#f3f8f8] bg-cover bg-center text-[1.6rem] font-bold tracking-tight text-[#0d2433] shadow-inner"
+                        style={club.imageUrl ? { backgroundImage: `url(${club.imageUrl})` } : undefined}
+                      >
+                        {!club.imageUrl ? club.initials : null}
+                      </div>
                     </div>
 
                     <div className="min-w-0 flex-1">

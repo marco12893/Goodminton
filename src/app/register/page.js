@@ -40,7 +40,7 @@ export default async function RegisterPage({ searchParams }) {
               <input
                 name="full_name"
                 type="text"
-                placeholder="Kent Aditya"
+                placeholder="Kent Andrew"
                 className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
               />
             </label>

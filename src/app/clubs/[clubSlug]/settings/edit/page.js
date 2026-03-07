@@ -7,7 +7,9 @@ import {
   removeClubPlayerAction,
   updateClubSettingsAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
+import SignedImageUploadField from "@/components/SignedImageUploadField";
 import { getClubPageData } from "@/lib/clubPageData";
+import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function ErrorMessage({ value }) {
@@ -115,6 +117,18 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
 
         <form action={updateClubSettingsAction} className="mt-5 space-y-4">
           <input type="hidden" name="club_slug" value={clubSlug} />
+          <SignedImageUploadField
+            label="Club icon"
+            folder="clubs"
+            objectId={club.id}
+            initialUrl={club.imageUrl ?? ""}
+            initialPath={parseStoragePathFromPublicUrl(club.imageUrl ?? "") ?? ""}
+            initialsLabel={club.name}
+            urlInputName="image_url"
+            pathInputName="image_storage_path"
+            currentUrlInputName="current_image_url"
+            currentPathInputName="current_image_storage_path"
+          />
 
           <label className="block">
             <span className="mb-2 block text-sm text-white/70">Club name</span>
@@ -150,16 +164,6 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
               rows="4"
               defaultValue={club.description ?? ""}
               className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Club image URL</span>
-            <input
-              name="image_url"
-              defaultValue={club.imageUrl ?? ""}
-              placeholder="Leave empty to use a placeholder"
-              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
             />
           </label>
 

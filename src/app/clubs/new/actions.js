@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { buildPublicImageUrl, deleteStorageObject } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
@@ -47,6 +48,8 @@ export async function createClubAction(formData) {
   const location = getString(formData, "location");
   const playSchedule = getString(formData, "play_schedule");
   const description = getString(formData, "description");
+  const imageUrl = getString(formData, "image_url") || null;
+  const imageStoragePath = getString(formData, "image_storage_path") || null;
 
   if (!name) {
     redirect("/clubs/new?error=Club name is required.");
@@ -72,7 +75,7 @@ export async function createClubAction(formData) {
       location: location || null,
       play_schedule: playSchedule || null,
       description: description || null,
-      image_url: null,
+      image_url: imageUrl || null,
     })
     .select()
     .single();
@@ -83,6 +86,11 @@ export async function createClubAction(formData) {
 
   const club = clubInsert.data;
 
+  if (imageStoragePath && imageUrl !== buildPublicImageUrl(imageStoragePath)) {
+    await supabaseAdmin.from("clubs").delete().eq("id", club.id);
+    redirect(`/clubs/new?error=${encodeURIComponent("Uploaded club image could not be verified.")}`);
+  }
+
   const membershipInsert = await supabaseAdmin.from("club_members").insert({
     club_id: club.id,
     user_id: user.id,
@@ -90,6 +98,9 @@ export async function createClubAction(formData) {
   });
 
   if (membershipInsert.error) {
+    if (imageStoragePath) {
+      await deleteStorageObject(imageStoragePath).catch(() => {});
+    }
     await supabaseAdmin.from("clubs").delete().eq("id", club.id);
     redirect(`/clubs/new?error=${encodeURIComponent(membershipInsert.error.message)}`);
   }
@@ -101,6 +112,9 @@ export async function createClubAction(formData) {
     .maybeSingle();
 
   if (playerLookup.error) {
+    if (imageStoragePath) {
+      await deleteStorageObject(imageStoragePath).catch(() => {});
+    }
     await supabaseAdmin.from("club_members").delete().eq("club_id", club.id);
     await supabaseAdmin.from("clubs").delete().eq("id", club.id);
     redirect(`/clubs/new?error=${encodeURIComponent(playerLookup.error.message)}`);
@@ -122,6 +136,9 @@ export async function createClubAction(formData) {
       .single();
 
     if (playerInsert.error) {
+      if (imageStoragePath) {
+        await deleteStorageObject(imageStoragePath).catch(() => {});
+      }
       await supabaseAdmin.from("club_members").delete().eq("club_id", club.id);
       await supabaseAdmin.from("clubs").delete().eq("id", club.id);
       redirect(`/clubs/new?error=${encodeURIComponent(playerInsert.error.message)}`);
@@ -145,6 +162,9 @@ export async function createClubAction(formData) {
   );
 
   if (clubPlayerInsert.error) {
+    if (imageStoragePath) {
+      await deleteStorageObject(imageStoragePath).catch(() => {});
+    }
     await supabaseAdmin.from("club_members").delete().eq("club_id", club.id);
     await supabaseAdmin.from("clubs").delete().eq("id", club.id);
     redirect(`/clubs/new?error=${encodeURIComponent(clubPlayerInsert.error.message)}`);
