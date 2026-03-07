@@ -454,6 +454,13 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
       </div>
 
       <EloChart points={chartPoints} rangeLabel={activeRange.label} />
+
+      <Link
+        href={`/clubs/${clubSlug}/players/${clubPlayerId}/match-log`}
+        className="block rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-4 text-center text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]"
+      >
+        Match Log
+      </Link>
     </section>
   );
 }
