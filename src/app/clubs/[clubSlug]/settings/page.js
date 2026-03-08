@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { Pencil } from "lucide-react";
 
 function AdminStar() {
   return (
@@ -21,8 +22,10 @@ function PencilButton({ clubSlug }) {
     <Link
       href={`/clubs/${clubSlug}/settings/edit`}
       className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/8 text-xl font-semibold text-white shadow-[0_12px_24px_rgba(2,14,28,0.28)] backdrop-blur-xl"
+      aria-label="Edit settings"
+      title="Edit settings"
     >
-      P
+      <Pencil size={20} />
     </Link>
   );
 }
