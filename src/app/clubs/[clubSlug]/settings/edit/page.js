@@ -12,7 +12,7 @@ import { getClubPageData } from "@/lib/clubPageData";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { ChevronLeft, ShieldCheck, UserPlus, Link as LinkIcon, UserMinus } from "lucide-react";
+import { ShieldCheck, UserPlus, Link as LinkIcon, UserMinus } from "lucide-react";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
@@ -70,15 +70,8 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   return (
     <section className="mx-auto w-full max-w-3xl space-y-6 pb-12">
       {/* Header section */}
-      <div className="flex items-center justify-between px-2">
+      <div className="px-2">
         <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Edit Club</h1>
-        <Link 
-          href={`/clubs/${clubSlug}/settings`} 
-          className="flex items-center gap-1 text-sm font-bold text-teal-400 transition-colors hover:text-teal-300"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </Link>
       </div>
 
       <div className="space-y-3 empty:hidden">

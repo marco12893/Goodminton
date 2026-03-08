@@ -4,7 +4,6 @@ import { createMatchLogAction } from "@/app/clubs/[clubSlug]/match-log/actions";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { ChevronLeft } from "lucide-react";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
@@ -51,15 +50,8 @@ export default async function NewMatchLogPage({ params, searchParams }) {
   return (
     <section className="mx-auto w-full max-w-2xl space-y-6 pb-12">
       {/* Header section */}
-      <div className="flex items-center justify-between px-2">
+      <div className="px-2">
         <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Add Match</h1>
-        <Link 
-          href={`/clubs/${clubSlug}/match-log`} 
-          className="flex items-center gap-1 text-sm font-bold text-teal-400 transition-colors hover:text-teal-300"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Logs
-        </Link>
       </div>
 
       <div className="empty:hidden">
