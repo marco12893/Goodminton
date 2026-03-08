@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ClubBottomNav from "@/components/ClubBottomNav";
-import ClubHeader from "@/components/ClubHeader";
+import ClubHeaderWrapper from "@/components/ClubHeaderWrapper";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseClientForCache } from "@/lib/supabase/server";
@@ -78,7 +78,7 @@ export default async function ClubLayout({ children, params }) {
       <div className="absolute inset-0 bg-[url('/background/photo-1722087642932-9b070e9a066e.webp')] bg-cover bg-center opacity-12 mix-blend-screen" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pb-4 pt-4">
-        <ClubHeader club={club} searchablePlayers={preparedSearchablePlayers} />
+        <ClubHeaderWrapper club={club} searchablePlayers={preparedSearchablePlayers} />
 
         <div className="flex flex-1 flex-col gap-5 pb-24 pt-6">{children}</div>
 

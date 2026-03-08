@@ -450,12 +450,6 @@ export default async function TournamentDetailPage({ params, searchParams }) {
         </div>
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href={`/clubs/${clubSlug}/tournaments`}
-            className="rounded-full border border-white/15 px-4 py-3 text-center text-sm font-semibold text-white/85"
-          >
-            Back to tournaments
-          </Link>
           {club.role === "admin" ? (
             <div className="flex flex-col gap-3 sm:ml-auto sm:flex-row">
               <form action={updateTournamentStatusAction} className="flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-2">

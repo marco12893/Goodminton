@@ -309,12 +309,7 @@ export default async function ClubCompareResultPage({ params, searchParams }) {
 
   return (
     <section className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <Link href={`/clubs/${clubSlug}/compare`} className="text-sm font-medium text-[#17dccb]">
-          Back to compare
-        </Link>
-      </div>
-
+      
       <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-5 py-6 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl">
         <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] md:items-center">
           <div>

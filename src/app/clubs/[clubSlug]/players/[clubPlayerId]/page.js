@@ -1111,12 +1111,7 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
 
   return (
     <section className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <Link href={`/clubs/${clubSlug}`} className="text-sm font-medium text-[#17dccb]">
-          Back to leaderboard
-        </Link>
-      </div>
-
+      
       <RangeTabs clubSlug={clubSlug} clubPlayerId={clubPlayerId} activeRange={activeRange.value} />
 
       <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-5 pb-6 pt-6 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl">

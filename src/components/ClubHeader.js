@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import SearchModal from "./SearchModal";
 
-export default function ClubHeader({ club, searchablePlayers = [] }) {
+export default function ClubHeader({ club, searchablePlayers = [], backTo = "/" }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
@@ -12,9 +12,9 @@ export default function ClubHeader({ club, searchablePlayers = [] }) {
       <header className="pt-2">
         <div className="flex items-start justify-between gap-3">
           <Link
-            href="/"
+            href={backTo}
             className="inline-flex shrink-0 items-center justify-center rounded-full bg-white/8 p-3 text-white/92 backdrop-blur-xl transition-all hover:bg-white/12 hover:scale-105"
-            aria-label="Back to home"
+            aria-label="Back to previous page"
           >
             <svg
               className="h-5 w-5"
