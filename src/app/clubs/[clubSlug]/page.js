@@ -184,7 +184,7 @@ export default async function ClubHomePage({ params, searchParams }) {
   return (
     <section className="space-y-5">
       <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl transition-all hover:shadow-[0_28px_70px_rgba(3,12,22,0.4)]">
-        <p className="text-center font-mono text-[2rem] font-semibold text-white underline decoration-white/55 underline-offset-[7px]">
+        <p className="text-center font-mono text-[2rem] font-semibold text-white decoration-white/55 underline-offset-[7px]">
           Club Leaderboard
         </p>
         <p className="mt-3 text-center text-sm leading-6 text-white/65">
