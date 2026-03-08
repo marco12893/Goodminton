@@ -4,12 +4,13 @@ import { createMatchLogAction } from "@/app/clubs/[clubSlug]/match-log/actions";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { ChevronLeft } from "lucide-react";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
 
   return (
-    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+    <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-200 backdrop-blur-sm">
       {value}
     </div>
   );
@@ -28,167 +29,155 @@ export default async function NewMatchLogPage({ params, searchParams }) {
   const error = query?.error;
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const cookieStore = await cookies();
   const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
-  if (!club) {
-    notFound();
-  }
+  if (!club) notFound();
 
   const { data: clubPlayers, error: clubPlayersError } = await supabase
     .from("club_players")
-    .select(
-      `
-        id,
-        player:players (
-          full_name
-        )
-      `
-    )
+    .select(`id, player:players (full_name)`)
     .eq("club_id", club.id)
     .order("created_at", { ascending: true });
 
-  if (clubPlayersError) {
-    throw new Error(clubPlayersError.message);
-  }
+  if (clubPlayersError) throw new Error(clubPlayersError.message);
 
   const options = clubPlayers ?? [];
 
   return (
-    <section className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-mono text-3xl font-semibold text-white">Add Match</h1>
-        <Link href={`/clubs/${clubSlug}/match-log`} className="text-sm font-medium text-[#17dccb]">
-          Back
+    <section className="mx-auto w-full max-w-2xl space-y-6 pb-12">
+      {/* Header section */}
+      <div className="flex items-center justify-between px-2">
+        <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Add Match</h1>
+        <Link 
+          href={`/clubs/${clubSlug}/match-log`} 
+          className="flex items-center gap-1 text-sm font-bold text-teal-400 transition-colors hover:text-teal-300"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Logs
         </Link>
       </div>
 
-      <ErrorMessage value={error} />
+      <div className="empty:hidden">
+        <ErrorMessage value={error} />
+      </div>
 
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <p className="text-sm leading-6 text-white/65">
-          All members can submit matches. Admin-created matches are approved immediately.
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+        <p className="mb-8 text-sm font-medium leading-relaxed text-slate-400">
+          All members can submit matches. Admin-created matches are approved immediately and affect ELO ratings.
         </p>
 
-        <form action={createMatchLogAction} className="mt-5 space-y-5">
+        <form action={createMatchLogAction} className="space-y-8">
           <input type="hidden" name="club_slug" value={clubSlug} />
 
+          {/* Date Picker */}
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Date and time</span>
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Match Date & Time</span>
             <input
               name="played_at"
               type="datetime-local"
               defaultValue={getDefaultDateTimeLocal()}
-              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Team 1 - Player 1</span>
-              <select
-                name="team1_player1"
-                className="w-full rounded-2xl border border-white/12 bg-[#152133] px-4 py-3 text-base text-white outline-none"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Select player
-                </option>
-                {options.map((clubPlayer) => (
-                  <option key={clubPlayer.id} value={clubPlayer.id}>
-                    {clubPlayer.player?.full_name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {/* Players Selection Grid */}
+          <div className="grid gap-8 sm:grid-cols-2">
+            
+            {/* Team 1 Selection */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-teal-400">Team 1</h3>
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase text-slate-500">Player 1</span>
+                  <select
+                    name="team1_player1"
+                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white outline-none transition-all focus:border-teal-400 focus:ring-1 focus:ring-teal-400"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Select player</option>
+                    {options.map((cp) => <option className="bg-slate-900" key={cp.id} value={cp.id}>{cp.player?.full_name}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase text-slate-500">Player 2 (Optional)</span>
+                  <select
+                    name="team1_player2"
+                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white outline-none transition-all focus:border-teal-400 focus:ring-1 focus:ring-teal-400"
+                    defaultValue=""
+                  >
+                    <option value="">None / Singles</option>
+                    {options.map((cp) => <option className="bg-slate-900" key={cp.id} value={cp.id}>{cp.player?.full_name}</option>)}
+                  </select>
+                </label>
+              </div>
+            </div>
 
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Team 1 - Player 2</span>
-              <select
-                name="team1_player2"
-                className="w-full rounded-2xl border border-white/12 bg-[#152133] px-4 py-3 text-base text-white outline-none"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Select player
-                </option>
-                {options.map((clubPlayer) => (
-                  <option key={clubPlayer.id} value={clubPlayer.id}>
-                    {clubPlayer.player?.full_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Team 2 - Player 1</span>
-              <select
-                name="team2_player1"
-                className="w-full rounded-2xl border border-white/12 bg-[#152133] px-4 py-3 text-base text-white outline-none"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Select player
-                </option>
-                {options.map((clubPlayer) => (
-                  <option key={clubPlayer.id} value={clubPlayer.id}>
-                    {clubPlayer.player?.full_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Team 2 - Player 2</span>
-              <select
-                name="team2_player2"
-                className="w-full rounded-2xl border border-white/12 bg-[#152133] px-4 py-3 text-base text-white outline-none"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Select player
-                </option>
-                {options.map((clubPlayer) => (
-                  <option key={clubPlayer.id} value={clubPlayer.id}>
-                    {clubPlayer.player?.full_name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* Team 2 Selection */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-rose-400">Team 2</h3>
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase text-slate-500">Player 1</span>
+                  <select
+                    name="team2_player1"
+                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white outline-none transition-all focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Select player</option>
+                    {options.map((cp) => <option className="bg-slate-900" key={cp.id} value={cp.id}>{cp.player?.full_name}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase text-slate-500">Player 2 (Optional)</span>
+                  <select
+                    name="team2_player2"
+                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-semibold text-white outline-none transition-all focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
+                    defaultValue=""
+                  >
+                    <option value="">None / Singles</option>
+                    {options.map((cp) => <option className="bg-slate-900" key={cp.id} value={cp.id}>{cp.player?.full_name}</option>)}
+                  </select>
+                </label>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Team 1 score</span>
-              <input
-                name="team1_score"
-                type="number"
-                min="0"
-                className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
-              />
-            </label>
+          {/* Scores Grid */}
+          <div className="pt-4">
+            <h3 className="mb-4 text-center text-xs font-black uppercase tracking-[0.2em] text-slate-500">Final Score</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="mb-1.5 block text-center text-[10px] font-bold uppercase text-slate-500">Team 1 Score</span>
+                <input
+                  name="team1_score"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-center text-2xl font-black text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
+                />
+              </label>
 
-            <label className="block">
-              <span className="mb-2 block text-sm text-white/70">Team 2 score</span>
-              <input
-                name="team2_score"
-                type="number"
-                min="0"
-                className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
-              />
-            </label>
+              <label className="block">
+                <span className="mb-1.5 block text-center text-[10px] font-bold uppercase text-slate-500">Team 2 Score</span>
+                <input
+                  name="team2_score"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-center text-2xl font-black text-white outline-none transition-all focus:border-rose-400 focus:bg-white/10 focus:ring-1 focus:ring-rose-400"
+                />
+              </label>
+            </div>
           </div>
 
-          <button className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
-            Submit match
+          {/* Submit Button */}
+          <button className="mt-4 w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-4 text-base font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 hover:shadow-cyan-500/30 active:scale-[0.98]">
+            Submit Match Result
           </button>
         </form>
       </div>
