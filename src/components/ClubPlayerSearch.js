@@ -37,36 +37,34 @@ export default function ClubPlayerSearch({ defaultValue }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.92),rgba(5,12,22,0.95))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.28)] backdrop-blur-xl"
-    >
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <input
-          type="search"
-          name="player"
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          placeholder="Search player name"
-          className="flex-1 rounded-full border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
-        />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-sm font-semibold text-[#062232] disabled:opacity-70"
-        >
-          Search
-        </button>
-      </div>
-      {defaultValue ? (
-        <button
-          type="button"
-          onClick={handleClear}
-          className="mt-3 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/85"
-        >
-          Clear search
-        </button>
-      ) : null}
-    </form>
+    <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.92),rgba(5,12,22,0.95))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.28)] backdrop-blur-xl">
+      <form onSubmit={handleSubmit} className="relative">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+            <svg
+              className="h-5 w-5 text-white/40"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <input
+            type="search"
+            name="player"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="Search player name"
+            className="w-full rounded-full border border-white/12 bg-white/8 pl-12 pr-4 py-4 text-base text-white outline-none placeholder:text-white/35 transition-all focus:border-white/20 focus:bg-white/10"
+          />
+        </div>
+      </form>
+    </div>
   );
 }

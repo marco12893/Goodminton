@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import ClubPlayerSearch from "@/components/ClubPlayerSearch";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -53,15 +52,15 @@ function PodiumCard({ entry, rank, variant }) {
   return (
     <Link
       href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
-      className={`flex flex-col items-center ${variant === "gold" ? "pt-0" : "pt-8"}`}
+      className={`flex flex-col items-center ${variant === "gold" ? "pt-0" : "pt-8"} transition-all hover:scale-105`}
     >
       <div
-        className={`flex h-24 w-24 items-center justify-center rounded-full border-[3px] bg-gradient-to-br ${avatarFill} text-2xl font-semibold text-white shadow-[0_18px_40px_rgba(2,14,28,0.35)] ${avatarRing}`}
+        className={`flex h-24 w-24 items-center justify-center rounded-full border-[3px] bg-gradient-to-br ${avatarFill} text-2xl font-semibold text-white shadow-[0_18px_40px_rgba(2,14,28,0.35)] ${avatarRing} transition-all hover:shadow-[0_22px_50px_rgba(2,14,28,0.45)]`}
       >
         {getInitials(entry.fullName)}
       </div>
       <div
-        className={`relative mt-5 w-full max-w-[10rem] flex-col rounded-t-[1.75rem] border px-4 pb-8 pt-7 shadow-[0_22px_50px_rgba(2,14,28,0.3)] ${pillarHeight} ${frameStyles}`}
+        className={`relative mt-5 w-full max-w-[10rem] flex-col rounded-t-[1.75rem] border px-4 pb-8 pt-7 shadow-[0_22px_50px_rgba(2,14,28,0.3)] ${pillarHeight} ${frameStyles} transition-all hover:shadow-[0_26px_60px_rgba(2,14,28,0.4)]`}
       >
         <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] opacity-65">
           #{rank}
@@ -83,7 +82,7 @@ function RankRow({ entry, rank }) {
   return (
     <Link
       href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
-      className="flex items-center justify-between gap-4 rounded-[1.7rem] border border-white/12 bg-gradient-to-r from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_18px_40px_rgba(6,28,38,0.28)]"
+      className="flex items-center justify-between gap-4 rounded-[1.7rem] border border-white/12 bg-gradient-to-r from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_18px_40px_rgba(6,28,38,0.28)] transition-all hover:scale-[1.02] hover:shadow-[0_22px_50px_rgba(6,28,38,0.35)] hover:from-[#13e5d6] hover:to-[#1dc8e8]"
     >
       <div className="min-w-0">
         <p className="truncate text-xl font-semibold">
@@ -100,8 +99,7 @@ function RankRow({ entry, rank }) {
 
 export default async function ClubHomePage({ params, searchParams }) {
   const { clubSlug } = await params;
-  const query = await searchParams;
-  const playerSearch = String(query?.player ?? "").trim();
+  await searchParams;
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -156,12 +154,6 @@ export default async function ClubHomePage({ params, searchParams }) {
     };
   });
 
-  const searchResults = playerSearch
-    ? entries
-        .filter((entry) => entry.fullName.toLowerCase().includes(playerSearch.toLowerCase()))
-        .slice(0, 8)
-    : [];
-
   const topThree = entries.slice(0, 3);
   const remaining = entries.slice(3);
   const podiumCenter = topThree[0] ?? null;
@@ -170,7 +162,7 @@ export default async function ClubHomePage({ params, searchParams }) {
 
   return (
     <section className="space-y-5">
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
+      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl transition-all hover:shadow-[0_28px_70px_rgba(3,12,22,0.4)]">
         <p className="text-center font-mono text-[2rem] font-semibold text-white underline decoration-white/55 underline-offset-[7px]">
           Club Leaderboard
         </p>
@@ -178,38 +170,13 @@ export default async function ClubHomePage({ params, searchParams }) {
           Live rankings based on each player&apos;s current Elo inside {club.name}.
         </p>
       </div>
-
-      <div className="space-y-4">
-        <ClubPlayerSearch defaultValue={playerSearch} />
-        {playerSearch ? (
-          searchResults?.length ? (
-            <div className="space-y-3">
-              {searchResults.map((result) => (
-                <Link
-                  key={result.id}
-                  href={`/clubs/${clubSlug}/players/${result.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[1.4rem] border border-white/10 bg-white/6 px-4 py-4 text-white"
-                >
-                  <span className="min-w-0 truncate font-semibold">{result.fullName}</span>
-                  <span className="shrink-0 text-sm text-[#17dccb]">Elo {result.elo}</span>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-[1.4rem] border border-dashed border-white/15 px-4 py-5 text-center text-white/65">
-              No players matched &quot;{playerSearch}&quot;.
-            </div>
-          )
-        ) : null}
-      </div>
-
       {entries.length === 0 ? (
         <div className="rounded-[2rem] border border-dashed border-white/15 bg-white/6 px-5 py-10 text-center text-white/70">
           No active players have joined this club yet.
         </div>
       ) : (
         <>
-          <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-4 pb-7 pt-8 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl">
+          <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-4 pb-7 pt-8 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl transition-all hover:shadow-[0_30px_80px_rgba(3,12,22,0.4)]">
             <div className="grid grid-cols-3 items-end gap-3">
               <div>{podiumLeft ? <PodiumCard entry={podiumLeft} rank={2} variant="silver" /> : null}</div>
               <div>{podiumCenter ? <PodiumCard entry={podiumCenter} rank={1} variant="gold" /> : null}</div>
@@ -217,7 +184,7 @@ export default async function ClubHomePage({ params, searchParams }) {
             </div>
           </div>
 
-          <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(66,74,98,0.58),rgba(47,57,78,0.55))] px-4 pb-5 pt-4 shadow-[0_22px_50px_rgba(3,12,22,0.26)] backdrop-blur-xl">
+          <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(66,74,98,0.58),rgba(47,57,78,0.55))] px-4 pb-5 pt-4 shadow-[0_22px_50px_rgba(3,12,22,0.26)] backdrop-blur-xl transition-all hover:shadow-[0_26px_60px_rgba(3,12,22,0.3)]">
             <div className="mx-auto h-1.5 w-24 rounded-full bg-white/65" />
 
             <div className="mt-5 space-y-4">
