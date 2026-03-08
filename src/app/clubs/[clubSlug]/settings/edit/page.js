@@ -109,6 +109,8 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             pathInputName="image_storage_path"
             currentUrlInputName="current_image_url"
             currentPathInputName="current_image_storage_path"
+            allowRemove
+            removeLabel="Remove photo"
           />
 
           <label className="block">
