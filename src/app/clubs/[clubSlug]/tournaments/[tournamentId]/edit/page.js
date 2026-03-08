@@ -100,21 +100,28 @@ export default async function EditTournamentPage({ params, searchParams }) {
       : [...new Set((legacyPlayers ?? []).map((row) => row.club_player_id).filter(Boolean))];
 
   return (
-    <section className="space-y-5">
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-4">
+    <section className="mx-auto w-full max-w-2xl space-y-6 pb-12">
+      {/* Header Card */}
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl sm:p-8">
+        <div className="flex flex-col-reverse items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <p className="font-mono text-3xl font-semibold text-white">Edit Tournament</p>
-            <p className="mt-3 text-sm leading-6 text-white/65">
+            <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Edit Tournament
+            </h1>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
               Updating a tournament will rebuild entrants and matches using the selected format and roster.
             </p>
           </div>
-          <Link href={`/clubs/${clubSlug}/tournaments/${tournamentId}`} className="text-sm font-medium text-[#17dccb]">
-            Back
+          <Link
+            href={`/clubs/${clubSlug}/tournaments/${tournamentId}`}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-bold text-slate-300 transition-all hover:bg-white/10 hover:text-white active:scale-95"
+          >
+            ← Back
           </Link>
         </div>
       </div>
 
+      {/* Render the External Form Component */}
       <TournamentSetupForm
         action={updateTournamentAction}
         clubSlug={clubSlug}
