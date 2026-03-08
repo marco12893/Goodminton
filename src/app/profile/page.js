@@ -9,16 +9,20 @@ function AccountMenuItem({ href, icon: Icon, title, description }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-4 rounded-[1.5rem] border border-white/10 bg-white/6 px-4 py-4 shadow-[0_14px_30px_rgba(2,10,20,0.18)]"
+      className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:-translate-y-1 hover:bg-white/10 hover:shadow-lg active:scale-[0.98]"
     >
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#071b2a]">
-        <Icon className="h-5 w-5" />
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400 transition-colors group-hover:bg-teal-400 group-hover:text-slate-900">
+        <Icon className="h-6 w-6" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="mt-1 text-sm text-white/55">{description}</p>
+        <p className="text-base font-bold text-white transition-colors group-hover:text-teal-300">
+          {title}
+        </p>
+        <p className="mt-0.5 text-sm font-medium text-slate-400">
+          {description}
+        </p>
       </div>
-      <ChevronRight className="h-5 w-5 text-white/55" />
+      <ChevronRight className="h-5 w-5 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-teal-400" />
     </Link>
   );
 }
@@ -67,34 +71,48 @@ export default async function ProfilePage() {
   const avatarUrl = player?.avatar_url ?? "";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.95))]" />
-      <div className="absolute inset-0 bg-[url('/background/premium_photo-1670002272491-3d3f8f5c00a5.webp')] bg-cover bg-center opacity-15 mix-blend-screen" />
+    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-50">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.15),transparent_35%),linear-gradient(180deg,_rgba(2,6,23,0.6),rgba(2,6,23,0.95))]" />
+      <div className="absolute inset-0 bg-[url('/background/premium_photo-1670002272491-3d3f8f5c00a5.webp')] bg-cover bg-center opacity-10 mix-blend-screen" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-5 py-6">
-        <div className="rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,#1ccfc2,#14b9df)] px-5 pb-8 pt-5 text-[#071b2a] shadow-[0_24px_60px_rgba(3,12,22,0.35)]">
+        
+        {/* Top Header Card */}
+        <div className="relative z-20 rounded-[2rem] border border-white/20 bg-gradient-to-br from-teal-400 to-cyan-500 px-6 pb-10 pt-6 shadow-xl">
           <div className="flex items-center justify-between">
-            <BackIcon href="/" />
-            <p className="font-mono text-[1.8rem] font-semibold text-white">Profile</p>
-            <div className="w-10" />
+            <div className="flex items-center justify-center">
+              <BackIcon href="/" />
+            </div>
+            <p className="text-xl font-bold tracking-tight text-slate-900">Profile</p>
+            {/* Balancer for absolute centering */}
+            <div className="w-8" />
           </div>
 
-          <div className="mt-8 flex items-center gap-4">
+          <div className="mt-8 flex items-center gap-5">
             <div
-              className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white/70 bg-[#083042] bg-cover bg-center text-3xl font-semibold text-white"
+              className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white/40 bg-white/20 bg-cover bg-center text-2xl font-bold text-slate-900 shadow-inner"
               style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined}
             >
               {!avatarUrl ? initials : null}
             </div>
-            <div className="min-w-0">
-              <p className="text-[1.8rem] font-semibold leading-tight text-white">{fullName}</p>
-              <p className="mt-2 text-sm text-white/80">{email}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-2xl font-bold leading-tight text-slate-900">
+                {fullName}
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold text-slate-800/80">
+                {email}
+              </p>
             </div>
           </div>
         </div>
 
-        <section className="relative -mt-5 flex-1 rounded-t-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(7,10,14,0.98),rgba(4,9,16,0.98))] px-4 pb-8 pt-8 shadow-[0_-8px_40px_rgba(2,10,20,0.22)]">
-          <p className="text-sm uppercase tracking-[0.22em] text-white/45">Account Settings</p>
+        {/* Bottom Menu Section */}
+        <section className="relative z-10 -mt-6 flex-1 rounded-b-[2rem] rounded-t-xl border border-white/10 bg-white/5 px-5 pb-8 pt-12 shadow-2xl backdrop-blur-xl">
+          <p className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">
+            Account Settings
+          </p>
+          
           <div className="mt-4 space-y-3">
             <AccountMenuItem
               href="/profile/personal-information"
@@ -117,12 +135,13 @@ export default async function ProfilePage() {
           </div>
 
           <form action={logoutAction} className="mt-8">
-            <button className="flex w-full items-center justify-center gap-2 rounded-[1.2rem] bg-gradient-to-r from-[#4ad6b7] to-[#3cc7d8] px-5 py-4 text-lg font-semibold text-[#062232] shadow-[0_16px_34px_rgba(18,216,201,0.28)]">
+            <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-base font-bold text-rose-400 shadow-lg transition-all hover:bg-rose-500/20 hover:text-rose-300 active:scale-[0.98]">
               <LogOut className="h-5 w-5" />
               Logout
             </button>
           </form>
         </section>
+
       </div>
     </main>
   );
