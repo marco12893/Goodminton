@@ -3,30 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { Pencil } from "lucide-react";
+import { Pencil, MapPin, Calendar, Users, ShieldCheck } from "lucide-react";
 
-function AdminStar() {
+function AdminBadge() {
   return (
-    <span
-      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-white/12 text-sm text-[#ffe27a]"
-      aria-label="Admin"
-      title="Admin"
-    >
-      *
+    <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-teal-400 backdrop-blur-sm">
+      <ShieldCheck size={12} />
+      Admin
     </span>
-  );
-}
-
-function PencilButton({ clubSlug }) {
-  return (
-    <Link
-      href={`/clubs/${clubSlug}/settings/edit`}
-      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/8 text-xl font-semibold text-white shadow-[0_12px_24px_rgba(2,14,28,0.28)] backdrop-blur-xl"
-      aria-label="Edit settings"
-      title="Edit settings"
-    >
-      <Pencil size={20} />
-    </Link>
   );
 }
 
@@ -36,121 +20,119 @@ export default async function ClubSettingsPage({ params, searchParams }) {
   const error = query?.error;
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const cookieStore = await cookies();
   const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
-  if (!club) {
-    notFound();
-  }
+  if (!club) notFound();
 
   const { data: members, error: membersError } = await supabase
     .from("club_players")
-    .select(
-      `
-        id,
-        player:players (
-          id,
-          full_name,
-          user_id
-        )
-      `
-    )
+    .select(`id, player:players (id, full_name, user_id)`)
     .eq("club_id", club.id)
     .order("created_at", { ascending: true });
 
-  if (membersError) {
-    throw new Error(membersError.message);
-  }
+  if (membersError) throw new Error(membersError.message);
 
-  const linkedUserIds = (members ?? []).map((member) => member.player?.user_id).filter(Boolean);
+  const linkedUserIds = (members ?? []).map((m) => m.player?.user_id).filter(Boolean);
 
-  const { data: memberships, error: membershipsError } = linkedUserIds.length
-    ? await supabase
-        .from("club_members")
-        .select("user_id, role")
-        .eq("club_id", club.id)
-        .in("user_id", linkedUserIds)
-    : { data: [], error: null };
-
-  if (membershipsError) {
-    throw new Error(membershipsError.message);
-  }
+  const { data: memberships } = linkedUserIds.length
+    ? await supabase.from("club_members").select("user_id, role").eq("club_id", club.id).in("user_id", linkedUserIds)
+    : { data: [] };
 
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
 
   return (
-    <section className="space-y-5">
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 pb-6 pt-5 text-white shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-4">
+    <section className="mx-auto w-full max-w-2xl space-y-6 pb-12">
+      {/* Header Card */}
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl sm:p-8">
+        <div className="flex items-start justify-between gap-6">
           <div>
-            <p className="font-mono text-3xl font-semibold text-white">Club Settings</p>
-            <p className="mt-3 text-sm text-white/65">
-              Club profile, schedule, description, and member roster.
+            <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Club Settings</h1>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
+              Manage club identity, schedules, and your member community roster.
             </p>
           </div>
-          {club.role === "admin" ? <PencilButton clubSlug={clubSlug} /> : null}
+          {club.role === "admin" && (
+            <Link
+              href={`/clubs/${clubSlug}/settings/edit`}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 hover:text-teal-400 active:scale-95"
+            >
+              <Pencil size={22} />
+            </Link>
+          )}
         </div>
       </div>
 
-      <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 pb-6 pt-6 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        {error ? (
-          <div className="mb-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+      {/* Main Content Card */}
+      <div className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl sm:p-10">
+        {error && (
+          <div className="mb-6 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-200">
             {error}
           </div>
-        ) : null}
+        )}
 
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+        {/* Profile Branding */}
+        <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
           <div
-            className="mx-auto flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-white/12 bg-[linear-gradient(135deg,#16d4c1,#1590b8)] bg-cover bg-center text-center text-2xl font-bold text-[#082032] shadow-[0_12px_30px_rgba(22,212,193,0.18)] sm:mx-0 sm:h-32 sm:w-32"
+            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border-4 border-slate-950 bg-slate-800 bg-cover bg-center text-3xl font-black text-white shadow-2xl ring-2 ring-teal-500/50"
             style={club.imageUrl ? { backgroundImage: `url(${club.imageUrl})` } : undefined}
           >
-            {!club.imageUrl ? <span>{club.name.slice(0, 2).toUpperCase()}</span> : null}
+            {!club.imageUrl && club.name.slice(0, 2).toUpperCase()}
           </div>
 
-          <div className="min-w-0 flex-1 pt-0 sm:pt-3">
-            <h1 className="break-words font-mono text-3xl font-semibold leading-tight text-white sm:text-[2.1rem]">
-              {club.name}
-            </h1>
-            <div className="mt-4 space-y-3 text-base leading-7 text-white/92 sm:text-lg">
-              <p>{club.location || "Location not set yet"}</p>
-              <p>{club.playSchedule || "Playing schedule not set yet"}</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-mono text-3xl font-bold leading-tight text-white">{club.name}</h2>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-400 sm:justify-start">
+                <MapPin size={16} className="text-teal-500" />
+                <span>{club.location || "Location not set"}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-400 sm:justify-start">
+                <Calendar size={16} className="text-teal-500" />
+                <span>{club.playSchedule || "Schedule not set"}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-8">
-          <h2 className="text-2xl font-semibold text-white sm:text-[1.9rem]">Description</h2>
-          <p className="mt-3 text-base leading-7 text-white/86 sm:text-lg sm:leading-8">
-            {club.description || "Club description has not been added yet."}
+        {/* Description Section */}
+        <div className="mt-10 border-t border-white/5 pt-8">
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-teal-500">About Club</h3>
+          <p className="mt-4 text-base font-medium leading-relaxed text-slate-300">
+            {club.description || "No club description provided."}
           </p>
         </div>
 
-        <div className="mt-8">
-          <h2 className="text-2xl font-semibold text-white sm:text-[1.9rem]">Members</h2>
-          <div className="mt-4 space-y-4">
+        {/* Members Roster Section */}
+        <div className="mt-10 border-t border-white/5 pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-teal-500">Member Roster</h3>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+              <Users size={14} />
+              <span>{members?.length || 0} Members</span>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             {(members ?? []).length === 0 ? (
-              <div className="rounded-[1.6rem] border border-dashed border-white/15 px-4 py-5 text-white/65">
-                No players have been added to this club yet.
+              <div className="col-span-full rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm font-medium text-slate-500">
+                No members found in this club.
               </div>
             ) : (
               members.map((member) => (
                 <Link
                   key={member.id}
                   href={`/clubs/${clubSlug}/players/${member.id}`}
-                  className="block rounded-[1.6rem] border border-white/10 bg-[linear-gradient(135deg,rgba(21,196,189,0.94),rgba(16,148,188,0.92))] px-5 py-4 text-xl font-semibold text-white shadow-[0_14px_30px_rgba(19,210,193,0.16)] sm:text-[1.55rem]"
+                  className="group flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 transition-all hover:border-teal-500/30 hover:bg-white/10"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="min-w-0 break-words">{member.player?.full_name}</span>
-                    {roleMap.get(member.player?.user_id) === "admin" ? <AdminStar /> : null}
-                  </div>
+                  <span className="truncate text-sm font-bold text-white group-hover:text-teal-300 transition-colors">
+                    {member.player?.full_name}
+                  </span>
+                  {roleMap.get(member.player?.user_id) === "admin" && <AdminBadge />}
                 </Link>
               ))
             )}

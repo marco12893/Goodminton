@@ -12,12 +12,13 @@ import { getClubPageData } from "@/lib/clubPageData";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { ChevronLeft, ShieldCheck, UserPlus, Link as LinkIcon, UserMinus } from "lucide-react";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
 
   return (
-    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+    <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-200 backdrop-blur-sm">
       {value}
     </div>
   );
@@ -25,9 +26,9 @@ function ErrorMessage({ value }) {
 
 function AdminBadge() {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-      <span>*</span>
-      <span>Admin</span>
+    <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-teal-400">
+      <ShieldCheck size={12} />
+      Admin
     </span>
   );
 }
@@ -39,85 +40,63 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   const success = query?.success;
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const cookieStore = await cookies();
   const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
-  if (!club) {
-    notFound();
-  }
-
-  if (club.role !== "admin") {
+  if (!club || club.role !== "admin") {
     redirect(`/clubs/${clubSlug}/settings`);
   }
 
   const { data: members, error: membersError } = await supabase
     .from("club_players")
-    .select(
-      `
-        id,
-        player:players (
-          id,
-          full_name,
-          user_id,
-          profile:profiles!players_user_id_fkey (
-            email,
-            full_name
-          )
-        )
-      `
-    )
+    .select(`id, player:players (id, full_name, user_id, profile:profiles!players_user_id_fkey (email, full_name))`)
     .eq("club_id", club.id)
     .order("created_at", { ascending: true });
 
-  if (membersError) {
-    throw new Error(membersError.message);
-  }
+  if (membersError) throw new Error(membersError.message);
 
-  const linkedUserIds = (members ?? []).map((member) => member.player?.user_id).filter(Boolean);
+  const linkedUserIds = (members ?? []).map((m) => m.player?.user_id).filter(Boolean);
 
-  const { data: memberships, error: membershipsError } = linkedUserIds.length
-    ? await supabase
-        .from("club_members")
-        .select("user_id, role")
-        .eq("club_id", club.id)
-        .in("user_id", linkedUserIds)
-    : { data: [], error: null };
-
-  if (membershipsError) {
-    throw new Error(membershipsError.message);
-  }
+  const { data: memberships } = linkedUserIds.length
+    ? await supabase.from("club_members").select("user_id, role").eq("club_id", club.id).in("user_id", linkedUserIds)
+    : { data: [] };
 
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
 
   return (
-    <section className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-mono text-3xl font-semibold text-white">Edit Club</h1>
-        <Link href={`/clubs/${clubSlug}/settings`} className="text-sm font-medium text-[#17dccb]">
+    <section className="mx-auto w-full max-w-3xl space-y-6 pb-12">
+      {/* Header section */}
+      <div className="flex items-center justify-between px-2">
+        <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Edit Club</h1>
+        <Link 
+          href={`/clubs/${clubSlug}/settings`} 
+          className="flex items-center gap-1 text-sm font-bold text-teal-400 transition-colors hover:text-teal-300"
+        >
+          <ChevronLeft className="h-4 w-4" />
           Back
         </Link>
       </div>
 
-      <ErrorMessage value={error} />
+      <div className="space-y-3 empty:hidden">
+        <ErrorMessage value={error} />
+        {success && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-200">
+            {success}
+          </div>
+        )}
+      </div>
 
-      {success ? (
-        <div className="rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          {success}
-        </div>
-      ) : null}
+      {/* Club Configuration Card */}
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+        <h2 className="mb-6 font-mono text-xl font-bold text-white flex items-center gap-2">
+          <span className="text-teal-400">01.</span> Club Configuration
+        </h2>
 
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <h2 className="font-mono text-[1.5rem] font-semibold text-white">Club Configuration</h2>
-
-        <form action={updateClubSettingsAction} className="mt-5 space-y-4">
+        <form action={updateClubSettingsAction} className="space-y-5">
           <input type="hidden" name="club_slug" value={clubSlug} />
           <SignedImageUploadField
             label="Club icon"
@@ -133,120 +112,142 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           />
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Club name</span>
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">Club Name</span>
             <input
               name="name"
               defaultValue={club.name}
-              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
             />
           </label>
 
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Location</span>
-            <input
-              name="location"
-              defaultValue={club.location ?? ""}
-              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
-            />
-          </label>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">Location</span>
+              <input
+                name="location"
+                defaultValue={club.location ?? ""}
+                placeholder="GOR Satria, Surabaya"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">Playing Schedule</span>
+              <input
+                name="play_schedule"
+                defaultValue={club.playSchedule ?? ""}
+                placeholder="Every Friday, 7 PM"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10"
+              />
+            </label>
+          </div>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Playing schedule</span>
-            <input
-              name="play_schedule"
-              defaultValue={club.playSchedule ?? ""}
-              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/70">Description</span>
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">Description</span>
             <textarea
               name="description"
               rows="4"
               defaultValue={club.description ?? ""}
-              className="w-full rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none"
+              className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
             />
           </label>
 
-          <button className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
-            Save Club
+          <button className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]">
+            Save Club Settings
           </button>
         </form>
       </div>
 
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.78),rgba(34,42,62,0.7))] p-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <h2 className="font-mono text-[1.5rem] font-semibold text-white">Players</h2>
-        <p className="mt-2 text-sm leading-6 text-white/65">
-          Add manual players, then link them to registered accounts by email so the club appears on their homepage automatically.
+      {/* Players Management Card */}
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+        <h2 className="font-mono text-xl font-bold text-white flex items-center gap-2">
+          <span className="text-teal-400">02.</span> Player Roster
+        </h2>
+        <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
+          Manage manual players and link them to registered accounts to enable automatic club access for them.
         </p>
-        <form action={addClubPlayerAction} className="mt-4 flex flex-col gap-3 sm:flex-row">
+
+        {/* Add Player Form */}
+        <form action={addClubPlayerAction} className="mt-8 flex flex-col gap-3 sm:flex-row">
           <input type="hidden" name="club_slug" value={clubSlug} />
-          <input
-            name="full_name"
-            placeholder="New player name"
-            className="flex-1 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base text-white outline-none placeholder:text-white/35"
-          />
-          <button className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-[#082032] sm:self-start">
-            Add
+          <div className="relative flex-1">
+            <UserPlus className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+            <input
+              name="full_name"
+              placeholder="New player name..."
+              className="w-full rounded-xl border border-white/10 bg-slate-950/40 py-3 pl-11 pr-4 text-base text-white outline-none transition-all focus:border-teal-400 focus:ring-1 focus:ring-teal-400"
+            />
+          </div>
+          <button className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-slate-900 transition-all hover:bg-slate-200 active:scale-95">
+            Add Player
           </button>
         </form>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-8 space-y-3">
           {(members ?? []).map((member) => (
             <div
               key={member.id}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/7 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="group flex flex-col gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 transition-all hover:bg-white/10 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href={`/clubs/${clubSlug}/players/${member.id}`}
-                    className="font-medium text-white underline decoration-white/20 underline-offset-4"
+                    className="text-base font-bold text-white transition-colors hover:text-teal-400"
                   >
                     {member.player?.full_name}
                   </Link>
-                  {roleMap.get(member.player?.user_id) === "admin" ? <AdminBadge /> : null}
+                  {roleMap.get(member.player?.user_id) === "admin" && <AdminBadge />}
                 </div>
-                <p className="text-sm text-white/60">
-                  {member.player?.user_id ? "Linked account" : "Manual player"}
-                </p>
-                {member.player?.profile?.email ? (
-                  <p className="mt-1 text-xs text-[#17dccb]">{member.player.profile.email}</p>
-                ) : null}
+                <div className="mt-1 flex items-center gap-2">
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                    member.player?.user_id ? "bg-teal-500/10 text-teal-400" : "bg-slate-500/10 text-slate-500"
+                  }`}>
+                    {member.player?.user_id ? "Linked Account" : "Manual Player"}
+                  </span>
+                  {member.player?.profile?.email && (
+                    <span className="text-xs font-medium text-slate-400 truncate max-w-[12rem]">
+                      • {member.player.profile.email}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[16rem]">
-                {!member.player?.user_id ? (
-                  <form action={linkClubPlayerAction} className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+                {!member.player?.user_id && (
+                  <form action={linkClubPlayerAction} className="flex flex-1 items-center gap-2 sm:flex-initial">
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="club_player_id" value={member.id} />
-                    <input
-                      name="email"
-                      type="email"
-                      placeholder="Link account email"
-                      className="min-w-0 flex-1 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white outline-none placeholder:text-white/35"
-                    />
-                    <button className="rounded-full bg-[#16d4c1] px-4 py-2 text-sm font-semibold text-[#082032]">
+                    <div className="relative flex-1 sm:w-48">
+                      <LinkIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                      <input
+                        name="email"
+                        type="email"
+                        placeholder="Link email"
+                        className="w-full rounded-lg border border-white/10 bg-slate-950/50 py-1.5 pl-8 pr-3 text-xs text-white outline-none focus:border-teal-400"
+                      />
+                    </div>
+                    <button className="rounded-lg bg-teal-500/20 px-3 py-1.5 text-xs font-bold text-teal-400 hover:bg-teal-500/30">
                       Link
                     </button>
                   </form>
-                ) : null}
+                )}
 
-                {member.player?.user_id && roleMap.get(member.player?.user_id) !== "admin" ? (
-                  <form action={promoteClubMemberAction} className="sm:self-end">
+                {member.player?.user_id && roleMap.get(member.player?.user_id) !== "admin" && (
+                  <form action={promoteClubMemberAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="club_player_id" value={member.id} />
-                    <button className="w-full rounded-full bg-amber-300 px-3 py-2 text-sm font-semibold text-[#082032] sm:w-auto">
-                      Promote to admin
+                    <button className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/30 transition-colors">
+                      Promote
                     </button>
                   </form>
-                ) : null}
+                )}
 
-                <form action={removeClubPlayerAction} className="sm:self-end">
+                <form action={removeClubPlayerAction}>
                   <input type="hidden" name="club_slug" value={clubSlug} />
                   <input type="hidden" name="club_player_id" value={member.id} />
-                  <button className="w-full rounded-full border border-white/15 px-3 py-2 text-sm text-white/80 sm:w-auto">
+                  <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
+                    <UserMinus size={14} />
                     Remove
                   </button>
                 </form>
