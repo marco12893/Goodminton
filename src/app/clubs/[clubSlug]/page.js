@@ -53,67 +53,55 @@ function getInitials(name) {
     .join("");
 }
 
-function getPodiumNameClass(name) {
-  if (name.length > 22) {
-    return "text-[0.95rem] sm:text-[1.05rem]";
-  }
-
-  if (name.length > 16) {
-    return "text-[1.05rem] sm:text-[1.18rem]";
-  }
-
-  return "text-[1.15rem] sm:text-[1.35rem]";
-}
-
 function PodiumCard({ entry, rank, variant }) {
-  const frameStyles =
-    variant === "gold"
-      ? "border-[#f4dd56]/70 bg-gradient-to-b from-[#ffd400] via-[#ffc62a] to-[#ff9d1c] text-[#161105]"
-      : variant === "silver"
-        ? "border-slate-200/80 bg-gradient-to-b from-[#eef2f6] to-[#c9d0d8] text-[#11151a]"
-        : "border-[#d0a991]/70 bg-gradient-to-b from-[#b98e7e] to-[#8f6b60] text-[#1a110f]";
-
-  const avatarRing =
-    variant === "gold"
-      ? "border-[#f4dd56]"
-      : variant === "silver"
-        ? "border-slate-100"
-        : "border-[#d0a991]";
-
-  const avatarFill =
-    variant === "gold"
-      ? "from-[#352705] to-[#0f2236]"
-      : variant === "silver"
-        ? "from-[#304154] to-[#0f2236]"
-        : "from-[#5a342d] to-[#0f2236]";
-
-  const pillarHeight =
-    variant === "gold" ? "h-[20rem]" : variant === "silver" ? "h-[17.5rem]" : "h-[16rem]";
+  // Palet warna khusus untuk setiap rank di podium
+  const theme = {
+    gold: {
+      border: "border-yellow-400/50",
+      bgBase: "bg-gradient-to-t from-yellow-500/30 via-yellow-500/10 to-transparent",
+      avatarBg: "from-yellow-400 to-amber-600",
+      text: "text-yellow-400",
+      height: "h-56",
+    },
+    silver: {
+      border: "border-slate-300/50",
+      bgBase: "bg-gradient-to-t from-slate-400/30 via-slate-400/10 to-transparent",
+      avatarBg: "from-slate-200 to-slate-400",
+      text: "text-slate-300",
+      height: "h-48",
+    },
+    bronze: {
+      border: "border-amber-600/50",
+      bgBase: "bg-gradient-to-t from-amber-700/30 via-amber-700/10 to-transparent",
+      avatarBg: "from-amber-500 to-amber-700",
+      text: "text-amber-500",
+      height: "h-40",
+    },
+  }[variant];
 
   return (
     <Link
       href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
-      className={`flex flex-col items-center ${variant === "gold" ? "pt-0" : "pt-8"} transition-all hover:scale-105`}
+      className="group flex h-full flex-col items-center justify-end"
     >
-      <div
-        className={`flex h-24 w-24 items-center justify-center rounded-full border-[3px] bg-gradient-to-br ${avatarFill} text-2xl font-semibold text-white shadow-[0_18px_40px_rgba(2,14,28,0.35)] ${avatarRing} transition-all hover:shadow-[0_22px_50px_rgba(2,14,28,0.45)]`}
-      >
+      {/* Avatar yang menimpa pilar (overlap) */}
+      <div className={`relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br ${theme.avatarBg} text-2xl font-bold text-slate-900 shadow-xl ring-4 ring-slate-950 transition-all duration-300 group-hover:-translate-y-2 group-hover:scale-110`}>
         {getInitials(entry.fullName)}
-      </div>
-      <div
-        className={`relative mt-5 w-full max-w-[10rem] flex-col rounded-t-[1.75rem] border px-4 pb-8 pt-7 shadow-[0_22px_50px_rgba(2,14,28,0.3)] ${pillarHeight} ${frameStyles} transition-all hover:shadow-[0_26px_60px_rgba(2,14,28,0.4)]`}
-      >
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] opacity-65">
-          #{rank}
-        </p>
-        <div className="mt-4 flex min-h-[7.5rem] items-center justify-center">
-          <p
-            className={`break-words text-balance text-center font-semibold leading-[1.12] ${getPodiumNameClass(entry.fullName)}`}
-          >
-            {entry.fullName}
-          </p>
+        
+        {/* Badge Angka Rank */}
+        <div className={`absolute -bottom-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-xs font-black shadow-lg ring-2 ring-slate-950 ${theme.text}`}>
+          {rank}
         </div>
-        <p className="absolute bottom-8 left-0 right-0 text-center text-lg font-semibold">Elo {entry.elo}</p>
+      </div>
+
+      {/* Pilar Podium */}
+      <div className={`-mt-10 flex w-full flex-col items-center justify-end rounded-t-3xl border-x border-t ${theme.border} ${theme.bgBase} ${theme.height} px-2 pb-5 pt-12 transition-all duration-300 group-hover:brightness-125`}>
+        <p className="w-full truncate text-center text-sm font-bold text-white drop-shadow-md">
+          {entry.fullName}
+        </p>
+        <p className={`mt-1 font-mono text-xl font-black drop-shadow-md ${theme.text}`}>
+          {entry.elo}
+        </p>
       </div>
     </Link>
   );
@@ -123,17 +111,29 @@ function RankRow({ entry, rank }) {
   return (
     <Link
       href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
-      className="flex items-center justify-between gap-4 rounded-[1.7rem] border border-white/12 bg-gradient-to-r from-[#14d4c6] to-[#1bc1df] px-5 py-5 text-[#072233] shadow-[0_18px_40px_rgba(6,28,38,0.28)] transition-all hover:scale-[1.02] hover:shadow-[0_22px_50px_rgba(6,28,38,0.35)] hover:from-[#13e5d6] hover:to-[#1dc8e8]"
+      className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-white/5 px-4 py-4 transition-all hover:-translate-y-1 hover:border-teal-400/30 hover:bg-white/10 hover:shadow-lg hover:shadow-teal-500/10"
     >
-      <div className="min-w-0">
-        <p className="truncate text-xl font-semibold">
-          {rank}. {entry.fullName}
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 font-mono text-lg font-bold text-slate-400 transition-colors group-hover:bg-teal-400/20 group-hover:text-teal-400">
+        {rank}
+      </div>
+      
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-bold text-white transition-colors group-hover:text-teal-300">
+          {entry.fullName}
         </p>
-        <p className="mt-1 text-sm font-medium text-[#072233]/75">
+        <p className="mt-0.5 text-xs font-medium text-slate-400">
           {entry.totalMatches} matches · {entry.winRate}% win rate
         </p>
       </div>
-      <p className="shrink-0 text-[2rem] font-semibold tracking-tight">{entry.elo}</p>
+      
+      <div className="flex shrink-0 flex-col items-end">
+        <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">
+          Elo
+        </p>
+        <p className="font-mono text-xl font-bold text-teal-400">
+          {entry.elo}
+        </p>
+      </div>
     </Link>
   );
 }
@@ -182,45 +182,50 @@ export default async function ClubHomePage({ params, searchParams }) {
   const podiumRight = topThree[2] ?? null;
 
   return (
-    <section className="space-y-5">
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl transition-all hover:shadow-[0_28px_70px_rgba(3,12,22,0.4)]">
-        <p className="text-center font-mono text-[2rem] font-semibold text-white decoration-white/55 underline-offset-[7px]">
-          Club Leaderboard
-        </p>
-        <p className="mt-3 text-center text-sm leading-6 text-white/65">
-          Live rankings based on each player&apos;s current Elo inside {club.name}.
+    <section className="mx-auto w-full max-w-md pb-10">
+      
+      {/* Clean Header Tanpa Box Border yang Berat */}
+      <div className="mb-8 px-2 text-center">
+        <h2 className="font-mono text-3xl font-bold tracking-tight text-white">
+          Leaderboard
+        </h2>
+        <p className="mt-2 text-sm text-slate-400">
+          Live rankings based on each player&apos;s current Elo inside <span className="font-semibold text-teal-400">{club.name}</span>.
         </p>
       </div>
+
       {entries.length === 0 ? (
-        <div className="rounded-[2rem] border border-dashed border-white/15 bg-white/6 px-5 py-10 text-center text-white/70">
+        <div className="rounded-3xl border border-dashed border-white/20 bg-white/5 px-5 py-12 text-center text-sm font-medium text-slate-400 backdrop-blur-sm">
           No active players have joined this club yet.
         </div>
       ) : (
-        <>
-          <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-4 pb-7 pt-8 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl transition-all hover:shadow-[0_30px_80px_rgba(3,12,22,0.4)]">
-            <div className="grid grid-cols-3 items-end gap-3">
-              <div>{podiumLeft ? <PodiumCard entry={podiumLeft} rank={2} variant="silver" /> : null}</div>
-              <div>{podiumCenter ? <PodiumCard entry={podiumCenter} rank={1} variant="gold" /> : null}</div>
-              <div>{podiumRight ? <PodiumCard entry={podiumRight} rank={3} variant="bronze" /> : null}</div>
+        <div className="space-y-6">
+          
+          {/* Podium Section */}
+          <div className="rounded-3xl border border-white/10 bg-slate-900/50 px-4 pt-10 backdrop-blur-xl">
+            <div className="grid grid-cols-3 items-end gap-2 px-1">
+              <div>{podiumLeft && <PodiumCard entry={podiumLeft} rank={2} variant="silver" />}</div>
+              <div>{podiumCenter && <PodiumCard entry={podiumCenter} rank={1} variant="gold" />}</div>
+              <div>{podiumRight && <PodiumCard entry={podiumRight} rank={3} variant="bronze" />}</div>
             </div>
           </div>
 
-          <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(66,74,98,0.58),rgba(47,57,78,0.55))] px-4 pb-5 pt-4 shadow-[0_22px_50px_rgba(3,12,22,0.26)] backdrop-blur-xl transition-all hover:shadow-[0_26px_60px_rgba(3,12,22,0.3)]">
-            <div className="mx-auto h-1.5 w-24 rounded-full bg-white/65" />
-
-            <div className="mt-5 space-y-4">
-              {remaining.length === 0 ? (
-                <div className="rounded-[1.7rem] border border-white/10 bg-white/6 px-5 py-6 text-center text-white/70">
-                  The podium currently includes every active player in this club.
-                </div>
-              ) : (
-                remaining.map((entry, index) => (
+          {/* Remaining Players List */}
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+            {remaining.length === 0 ? (
+              <div className="rounded-2xl border border-white/5 bg-white/5 px-5 py-8 text-center text-sm font-medium text-slate-400">
+                The podium currently includes every active player in this club.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {remaining.map((entry, index) => (
                   <RankRow key={entry.id} entry={entry} rank={index + 4} />
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-        </>
+          
+        </div>
       )}
     </section>
   );

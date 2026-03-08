@@ -19,7 +19,6 @@ export default async function RegisterPage({ searchParams }) {
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-50">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.15),transparent_35%),linear-gradient(180deg,_rgba(2,6,23,0.6),rgba(2,6,23,0.95))]" />
-      <div className="absolute inset-0 bg-[url('/background/photo-1722087642932-9b070e9a066e.webp')] bg-cover bg-center opacity-10 mix-blend-screen" />
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10">
         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
