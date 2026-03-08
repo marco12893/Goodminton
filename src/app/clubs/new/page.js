@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClubAction } from "@/app/clubs/new/actions";
 import SignedImageUploadField from "@/components/SignedImageUploadField";
+import BackIcon from "@/components/BackIcon";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function ErrorMessage({ value }) {
@@ -35,15 +36,14 @@ export default async function NewClubPage({ searchParams }) {
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-10">
         <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] p-6 shadow-[0_28px_70px_rgba(3,12,22,0.45)] backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <BackIcon href="/" />
+            <div className="text-center">
               <p className="font-mono text-[2rem] font-semibold">GoodMinton</p>
               <h1 className="mt-4 font-mono text-[2.15rem] font-semibold leading-none">
                 Create New Club
               </h1>
             </div>
-            <Link href="/" className="text-sm font-medium text-[#17dccb]">
-              Back
-            </Link>
+            <div className="w-12" />
           </div>
 
           <p className="mt-3 text-base text-white/68">

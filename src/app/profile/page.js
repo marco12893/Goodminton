@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, LockKeyhole, LogOut, Share2, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/auth/actions";
+import BackIcon from "@/components/BackIcon";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function AccountMenuItem({ href, icon: Icon, title, description }) {
@@ -73,9 +74,7 @@ export default async function ProfilePage() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-5 py-6">
         <div className="rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,#1ccfc2,#14b9df)] px-5 pb-8 pt-5 text-[#071b2a] shadow-[0_24px_60px_rgba(3,12,22,0.35)]">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-sm font-semibold text-white">
-              Back
-            </Link>
+            <BackIcon href="/" />
             <p className="font-mono text-[1.8rem] font-semibold text-white">Profile</p>
             <div className="w-10" />
           </div>
