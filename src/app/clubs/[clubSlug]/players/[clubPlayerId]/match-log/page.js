@@ -9,13 +9,13 @@ const MATCHES_PER_PAGE = 10;
 function StatusBadge({ status }) {
   const styles =
     status === "approved"
-      ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200"
+      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
       : status === "rejected"
-        ? "border-rose-300/20 bg-rose-300/10 text-rose-200"
-        : "border-amber-300/20 bg-amber-300/10 text-amber-200";
+        ? "border-rose-500/20 bg-rose-500/10 text-rose-400"
+        : "border-amber-500/20 bg-amber-500/10 text-amber-400";
 
   return (
-    <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${styles}`}>
+    <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm ${styles}`}>
       {status}
     </span>
   );
@@ -24,14 +24,14 @@ function StatusBadge({ status }) {
 function ScorePill({ score, tone }) {
   const styles =
     tone === "win"
-      ? "border-emerald-300/20 bg-emerald-300/12 text-emerald-200"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
       : tone === "loss"
-        ? "border-rose-300/20 bg-rose-300/12 text-rose-200"
-        : "border-white/15 bg-white/8 text-white";
+        ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
+        : "border-white/10 bg-white/5 text-slate-300";
 
   return (
     <span
-      className={`inline-flex min-w-16 items-center justify-center rounded-2xl border px-4 py-3 text-3xl font-bold tracking-tight sm:min-w-20 sm:text-4xl ${styles}`}
+      className={`inline-flex min-w-[4rem] items-center justify-center rounded-2xl border px-3 py-2.5 font-mono text-3xl font-black tracking-tight sm:min-w-[4.5rem] sm:text-4xl ${styles}`}
     >
       {score}
     </span>
@@ -41,15 +41,15 @@ function ScorePill({ score, tone }) {
 function EloDeltaBadge({ value }) {
   const styles =
     value > 0
-      ? "border-emerald-300/20 bg-emerald-300/12 text-emerald-200"
+      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
       : value < 0
-        ? "border-rose-300/20 bg-rose-300/12 text-rose-200"
-        : "border-white/12 bg-white/7 text-white/65";
+        ? "border-rose-500/20 bg-rose-500/10 text-rose-400"
+        : "border-white/10 bg-white/5 text-slate-400";
 
   const label = value > 0 ? `+${value}` : `${value}`;
 
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold tracking-[0.08em] ${styles}`}>
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold tracking-wider ${styles}`}>
       {label} Elo
     </span>
   );
@@ -218,61 +218,70 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
   });
 
   return (
-    <section className="space-y-5">
-      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(67,74,97,0.82),rgba(28,37,57,0.78))] px-5 py-5 shadow-[0_24px_60px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-4">
+    <section className="mx-auto w-full max-w-2xl space-y-6 pb-12">
+      {/* Header Card */}
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl sm:p-8">
+        <div className="flex flex-col-reverse items-start justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <p className="font-mono text-3xl font-semibold text-white">Player Match Log</p>
-            <p className="mt-3 text-sm leading-6 text-white/65">
-              Every recorded club match played by {playerRecord.player?.full_name ?? "this player"}.
+            <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Match Log
+            </h1>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
+              History for <span className="font-bold text-teal-400">{playerRecord.player?.full_name ?? "this player"}</span>.
             </p>
           </div>
           <Link
             href={`/clubs/${clubSlug}/players/${clubPlayerId}`}
-            className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/85"
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-bold text-slate-300 transition-all hover:bg-white/10 hover:text-white active:scale-95"
           >
-            Back
+            ← Back to Profile
           </Link>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 rounded-[1.6rem] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/68">
+      {/* Pagination Info */}
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-400 backdrop-blur-md">
         <p>
           Showing {normalizedMatches.length === 0 ? 0 : rangeFrom + 1}-
-          {Math.min(rangeFrom + normalizedMatches.length, totalMatches)} of {totalMatches} matches
+          {Math.min(rangeFrom + normalizedMatches.length, totalMatches)} of {totalMatches}
         </p>
         <p>
-          Page {Math.min(currentPage, totalPages)} of {totalPages}
+          Page {Math.min(currentPage, totalPages)} / {totalPages}
         </p>
       </div>
 
-      <div className="space-y-4">
+      {/* Match List */}
+      <div className="space-y-5">
         {normalizedMatches.length === 0 ? (
-          <div className="rounded-[2rem] border border-dashed border-white/15 bg-white/6 px-5 py-8 text-center text-white/70">
+          <div className="rounded-[2rem] border border-dashed border-white/20 bg-white/5 p-10 text-center font-medium text-slate-400 backdrop-blur-md">
             This player has not played any club matches yet.
           </div>
         ) : (
           normalizedMatches.map((match) => (
             <article
               key={match.id}
-              className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)] backdrop-blur-xl"
+              className="group rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-lg backdrop-blur-xl transition-all hover:border-white/20 hover:bg-white/10 sm:p-6"
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-white/60">{formatPlayedAt(match.played_at)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-4">
+                <p className="text-sm font-bold text-slate-500">{formatPlayedAt(match.played_at)}</p>
                 <StatusBadge status={match.status} />
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                <div className="rounded-2xl border border-white/8 bg-white/6 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm uppercase tracking-[0.18em] text-white/45">Team 1</p>
-                    {match.status === "approved" ? <EloDeltaBadge value={match.team1EloDelta} /> : null}
+              <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+                
+                {/* Team 1 */}
+                <div className="rounded-2xl border border-white/5 bg-slate-950/40 p-4 shadow-inner">
+                  <div className="flex items-center justify-between gap-3 pb-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Team 1</p>
+                    {match.status === "approved" && match.team1EloDelta !== 0 && (
+                      <EloDeltaBadge value={match.team1EloDelta} />
+                    )}
                   </div>
-                  <div className="mt-3 space-y-3">
+                  <div className="space-y-1.5">
                     {match.team1.map((player) => (
                       <p
                         key={player.fullName}
-                        className={`text-base font-semibold ${player.isTarget ? "text-[#17dccb]" : "text-white"}`}
+                        className={`truncate text-sm sm:text-base ${player.isTarget ? "font-bold text-teal-400" : "font-medium text-slate-300"}`}
                       >
                         {player.fullName}
                       </p>
@@ -280,11 +289,9 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-2 py-2">
-                  <div className="text-center text-[11px] uppercase tracking-[0.3em] text-white/45">
-                    score
-                  </div>
-                  <div className="flex items-center gap-2">
+                {/* Score VS */}
+                <div className="flex flex-col items-center gap-2 py-2 sm:py-0">
+                  <div className="flex items-center gap-3">
                     <ScorePill
                       score={match.team1_score}
                       tone={
@@ -295,7 +302,7 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
                             : "neutral"
                       }
                     />
-                    <span className="text-lg font-semibold text-white/35">-</span>
+                    <span className="text-xl font-black text-slate-600">-</span>
                     <ScorePill
                       score={match.team2_score}
                       tone={
@@ -309,39 +316,44 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/8 bg-white/6 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm uppercase tracking-[0.18em] text-white/45">Team 2</p>
-                    {match.status === "approved" ? <EloDeltaBadge value={match.team2EloDelta} /> : null}
+                {/* Team 2 */}
+                <div className="rounded-2xl border border-white/5 bg-slate-950/40 p-4 shadow-inner">
+                  <div className="flex items-center justify-between gap-3 pb-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Team 2</p>
+                    {match.status === "approved" && match.team2EloDelta !== 0 && (
+                      <EloDeltaBadge value={match.team2EloDelta} />
+                    )}
                   </div>
-                  <div className="mt-3 space-y-3">
+                  <div className="space-y-1.5">
                     {match.team2.map((player) => (
                       <p
                         key={player.fullName}
-                        className={`text-base font-semibold ${player.isTarget ? "text-[#17dccb]" : "text-white"}`}
+                        className={`truncate text-sm sm:text-base ${player.isTarget ? "font-bold text-teal-400" : "font-medium text-slate-300"}`}
                       >
                         {player.fullName}
                       </p>
                     ))}
                   </div>
                 </div>
+
               </div>
             </article>
           ))
         )}
       </div>
 
-      {totalMatches ? (
-        <div className="flex items-center justify-between gap-3">
+      {/* Pagination Actions */}
+      {totalMatches > 0 && (
+        <div className="flex items-center justify-between gap-4 pt-4">
           {previousPage ? (
             <Link
               href={buildPlayerMatchLogUrl(clubSlug, clubPlayerId, previousPage)}
-              className="rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white/85"
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-center text-sm font-bold text-white transition-all hover:bg-white/10 active:scale-[0.98]"
             >
               Previous
             </Link>
           ) : (
-            <span className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white/30">
+            <span className="flex-1 cursor-not-allowed rounded-2xl border border-white/5 bg-white/5 px-6 py-4 text-center text-sm font-bold text-slate-600">
               Previous
             </span>
           )}
@@ -349,17 +361,17 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
           {nextPage ? (
             <Link
               href={buildPlayerMatchLogUrl(clubSlug, clubPlayerId, nextPage)}
-              className="rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-sm font-semibold text-[#062232]"
+              className="flex-1 rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-6 py-4 text-center text-sm font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 active:scale-[0.98]"
             >
-              Next
+              Next Page
             </Link>
           ) : (
-            <span className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white/30">
-              Next
+            <span className="flex-1 cursor-not-allowed rounded-2xl border border-white/5 bg-white/5 px-6 py-4 text-center text-sm font-bold text-slate-600">
+              Next Page
             </span>
           )}
         </div>
-      ) : null}
+      )}
     </section>
   );
 }

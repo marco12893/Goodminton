@@ -125,44 +125,20 @@ function buildPerformanceSummary(results) {
   };
 }
 
-function StatCard({ label, value, icon, trend, color = "default" }) {
-  const colorVariants = {
-    default: "from-[#14d4c6] to-[#1bc1df]",
-    success: "from-[#2cd85b] to-[#26a846]",
-    danger: "from-[#ff5252] to-[#e63946]",
-    warning: "from-[#ffa726] to-[#fb8c00]",
-    info: "from-[#42a5f5] to-[#2196f3]"
-  };
-
+function StatCard({ label, value, icon, trend }) {
   return (
-    <div className="group relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-[1px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.18)] hover:scale-[1.02]">
-      <div className="relative h-full rounded-[1.4rem] bg-gradient-to-br from-[#0a1420] to-[#060c14] p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              {icon && (
-                <span className="text-[1.2rem] opacity-70">{icon}</span>
-              )}
-              <p className="text-xs font-medium text-white/60 uppercase tracking-[0.05em]">{label}</p>
-            </div>
-            <p className="mt-3 text-[2rem] font-bold text-white leading-tight">
-              {value}
-            </p>
-            {trend && (
-              <div className="mt-2 flex items-center gap-1">
-                <span className={`text-xs font-medium ${
-                  trend.type === 'up' ? 'text-[#2cd85b]' : 'text-[#ff5252]'
-                }`}>
-                  {trend.type === 'up' ? '↑' : '↓'} {trend.value}
-                </span>
-              </div>
-            )}
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:-translate-y-1 hover:border-teal-400/30 hover:bg-white/10 hover:shadow-lg hover:shadow-teal-500/10 backdrop-blur-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-2xl opacity-80 transition-transform group-hover:scale-110 group-hover:opacity-100">{icon}</span>
+        {trend && (
+          <div className={`flex items-center gap-1 text-xs font-bold ${trend.type === 'up' ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {trend.type === 'up' ? '↗' : '↘'} {trend.value}
           </div>
-          {color !== 'default' && (
-            <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${colorVariants[color]} opacity-20 blur-xl absolute top-[-20px] right-[-20px]`} />
-          )}
-        </div>
-        <div className={`absolute inset-0 bg-gradient-to-br ${colorVariants[color]} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`} />
+        )}
+      </div>
+      <div className="mt-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-300">{label}</p>
+        <p className="mt-1 font-mono text-2xl font-bold text-white drop-shadow-sm">{value}</p>
       </div>
     </div>
   );
@@ -170,46 +146,43 @@ function StatCard({ label, value, icon, trend, color = "default" }) {
 
 function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
   return (
-    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-2xl font-semibold text-white">Top 5 Best Partners</p>
-          <p className="mt-2 text-sm text-white/60">
-            Ranked by win rate among partners with at least 5 matches in {rangeLabel.toLowerCase()}.
-          </p>
-        </div>
+    <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-xl">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold tracking-tight text-white">Top Partners</h2>
+        <p className="mt-1 text-sm font-medium text-slate-400">
+          Ranked by win rate (min. 5 matches) in {rangeLabel.toLowerCase()}.
+        </p>
       </div>
 
       {partners.length === 0 ? (
-        <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 px-5 py-6 text-center text-white/65">
-          No partner has reached 5 matches with this player in the selected time range.
+        <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 px-5 py-8 text-center text-sm font-medium text-slate-400">
+          No partner has reached 5 matches in this range.
         </div>
       ) : (
-        <div className="mt-5 space-y-4">
+        <div className="space-y-3">
           {partners.map((partner, index) => (
             <Link
               key={partner.id}
               href={`/clubs/${clubSlug}/players/${partner.id}`}
-              className="flex items-center gap-4 rounded-[1.5rem] border border-white/8 bg-white/[0.04] px-4 py-4 transition hover:bg-white/[0.06]"
+              className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-3 transition-all hover:bg-white/10 hover:shadow-md active:scale-[0.98]"
             >
               <div
-                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-white/70 bg-gradient-to-br from-[#163047] to-[#0f2236] bg-cover bg-center text-2xl font-semibold text-white"
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-800 bg-cover bg-center text-lg font-bold text-white shadow-inner ring-2 ring-transparent transition-all group-hover:ring-teal-400/50"
                 style={partner.avatarUrl ? { backgroundImage: `url(${partner.avatarUrl})` } : undefined}
               >
                 {!partner.avatarUrl ? getInitials(partner.name) : null}
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-[1.7rem] font-semibold text-white">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-bold text-white group-hover:text-teal-300">
                   {index + 1}. {partner.name}
                 </p>
-                <p className="mt-2 text-lg">
-                  <span className="font-semibold text-[#2cd85b]">{partner.wins} wins</span>
-                  <span className="mx-2 text-white/35">•</span>
-                  <span className="font-semibold text-[#ff5252]">{partner.losses} losses</span>
-                </p>
-                <p className="mt-1 text-sm text-white/55">
-                  {formatDecimal(partner.winRate)}% win rate across {partner.matches} matches
-                </p>
+                <div className="mt-1 flex items-center gap-2 text-sm font-medium">
+                  <span className="text-emerald-400">{partner.wins}W</span>
+                  <span className="text-slate-600">-</span>
+                  <span className="text-rose-400">{partner.losses}L</span>
+                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-400">{formatDecimal(partner.winRate)}%</span>
+                </div>
               </div>
             </Link>
           ))}
@@ -220,129 +193,89 @@ function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
 }
 
 function AchievementSection({ achievements, rangeLabel }) {
-  if (Array.isArray(achievements)) {
-    return (
-      <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-2xl font-semibold text-white">Achievements</p>
-            <p className="mt-2 text-sm text-white/60">
-              Unlocked milestones for {rangeLabel.toLowerCase()}. Locked achievements stay on the right.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 -mx-1 overflow-x-auto pb-2">
-          <div className="flex min-w-max gap-3 px-1">
-            {achievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`w-[10.5rem] shrink-0 rounded-[1.35rem] border px-3 py-3 ${
-                  achievement.unlocked
-                    ? "border-white/8 bg-white/[0.04]"
-                    : "border-white/6 bg-white/[0.02] opacity-55 grayscale"
-                }`}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div
-                    className={`flex h-20 w-20 items-center justify-center rounded-[1.4rem] text-[2.35rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ${
-                      achievement.unlocked
-                        ? "bg-gradient-to-br from-[#13d8c8] via-[#18b8df] to-[#1d86d4]"
-                        : "bg-white/10 text-white/55"
-                    }`}
-                  >
-                    <span aria-hidden="true">{achievement.icon}</span>
-                  </div>
-                  <p className={`mt-3 line-clamp-2 text-[1.02rem] font-semibold leading-5 ${achievement.unlocked ? "text-white" : "text-white/72"}`}>
-                    {achievement.title}
-                  </p>
-                  <p className={`mt-2 line-clamp-3 text-xs leading-5 ${achievement.unlocked ? "text-white/65" : "text-white/42"}`}>
-                    {achievement.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!Array.isArray(achievements)) return null;
 
   return (
-    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-2xl font-semibold text-white">Achievements</p>
-          <p className="mt-2 text-sm text-white/60">
-            Unlocked milestones for {rangeLabel.toLowerCase()}.
-          </p>
-        </div>
+    <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-xl">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold tracking-tight text-white">Achievements</h2>
+        <p className="mt-1 text-sm font-medium text-slate-400">
+          Unlocked milestones for {rangeLabel.toLowerCase()}.
+        </p>
       </div>
 
-      {achievements.length === 0 ? (
-        <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 px-5 py-6 text-center text-white/65">
-          No achievements unlocked in the selected time range yet.
-        </div>
-      ) : (
-        <div className="mt-5 grid gap-4">
+      <div className="-mx-2 flex overflow-x-auto pb-4 pt-2">
+        <div className="flex min-w-max gap-3 px-2">
           {achievements.map((achievement) => (
             <div
               key={achievement.id}
-              className="rounded-[1.5rem] border border-white/8 bg-white/[0.04] px-4 py-4"
+              className={`w-40 shrink-0 rounded-2xl border p-4 transition-all hover:-translate-y-1 ${
+                achievement.unlocked
+                  ? "border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-cyan-500/10 shadow-lg"
+                  : "border-white/5 bg-white/5 opacity-60 grayscale"
+              }`}
             >
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#12d8c9] to-[#18c3e5] text-2xl">
-                  {achievement.icon}
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-inner ${
+                    achievement.unlocked
+                      ? "bg-gradient-to-br from-teal-400 to-cyan-500 text-slate-900 shadow-teal-500/50"
+                      : "bg-white/10 text-slate-500"
+                  }`}
+                >
+                  <span aria-hidden="true">{achievement.icon}</span>
                 </div>
-                <div>
-                  <p className="text-xl font-semibold text-white">{achievement.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-white/65">{achievement.description}</p>
-                </div>
+                <p className={`mt-3 line-clamp-2 text-sm font-bold ${achievement.unlocked ? "text-white" : "text-slate-400"}`}>
+                  {achievement.title}
+                </p>
+                <p className={`mt-1.5 line-clamp-3 text-xs font-medium ${achievement.unlocked ? "text-teal-100/70" : "text-slate-500"}`}>
+                  {achievement.description}
+                </p>
               </div>
             </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 function RivalSection({ clubSlug, rival, rangeLabel }) {
   return (
-    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-2xl font-semibold text-white">Rival</p>
-          <p className="mt-2 text-sm text-white/60">
-            A lower-rated opponent who still keeps beating this player in {rangeLabel.toLowerCase()}.
-          </p>
-        </div>
+    <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-xl">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold tracking-tight text-white">Arch Rival</h2>
+        <p className="mt-1 text-sm font-medium text-slate-400">
+          Lower-rated opponent who keeps winning in {rangeLabel.toLowerCase()}.
+        </p>
       </div>
 
       {!rival ? (
-        <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 px-5 py-6 text-center text-white/65">
-          No rival found in the selected time range.
+        <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 px-5 py-8 text-center text-sm font-medium text-slate-400">
+          No rival found in this range.
         </div>
       ) : (
         <Link
           href={`/clubs/${clubSlug}/players/${rival.id}`}
-          className="mt-5 flex items-center gap-4 rounded-[1.5rem] border border-white/8 bg-white/[0.04] px-4 py-4 transition hover:bg-white/[0.06]"
+          className="group flex items-center gap-4 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4 transition-all hover:bg-rose-500/10 hover:shadow-lg active:scale-[0.98]"
         >
           <div
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-white/70 bg-gradient-to-br from-[#163047] to-[#0f2236] bg-cover bg-center text-2xl font-semibold text-white"
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-800 bg-cover bg-center text-xl font-bold text-white shadow-inner ring-2 ring-transparent transition-all group-hover:ring-rose-400/50"
             style={rival.avatarUrl ? { backgroundImage: `url(${rival.avatarUrl})` } : undefined}
           >
             {!rival.avatarUrl ? getInitials(rival.name) : null}
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-[1.7rem] font-semibold text-white">{rival.name}</p>
-            <p className="mt-2 text-lg">
-              <span className="font-semibold text-[#2cd85b]">{rival.playerWins} wins</span>
-              <span className="mx-2 text-white/35">•</span>
-              <span className="font-semibold text-[#ff5252]">{rival.playerLosses} losses</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-lg font-bold text-white group-hover:text-rose-300">
+              {rival.name}
             </p>
-            <p className="mt-1 text-sm text-white/55">
-              Elo {rival.elo} • {formatDecimal(rival.playerWinRate)}% win rate across {rival.matches} matches
+            <div className="mt-1 flex items-center gap-2 text-sm font-medium">
+              <span className="text-emerald-400">{rival.playerWins}W</span>
+              <span className="text-slate-600">-</span>
+              <span className="text-rose-400">{rival.playerLosses}L</span>
+            </div>
+            <p className="mt-1 text-xs font-medium text-slate-400">
+              Elo {rival.elo} • {formatDecimal(rival.playerWinRate)}% WR
             </p>
           </div>
         </Link>
@@ -364,340 +297,57 @@ function buildAchievements({
   peakRating,
   initialElo,
 }) {
-  if (Array.isArray(participants)) {
-    const perfectWin = participants.some(
-      (row) =>
-        row.team === row.match?.winning_team &&
-        row.points_scored === 21 &&
-        row.points_allowed === 0,
-    );
-
-    const closeWins = participants.filter((row) => {
-      if (row.team !== row.match?.winning_team) {
-        return false;
-      }
-
-      return Math.abs((row.points_scored ?? 0) - (row.points_allowed ?? 0)) <= 2;
-    }).length;
-
-    const dominantWins = participants.filter((row) => {
-      if (row.team !== row.match?.winning_team) {
-        return false;
-      }
-
-      return (row.points_scored ?? 0) - (row.points_allowed ?? 0) >= 10;
-    }).length;
-
-    const averageScored = totalMatches > 0 ? totalPointsScored / totalMatches : 0;
-    const averageConceded = totalMatches > 0 ? totalPointsConceded / totalMatches : 0;
-
-    const achievementCatalog = [
-      {
-        id: "streak-5",
-        icon: "⚡",
-        title: "Hot Streak",
-        description: "Win 5 matches in a row.",
-        unlocked: performance.longestWinStreak >= 5,
-      },
-      {
-        id: "streak-10",
-        icon: "🔥",
-        title: "Unstoppable",
-        description: "Win 10 matches in a row.",
-        unlocked: performance.longestWinStreak >= 10,
-      },
-      {
-        id: "wins-50",
-        icon: "🥉",
-        title: "Half-Century",
-        description: "Reach 50 wins.",
-        unlocked: totalWins >= 50,
-      },
-      {
-        id: "wins-100",
-        icon: "🥈",
-        title: "Century Winner",
-        description: "Reach 100 wins.",
-        unlocked: totalWins >= 100,
-      },
-      {
-        id: "wins-500",
-        icon: "🏆",
-        title: "Legendary Grind",
-        description: "Reach 500 wins.",
-        unlocked: totalWins >= 500,
-      },
-      {
-        id: "wins-1000",
-        icon: "👑",
-        title: "Immortal Winner",
-        description: "Reach 1000 wins.",
-        unlocked: totalWins >= 1000,
-      },
-      {
-        id: "matches-100",
-        icon: "🎯",
-        title: "Iron Player",
-        description: "Play 100 recorded matches.",
-        unlocked: totalMatches >= 100,
-      },
-      {
-        id: "matches-250",
-        icon: "🧱",
-        title: "Club Marathoner",
-        description: "Play 250 recorded matches.",
-        unlocked: totalMatches >= 250,
-      },
-      {
-        id: "perfect-21-0",
-        icon: "💎",
-        title: "Perfect Sweep",
-        description: "Win a match by 21-0.",
-        unlocked: perfectWin,
-      },
-      {
-        id: "clutch-5",
-        icon: "🧠",
-        title: "Clutch Performer",
-        description: "Win 5 matches by 2 points or fewer.",
-        unlocked: closeWins >= 5,
-      },
-      {
-        id: "dominant-10",
-        icon: "🚀",
-        title: "Dominant Force",
-        description: "Win 10 matches by 10 points or more.",
-        unlocked: dominantWins >= 10,
-      },
-      {
-        id: "high-scorer",
-        icon: "🎯",
-        title: "High Scorer",
-        description: "Average at least 18 points scored across 10 or more matches.",
-        unlocked: averageScored >= 18 && totalMatches >= 10,
-      },
-      {
-        id: "stonewall",
-        icon: "🛡️",
-        title: "Stonewall",
-        description: "Concede 12 points or fewer on average across 10 or more matches.",
-        unlocked: averageConceded <= 12 && totalMatches >= 10,
-      },
-      {
-        id: "points-1000",
-        icon: "🔢",
-        title: "Point Machine",
-        description: "Score 1000 total points.",
-        unlocked: totalPointsScored >= 1000,
-      },
-      {
-        id: "points-2000",
-        icon: "💥",
-        title: "Score Engine",
-        description: "Score 2000 total points.",
-        unlocked: totalPointsScored >= 2000,
-      },
-      {
-        id: "win-rate-70",
-        icon: "📊",
-        title: "Reliable Winner",
-        description: "Maintain at least 70% win rate across 30 or more matches.",
-        unlocked: totalMatches >= 30 && totalWins / totalMatches >= 0.7,
-      },
-      {
-        id: "elo-plus-100",
-        icon: "📈",
-        title: "Rating Climber",
-        description: "Improve Elo by at least 100 points.",
-        unlocked: displayedElo != null && initialElo != null && displayedElo - initialElo >= 100,
-      },
-      {
-        id: "peak-1200",
-        icon: "🌟",
-        title: "1200 Club",
-        description: "Reach a peak Elo of 1200 or higher.",
-        unlocked: peakRating != null && peakRating >= 1200,
-      },
-      {
-        id: "peak-1400",
-        icon: "⭐",
-        title: "Elite Tier",
-        description: "Reach a peak Elo of 1400 or higher.",
-        unlocked: peakRating != null && peakRating >= 1400,
-      },
-      {
-        id: "undefeated-25",
-        icon: "✨",
-        title: "Untouched Run",
-        description: "Stay undefeated across at least 25 matches.",
-        unlocked: totalLosses === 0 && totalMatches >= 25,
-      },
-    ];
-
-    const availableAchievements = achievementCatalog.filter(
-      (achievement) => achievement.id !== "elo-plus-100",
-    );
-    const unlocked = availableAchievements.filter((achievement) => achievement.unlocked);
-    const locked = availableAchievements.filter((achievement) => !achievement.unlocked);
-
-    return [...unlocked, ...locked];
-  }
-
-  const achievements = [];
-
+  if (!Array.isArray(participants)) return [];
+  
   const perfectWin = participants.some(
-    (row) =>
-      row.team === row.match?.winning_team &&
-      row.points_scored === 21 &&
-      row.points_allowed === 0,
+    (row) => row.team === row.match?.winning_team && row.points_scored === 21 && row.points_allowed === 0
   );
-
-  const closeWins = participants.filter((row) => {
-    if (row.team !== row.match?.winning_team) {
-      return false;
-    }
-
-    return Math.abs((row.points_scored ?? 0) - (row.points_allowed ?? 0)) <= 2;
-  }).length;
-
+  const closeWins = participants.filter((row) => row.team === row.match?.winning_team && Math.abs((row.points_scored ?? 0) - (row.points_allowed ?? 0)) <= 2).length;
+  const dominantWins = participants.filter((row) => row.team === row.match?.winning_team && (row.points_scored ?? 0) - (row.points_allowed ?? 0) >= 10).length;
   const averageScored = totalMatches > 0 ? totalPointsScored / totalMatches : 0;
   const averageConceded = totalMatches > 0 ? totalPointsConceded / totalMatches : 0;
-  const comebackStreak = results.slice(-3).every((result) => result === "W");
 
-  if (performance.longestWinStreak >= 10) {
-    achievements.push({
-      id: "streak-10",
-      icon: "🔥",
-      title: "Unstoppable",
-      description: "Won 10 matches in a row.",
-    });
-  }
+  const achievementCatalog = [
+    { id: "streak-5", icon: "⚡", title: "Hot Streak", description: "Win 5 matches in a row.", unlocked: performance.longestWinStreak >= 5 },
+    { id: "streak-10", icon: "🔥", title: "Unstoppable", description: "Win 10 matches in a row.", unlocked: performance.longestWinStreak >= 10 },
+    { id: "wins-50", icon: "🥉", title: "Half-Century", description: "Reach 50 wins.", unlocked: totalWins >= 50 },
+    { id: "wins-100", icon: "🥈", title: "Century Winner", description: "Reach 100 wins.", unlocked: totalWins >= 100 },
+    { id: "wins-500", icon: "🏆", title: "Legendary Grind", description: "Reach 500 wins.", unlocked: totalWins >= 500 },
+    { id: "wins-1000", icon: "👑", title: "Immortal Winner", description: "Reach 1000 wins.", unlocked: totalWins >= 1000 },
+    { id: "matches-100", icon: "🎯", title: "Iron Player", description: "Play 100 recorded matches.", unlocked: totalMatches >= 100 },
+    { id: "matches-250", icon: "🧱", title: "Club Marathoner", description: "Play 250 recorded matches.", unlocked: totalMatches >= 250 },
+    { id: "perfect-21-0", icon: "💎", title: "Perfect Sweep", description: "Win a match by 21-0.", unlocked: perfectWin },
+    { id: "clutch-5", icon: "🧠", title: "Clutch Performer", description: "Win 5 matches by 2 points or fewer.", unlocked: closeWins >= 5 },
+    { id: "dominant-10", icon: "🚀", title: "Dominant Force", description: "Win 10 matches by 10 points or more.", unlocked: dominantWins >= 10 },
+    { id: "high-scorer", icon: "🎯", title: "High Scorer", description: "Average 18+ points scored (min 10 matches).", unlocked: averageScored >= 18 && totalMatches >= 10 },
+    { id: "stonewall", icon: "🛡️", title: "Stonewall", description: "Concede 12 or fewer points on average (min 10 matches).", unlocked: averageConceded <= 12 && totalMatches >= 10 },
+    { id: "points-1000", icon: "🔢", title: "Point Machine", description: "Score 1000 total points.", unlocked: totalPointsScored >= 1000 },
+    { id: "points-2000", icon: "💥", title: "Score Engine", description: "Score 2000 total points.", unlocked: totalPointsScored >= 2000 },
+    { id: "win-rate-70", icon: "📊", title: "Reliable Winner", description: "Maintain 70%+ win rate across 30+ matches.", unlocked: totalMatches >= 30 && totalWins / totalMatches >= 0.7 },
+    { id: "peak-1200", icon: "🌟", title: "1200 Club", description: "Reach a peak Elo of 1200+.", unlocked: peakRating != null && peakRating >= 1200 },
+    { id: "peak-1400", icon: "⭐", title: "Elite Tier", description: "Reach a peak Elo of 1400+.", unlocked: peakRating != null && peakRating >= 1400 },
+    { id: "undefeated-25", icon: "✨", title: "Untouched Run", description: "Stay undefeated across at least 25 matches.", unlocked: totalLosses === 0 && totalMatches >= 25 },
+  ];
 
-  if (performance.longestWinStreak >= 5) {
-    achievements.push({
-      id: "streak-5",
-      icon: "⚡",
-      title: "Hot Streak",
-      description: "Won 5 matches in a row.",
-    });
-  }
-
-  if (totalWins >= 100) {
-    achievements.push({
-      id: "wins-100",
-      icon: "👑",
-      title: "Century Winner",
-      description: "Reached 100 wins.",
-    });
-  }
-
-  if (totalWins >= 50) {
-    achievements.push({
-      id: "wins-50",
-      icon: "🏆",
-      title: "Half-Century",
-      description: "Reached 50 wins.",
-    });
-  }
-
-  if (totalMatches >= 100) {
-    achievements.push({
-      id: "matches-100",
-      icon: "🎯",
-      title: "Iron Player",
-      description: "Played 100 recorded matches.",
-    });
-  }
-
-  if (perfectWin) {
-    achievements.push({
-      id: "perfect-21-0",
-      icon: "💎",
-      title: "Perfect Sweep",
-      description: "Won a match by 21-0.",
-    });
-  }
-
-  if (closeWins >= 5) {
-    achievements.push({
-      id: "clutch",
-      icon: "🧠",
-      title: "Clutch Performer",
-      description: "Won at least 5 matches by a margin of 2 points or fewer.",
-    });
-  }
-
-  if (averageScored >= 18 && totalMatches >= 10) {
-    achievements.push({
-      id: "high-scorer",
-      icon: "🚀",
-      title: "High Scorer",
-      description: "Averaged at least 18 points scored across 10 or more matches.",
-    });
-  }
-
-  if (averageConceded <= 12 && totalMatches >= 10) {
-    achievements.push({
-      id: "stonewall",
-      icon: "🛡️",
-      title: "Stonewall",
-      description: "Conceded 12 points or fewer on average across 10 or more matches.",
-    });
-  }
-
-  if (displayedElo != null && initialElo != null && displayedElo - initialElo >= 100) {
-    achievements.push({
-      id: "elo-plus-100",
-      icon: "📈",
-      title: "Rating Climber",
-      description: "Improved Elo by at least 100 points.",
-    });
-  }
-
-  if (peakRating != null && peakRating >= 1200) {
-    achievements.push({
-      id: "peak-1200",
-      icon: "🌟",
-      title: "1200 Club",
-      description: "Reached a peak Elo of 1200 or higher.",
-    });
-  }
-
-  if (comebackStreak && totalWins >= 3) {
-    achievements.push({
-      id: "on-a-roll",
-      icon: "🎮",
-      title: "On a Roll",
-      description: "Ended the selected range with a 3-match winning streak.",
-    });
-  }
-
-  if (totalLosses === 0 && totalMatches >= 10) {
-    achievements.push({
-      id: "untouched",
-      icon: "✨",
-      title: "Untouched",
-      description: "Stayed undefeated across at least 10 matches.",
-    });
-  }
-
-  return achievements;
+  const unlocked = achievementCatalog.filter((a) => a.unlocked);
+  const locked = achievementCatalog.filter((a) => !a.unlocked);
+  return [...unlocked, ...locked];
 }
 
 function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
   return (
-    <div className="overflow-x-auto rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.92),rgba(5,12,22,0.94))] p-3 shadow-[0_20px_50px_rgba(3,12,22,0.28)]">
-      <div className="flex min-w-max flex-nowrap gap-3">
+    <div className="sticky top-4 z-50 overflow-hidden rounded-full border border-white/10 bg-slate-900/80 p-1.5 shadow-xl backdrop-blur-xl">
+      <div className="flex w-full items-center justify-between">
         {RANGE_OPTIONS.map((option) => {
           const isActive = option.value === activeRange;
           return (
             <Link
               key={option.value}
               href={`/clubs/${clubSlug}/players/${clubPlayerId}?range=${option.value}`}
-              className={`rounded-full px-4 py-3 text-center text-sm font-semibold whitespace-nowrap transition ${
+              className={`flex-1 rounded-full px-3 py-2 text-center text-xs font-bold transition-all sm:text-sm ${
                 isActive
-                  ? "bg-white/85 text-[#11151a]"
-                  : "bg-transparent text-white/62 hover:bg-white/8 hover:text-white"
+                  ? "bg-teal-400 text-slate-900 shadow-sm"
+                  : "text-slate-400 hover:bg-white/10 hover:text-white"
               }`}
             >
               {option.label}
@@ -712,8 +362,11 @@ function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
 function EloChart({ points, rangeLabel }) {
   if (points.length === 0) {
     return (
-      <div className="rounded-[1.7rem] border border-dashed border-white/12 bg-white/5 px-5 py-8 text-center text-white/65">
-        No Elo history is available for the {rangeLabel.toLowerCase()} range.
+      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-xl">
+        <h2 className="text-xl font-bold tracking-tight text-white">Elo History</h2>
+        <div className="mt-4 rounded-2xl border border-dashed border-white/20 bg-white/5 px-5 py-8 text-center text-sm font-medium text-slate-400">
+          No Elo history available for {rangeLabel.toLowerCase()}.
+        </div>
       </div>
     );
   }
@@ -737,9 +390,7 @@ function EloChart({ points, rangeLabel }) {
     return { ...point, x, y };
   });
 
-  const path = coordinates
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
-    .join(" ");
+  const path = coordinates.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
   const areaPath = `${path} L ${coordinates.at(-1).x.toFixed(2)} ${chartBottom} L ${coordinates[0].x.toFixed(2)} ${chartBottom} Z`;
   const yTicks = [max, Math.round((max + min) / 2), min];
   const bottomLabels = [
@@ -749,23 +400,23 @@ function EloChart({ points, rangeLabel }) {
   ];
 
   return (
-    <div className="rounded-[1.9rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.94),rgba(5,12,22,0.96))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.3)]">
-      <div className="flex items-end justify-between gap-4">
+    <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-xl">
+      <div className="flex items-end justify-between">
         <div>
-          <p className="font-mono text-2xl font-semibold text-white">Career Elo Chart</p>
-          <p className="mt-2 text-sm text-white/60">
-            {points.length} recorded point{points.length === 1 ? "" : "s"} in {rangeLabel.toLowerCase()}
+          <h2 className="text-xl font-bold tracking-tight text-white">Career Elo</h2>
+          <p className="mt-1 text-sm font-medium text-slate-400">
+            {points.length} recorded point{points.length === 1 ? "" : "s"}
           </p>
         </div>
-        <div className="text-right text-sm text-white/55">
-          <p>High {max}</p>
-          <p>Low {min}</p>
+        <div className="text-right text-xs font-bold text-slate-500">
+          <p>HIGH <span className="text-teal-400">{max}</span></p>
+          <p>LOW <span className="text-rose-400">{min}</span></p>
         </div>
       </div>
 
-      <div className="mt-5 rounded-[1.5rem] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(24,206,195,0.15),transparent_40%),rgba(255,255,255,0.03)] px-4 py-4">
+      <div className="mt-6 rounded-2xl bg-slate-950/50 p-4 shadow-inner">
         <div className="grid grid-cols-[auto_1fr] gap-3">
-          <div className="flex h-40 flex-col justify-between pt-1 text-xs text-white/45">
+          <div className="flex h-40 flex-col justify-between pt-1 text-xs font-medium text-slate-500">
             {yTicks.map((tick) => (
               <span key={tick}>{tick}</span>
             ))}
@@ -774,43 +425,30 @@ function EloChart({ points, rangeLabel }) {
             <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="elo-stroke" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#14d4c6" />
-                  <stop offset="100%" stopColor="#1bc1df" />
+                  <stop offset="0%" stopColor="#2dd4bf" /> {/* teal-400 */}
+                  <stop offset="100%" stopColor="#06b6d4" /> {/* cyan-500 */}
                 </linearGradient>
                 <linearGradient id="elo-fill" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(43, 196, 226, 0.38)" />
-                  <stop offset="100%" stopColor="rgba(43, 196, 226, 0.12)" />
+                  <stop offset="0%" stopColor="rgba(45, 212, 191, 0.4)" />
+                  <stop offset="100%" stopColor="rgba(45, 212, 191, 0)" />
                 </linearGradient>
               </defs>
               {yTicks.map((tick) => {
                 const y = chartBottom - ((tick - min) / range) * chartHeight;
-                return (
-                  <line
-                    key={tick}
-                    x1="0"
-                    y1={y}
-                    x2={width}
-                    y2={y}
-                    stroke="rgba(255,255,255,0.12)"
-                    strokeWidth="0.6"
-                  />
-                );
+                return <line key={tick} x1="0" y1={y} x2={width} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />;
               })}
               <path d={areaPath} fill="url(#elo-fill)" />
-              <path d={path} fill="none" stroke="url(#elo-stroke)" strokeWidth="2.2" strokeLinecap="round" />
+              <path d={path} fill="none" stroke="url(#elo-stroke)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-[auto_1fr] gap-3">
-        <div />
-        <div className="flex items-center justify-between gap-4 text-xs uppercase tracking-[0.2em] text-white/45">
-          {bottomLabels.map((label, index) => (
-            <span key={`${label}-${index}`} className={index === 1 ? "text-center" : ""}>
-              {label}
-            </span>
-          ))}
+        <div className="mt-3 grid grid-cols-[auto_1fr] gap-3">
+          <div />
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {bottomLabels.map((label, index) => (
+              <span key={`${label}-${index}`} className={index === 1 ? "text-center" : ""}>{label}</span>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -824,86 +462,38 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
   const rangeStart = getRangeStart(activeRange);
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   const cookieStore = await cookies();
   const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
-  if (!club) {
-    notFound();
-  }
+  if (!club) notFound();
 
   const { data: clubPlayer, error: clubPlayerError } = await supabase
     .from("club_players")
-    .select(
-      `
-        id,
-        club_id,
-        elo_initial,
-        elo_current,
-        player:players (
-          full_name,
-          avatar_url,
-          gender,
-          birth_date,
-          handedness
-        )
-      `
-    )
+    .select(`id, club_id, elo_initial, elo_current, player:players (full_name, avatar_url, gender, birth_date, handedness)`)
     .eq("id", clubPlayerId)
     .eq("club_id", club.id)
     .maybeSingle();
 
-  if (clubPlayerError) {
-    throw new Error(clubPlayerError.message);
-  }
-
-  if (!clubPlayer) {
-    notFound();
-  }
+  if (clubPlayerError) throw new Error(clubPlayerError.message);
+  if (!clubPlayer) notFound();
 
   const { data: participantRows, error: participantError } = await supabase
     .from("match_participants")
-    .select(
-      `
-        match_id,
-        team,
-        points_scored,
-        points_allowed,
-        created_at,
-        match:matches (
-          played_at,
-          status,
-          winning_team,
-          team1_score,
-          team2_score
-        )
-      `
-    )
+    .select(`match_id, team, points_scored, points_allowed, created_at, match:matches (played_at, status, winning_team, team1_score, team2_score)`)
     .eq("club_player_id", clubPlayerId);
 
-  if (participantError) {
-    throw new Error(participantError.message);
-  }
+  if (participantError) throw new Error(participantError.message);
 
   const approvedParticipants = (participantRows ?? [])
     .filter((row) => row.match?.status === "approved")
-    .sort(
-      (a, b) =>
-        new Date(a.match?.played_at ?? a.created_at).getTime() -
-        new Date(b.match?.played_at ?? b.created_at).getTime()
-    );
+    .sort((a, b) => new Date(a.match?.played_at ?? a.created_at).getTime() - new Date(b.match?.played_at ?? b.created_at).getTime());
 
   const filteredParticipants = rangeStart
-    ? approvedParticipants.filter(
-        (row) => new Date(row.match?.played_at ?? row.created_at).getTime() >= rangeStart.getTime()
-      )
+    ? approvedParticipants.filter((row) => new Date(row.match?.played_at ?? row.created_at).getTime() >= rangeStart.getTime())
     : approvedParticipants;
 
   const totalPointsScored = filteredParticipants.reduce((sum, row) => sum + (row.points_scored ?? 0), 0);
@@ -917,46 +507,28 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
     .eq("club_player_id", clubPlayerId)
     .order("recorded_on", { ascending: true });
 
-  if (eloError) {
-    throw new Error(eloError.message);
-  }
+  if (eloError) throw new Error(eloError.message);
 
-  const filteredEloRows = rangeStart
-    ? (eloRows ?? []).filter((row) => new Date(row.recorded_on).getTime() >= rangeStart.getTime())
-    : (eloRows ?? []);
-
-  const chartPoints = [];
-
-  if (filteredEloRows.length > 0) {
-    chartPoints.push({ elo: filteredEloRows[0].elo_before, label: "Start" });
-
-    for (const row of filteredEloRows) {
-      chartPoints.push({
-        elo: row.elo_after,
-        label: new Intl.DateTimeFormat("en-US", {
-          month: "short",
-          day: "numeric",
-        }).format(new Date(row.recorded_on)),
-      });
-    }
-  }
+  const filteredEloRows = rangeStart ? (eloRows ?? []).filter((row) => new Date(row.recorded_on).getTime() >= rangeStart.getTime()) : (eloRows ?? []);
+  const chartPoints = filteredEloRows.length > 0 ? [
+    { elo: filteredEloRows[0].elo_before, label: "Start" },
+    ...filteredEloRows.map(row => ({
+      elo: row.elo_after,
+      label: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(row.recorded_on))
+    }))
+  ] : [];
 
   const totalMatches = filteredParticipants.length;
   const totalWins = results.filter((result) => result === "W").length;
   const totalLosses = results.filter((result) => result === "L").length;
   const winRate = totalMatches > 0 ? (totalWins / totalMatches) * 100 : 0;
-  const peakRating =
-    chartPoints.length > 0
-      ? Math.max(...chartPoints.map((point) => point.elo))
-      : activeRange.value === "all"
-        ? Math.max(clubPlayer.elo_initial ?? 1000, clubPlayer.elo_current ?? 1000)
-        : null;
-  const displayedElo =
-    filteredEloRows.length > 0
-      ? filteredEloRows.at(-1).elo_after
-      : activeRange.value === "all"
-        ? clubPlayer.elo_current ?? 1000
-        : null;
+  
+  const peakRating = chartPoints.length > 0 ? Math.max(...chartPoints.map((point) => point.elo)) 
+    : activeRange.value === "all" ? Math.max(clubPlayer.elo_initial ?? 1000, clubPlayer.elo_current ?? 1000) : null;
+    
+  const displayedElo = filteredEloRows.length > 0 ? filteredEloRows.at(-1).elo_after 
+    : activeRange.value === "all" ? clubPlayer.elo_current ?? 1000 : null;
+
   const allTimeTotalMatches = approvedParticipants.length;
   const allTimeTotalWins = approvedParticipants.filter((row) => row.team === row.match?.winning_team).length;
   const allTimeTotalLosses = allTimeTotalMatches - allTimeTotalWins;
@@ -964,10 +536,7 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
   const allTimeTotalPointsConceded = approvedParticipants.reduce((sum, row) => sum + (row.points_allowed ?? 0), 0);
   const allTimeResults = approvedParticipants.map((row) => (row.team === row.match?.winning_team ? "W" : "L"));
   const allTimePerformance = buildPerformanceSummary(allTimeResults);
-  const allTimePeakRating =
-    (eloRows ?? []).length > 0
-      ? Math.max(clubPlayer.elo_initial ?? 1000, ...(eloRows ?? []).map((row) => row.elo_after))
-      : Math.max(clubPlayer.elo_initial ?? 1000, clubPlayer.elo_current ?? 1000);
+  const allTimePeakRating = (eloRows ?? []).length > 0 ? Math.max(clubPlayer.elo_initial ?? 1000, ...(eloRows ?? []).map((row) => row.elo_after)) : Math.max(clubPlayer.elo_initial ?? 1000, clubPlayer.elo_current ?? 1000);
 
   const achievements = buildAchievements({
     totalMatches: allTimeTotalMatches,
@@ -986,285 +555,138 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
   const filteredMatchIds = [...new Set(filteredParticipants.map((row) => row.match_id).filter(Boolean))];
 
   const { data: partnerRows, error: partnerError } = filteredMatchIds.length
-    ? await supabase
-        .from("match_participants")
-        .select(
-          `
-            match_id,
-            club_player_id,
-            team,
-            club_player:club_players (
-              id,
-              elo_current,
-              player:players (
-                full_name,
-                avatar_url
-              )
-            )
-          `
-        )
-        .in("match_id", filteredMatchIds)
+    ? await supabase.from("match_participants").select(`match_id, club_player_id, team, club_player:club_players (id, elo_current, player:players (full_name, avatar_url))`).in("match_id", filteredMatchIds)
     : { data: [], error: null };
 
-  if (partnerError) {
-    throw new Error(partnerError.message);
-  }
+  if (partnerError) throw new Error(partnerError.message);
 
   const playerMatchesById = new Map(filteredParticipants.map((row) => [row.match_id, row]));
   const partnerSummary = new Map();
-
-  for (const row of partnerRows ?? []) {
-    const playerMatch = playerMatchesById.get(row.match_id);
-
-    if (!playerMatch || row.club_player_id === clubPlayerId || row.team !== playerMatch.team) {
-      continue;
-    }
-
-    const key = row.club_player_id;
-    const current = partnerSummary.get(key) ?? {
-      id: row.club_player?.id ?? row.club_player_id,
-      name: row.club_player?.player?.full_name ?? "Unknown player",
-      avatarUrl: row.club_player?.player?.avatar_url ?? "",
-      matches: 0,
-      wins: 0,
-      losses: 0,
-    };
-
-    current.matches += 1;
-
-    if (playerMatch.team === playerMatch.match?.winning_team) {
-      current.wins += 1;
-    } else {
-      current.losses += 1;
-    }
-
-    partnerSummary.set(key, current);
-  }
-
-  const topPartners = [...partnerSummary.values()]
-    .map((partner) => ({
-      ...partner,
-      winRate: partner.matches > 0 ? (partner.wins / partner.matches) * 100 : 0,
-    }))
-    .filter((partner) => partner.matches >= 5)
-    .sort((a, b) => {
-      if (b.winRate !== a.winRate) return b.winRate - a.winRate;
-      if (b.matches !== a.matches) return b.matches - a.matches;
-      if (b.wins !== a.wins) return b.wins - a.wins;
-      return a.name.localeCompare(b.name);
-    })
-    .slice(0, 5);
-
   const rivalSummary = new Map();
 
   for (const row of partnerRows ?? []) {
     const playerMatch = playerMatchesById.get(row.match_id);
+    if (!playerMatch || row.club_player_id === clubPlayerId) continue;
 
-    if (!playerMatch || row.club_player_id === clubPlayerId || row.team === playerMatch.team) {
-      continue;
-    }
-
-    const current = rivalSummary.get(row.club_player_id) ?? {
-      id: row.club_player?.id ?? row.club_player_id,
-      name: row.club_player?.player?.full_name ?? "Unknown player",
-      avatarUrl: row.club_player?.player?.avatar_url ?? "",
-      elo: row.club_player?.elo_current ?? 1000,
-      matches: 0,
-      playerWins: 0,
-      playerLosses: 0,
-    };
-
-    current.matches += 1;
-
-    if (playerMatch.team === playerMatch.match?.winning_team) {
-      current.playerWins += 1;
+    if (row.team === playerMatch.team) {
+      const current = partnerSummary.get(row.club_player_id) ?? { id: row.club_player?.id ?? row.club_player_id, name: row.club_player?.player?.full_name ?? "Unknown", avatarUrl: row.club_player?.player?.avatar_url ?? "", matches: 0, wins: 0, losses: 0 };
+      current.matches += 1;
+      if (playerMatch.team === playerMatch.match?.winning_team) current.wins += 1; else current.losses += 1;
+      partnerSummary.set(row.club_player_id, current);
     } else {
-      current.playerLosses += 1;
+      const current = rivalSummary.get(row.club_player_id) ?? { id: row.club_player?.id ?? row.club_player_id, name: row.club_player?.player?.full_name ?? "Unknown", avatarUrl: row.club_player?.player?.avatar_url ?? "", elo: row.club_player?.elo_current ?? 1000, matches: 0, playerWins: 0, playerLosses: 0 };
+      current.matches += 1;
+      if (playerMatch.team === playerMatch.match?.winning_team) current.playerWins += 1; else current.playerLosses += 1;
+      rivalSummary.set(row.club_player_id, current);
     }
-
-    rivalSummary.set(row.club_player_id, current);
   }
 
-  const rival = [...rivalSummary.values()]
-    .map((entry) => ({
-      ...entry,
-      playerWinRate: entry.matches > 0 ? (entry.playerWins / entry.matches) * 100 : 0,
-    }))
-    .filter(
-      (entry) =>
-        entry.matches >= 5 &&
-        entry.playerWinRate < 50 &&
-        entry.elo < (clubPlayer.elo_current ?? clubPlayer.elo_initial ?? 1000),
-    )
-    .sort((a, b) => {
-      if (a.playerWinRate !== b.playerWinRate) return a.playerWinRate - b.playerWinRate;
-      if (b.matches !== a.matches) return b.matches - a.matches;
-      if (b.playerLosses !== a.playerLosses) return b.playerLosses - a.playerLosses;
-      return a.name.localeCompare(b.name);
-    })[0] ?? null;
+  const topPartners = [...partnerSummary.values()]
+    .map((p) => ({ ...p, winRate: p.matches > 0 ? (p.wins / p.matches) * 100 : 0 }))
+    .filter((p) => p.matches >= 5)
+    .sort((a, b) => b.winRate !== a.winRate ? b.winRate - a.winRate : b.matches !== a.matches ? b.matches - a.matches : b.wins !== a.wins ? b.wins - a.wins : a.name.localeCompare(b.name))
+    .slice(0, 5);
 
-  const bioItems = [
-    getAgeLabel(clubPlayer.player?.birth_date),
-    formatGender(clubPlayer.player?.gender),
-    formatHandedness(clubPlayer.player?.handedness),
-  ].filter(Boolean);
+  const rival = [...rivalSummary.values()]
+    .map((e) => ({ ...e, playerWinRate: e.matches > 0 ? (e.playerWins / e.matches) * 100 : 0 }))
+    .filter((e) => e.matches >= 5 && e.playerWinRate < 50 && e.elo < (clubPlayer.elo_current ?? clubPlayer.elo_initial ?? 1000))
+    .sort((a, b) => a.playerWinRate !== b.playerWinRate ? a.playerWinRate - b.playerWinRate : b.matches !== a.matches ? b.matches - a.matches : b.playerLosses !== a.playerLosses ? b.playerLosses - a.playerLosses : a.name.localeCompare(b.name))[0] ?? null;
+
+  const bioItems = [getAgeLabel(clubPlayer.player?.birth_date), formatGender(clubPlayer.player?.gender), formatHandedness(clubPlayer.player?.handedness)].filter(Boolean);
 
   return (
-    <section className="space-y-5">
+    <section className="mx-auto w-full max-w-xl space-y-6 pb-12">
       
+      {/* Time Range Tabs - Sticky untuk Navigasi Cepat */}
       <RangeTabs clubSlug={clubSlug} clubPlayerId={clubPlayerId} activeRange={activeRange.value} />
 
-      <div className="rounded-[2.3rem] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,31,0.94),rgba(4,11,20,0.98))] px-5 pb-6 pt-6 shadow-[0_26px_70px_rgba(3,12,22,0.35)] backdrop-blur-xl">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div
-            className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[3px] border-white/80 bg-gradient-to-br from-[#163047] to-[#0f2236] bg-cover bg-center text-3xl font-semibold text-white shadow-[0_18px_40px_rgba(2,14,28,0.35)]"
-            style={clubPlayer.player?.avatar_url ? { backgroundImage: `url(${clubPlayer.player.avatar_url})` } : undefined}
-          >
-            {!clubPlayer.player?.avatar_url ? getInitials(clubPlayer.player?.full_name ?? "P") : null}
-          </div>
-
-          <div>
-            <h1 className="font-mono text-3xl font-semibold text-white">
-              {clubPlayer.player?.full_name ?? "Unknown player"}
-            </h1>
-            <p className="mt-2 text-2xl text-white/82">
-              {displayedElo != null ? `Elo ${displayedElo}` : `No matches in ${activeRange.label.toLowerCase()}`}
-            </p>
-            {bioItems.length > 0 ? (
-              <p className="mt-2 text-sm text-white/62">{bioItems.join(" • ")}</p>
-            ) : null}
-            <p className="mt-2 text-sm text-white/55">Showing stats for {activeRange.label.toLowerCase()}.</p>
-          </div>
-        </div>
-
-        {totalMatches === 0 ? (
-          <div className="mt-6 rounded-[1.7rem] border border-dashed border-white/12 bg-white/5 px-5 py-8 text-center text-white/65">
-            This player has no approved matches in the selected time range.
-          </div>
-        ) : null}
-
-        <div className="mt-8 space-y-8">
-          {/* Match Performance Stats */}
-          <div>
-            <h3 className="mb-6 font-mono text-xl font-semibold text-white/90 flex items-center gap-3">
-              <span className="text-[#14d4c6] text-2xl">📊</span>
-              <span>Match Performance</span>
-              <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard 
-                label="Total Matches" 
-                value={totalMatches} 
-                icon="🎮"
-                color="info"
-              />
-              <StatCard 
-                label="Wins" 
-                value={totalWins} 
-                icon="🏆"
-                color="success"
-              />
-              <StatCard 
-                label="Losses" 
-                value={totalLosses} 
-                icon="📉"
-                color="danger"
-              />
-              <StatCard 
-                label="Win Rate" 
-                value={`${formatDecimal(winRate)}%`} 
-                icon="📈"
-                color={winRate >= 60 ? "success" : winRate >= 40 ? "warning" : "danger"}
-                trend={totalMatches > 1 ? {
-                  type: winRate >= 50 ? "up" : "down",
-                  value: `${Math.abs(winRate - 50).toFixed(1)}%`
-                } : null}
-              />
+      {/* Main Profile Header */}
+      <div className="relative mt-4 overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-cyan-500/5 opacity-50" />
+        
+        <div className="relative p-6 sm:p-8">
+          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+            <div
+              className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-slate-800 bg-cover bg-center text-3xl font-bold text-white shadow-xl ring-4 ring-slate-950"
+              style={clubPlayer.player?.avatar_url ? { backgroundImage: `url(${clubPlayer.player.avatar_url})` } : undefined}
+            >
+              {!clubPlayer.player?.avatar_url ? getInitials(clubPlayer.player?.full_name ?? "P") : null}
             </div>
-          </div>
 
-          {/* Points Statistics */}
-          <div>
-            <h3 className="mb-6 font-mono text-xl font-semibold text-white/90 flex items-center gap-3">
-              <span className="text-[#14d4c6] text-2xl">🎯</span>
-              <span>Points Analysis</span>
-              <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard 
-                label="Total Points Scored" 
-                value={totalPointsScored} 
-                icon="⚡"
-                color="success"
-              />
-              <StatCard 
-                label="Avg Points Scored" 
-                value={formatDecimal(totalMatches > 0 ? totalPointsScored / totalMatches : 0)} 
-                icon="📊"
-                color="info"
-              />
-              <StatCard 
-                label="Total Points Conceded" 
-                value={totalPointsConceded} 
-                icon="🛡️"
-                color="warning"
-              />
-              <StatCard 
-                label="Avg Points Conceded" 
-                value={formatDecimal(totalMatches > 0 ? totalPointsConceded / totalMatches : 0)} 
-                icon="📉"
-                color="warning"
-              />
-            </div>
-          </div>
-        </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">
+                {clubPlayer.player?.full_name ?? "Unknown player"}
+              </h1>
+              
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                <span className="rounded-full bg-teal-500/20 px-3 py-1 font-mono text-lg font-bold text-teal-300 ring-1 ring-teal-500/30">
+                  {displayedElo != null ? `ELO ${displayedElo}` : 'No matches'}
+                </span>
+                {performance.recent.length > 0 && (
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold tracking-widest text-white shadow-inner">
+                    {performance.recent.join("")}
+                  </span>
+                )}
+              </div>
 
-        <div className="mt-7 rounded-[1.9rem] border border-white/10 bg-white/5 px-5 py-5">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-mono text-2xl font-semibold text-white">Performance</h2>
-            <div className="text-right">
-              <p className="text-sm uppercase tracking-[0.22em] text-white/45">Recent Form</p>
-              <p className="mt-1 text-lg font-semibold text-white">
-                {performance.recent.length > 0 ? performance.recent.join("") : "No matches yet"}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 space-y-3 text-lg text-white/88">
-            <div className="flex items-center justify-between gap-4">
-              <span>Peak Rating</span>
-              <span>{peakRating != null ? peakRating : "-"}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span>Longest Win Streak</span>
-              <span>{performance.longestWinStreak}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span>Longest Lose Streak</span>
-              <span>{performance.longestLoseStreak}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span>Current Streak</span>
-              <span>{performance.currentStreakLabel}</span>
+              {bioItems.length > 0 && (
+                <p className="mt-3 text-sm font-medium text-slate-400">
+                  {bioItems.join(" • ")}
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <EloChart points={chartPoints} rangeLabel={activeRange.label} />
+      {totalMatches === 0 ? (
+        <div className="rounded-[2rem] border border-dashed border-white/20 bg-white/5 p-10 text-center text-slate-400 backdrop-blur-md">
+          <p className="font-medium">This player has no approved matches in {activeRange.label.toLowerCase()}.</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          
+          {/* Stats Grid - Disatukan untuk Efisiensi Layar */}
+          <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-teal-400">Match Overview</h3>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <StatCard label="Matches" value={totalMatches} icon="🎮" />
+              <StatCard label="Win Rate" value={`${formatDecimal(winRate)}%`} icon="📈" trend={totalMatches > 1 ? { type: winRate >= 50 ? "up" : "down", value: `${Math.abs(winRate - 50).toFixed(1)}%` } : null} />
+              <StatCard label="Wins" value={totalWins} icon="🏆" />
+              <StatCard label="Losses" value={totalLosses} icon="💀" />
+            </div>
 
-      <AchievementSection achievements={achievements} rangeLabel={activeRange.label} />
+            <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-cyan-400">Points Analysis</h3>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <StatCard label="Scored" value={totalPointsScored} icon="⚡" />
+              <StatCard label="Avg Scored" value={formatDecimal(totalPointsScored / totalMatches)} icon="🎯" />
+              <StatCard label="Conceded" value={totalPointsConceded} icon="🛡️" />
+              <StatCard label="Avg Conceded" value={formatDecimal(totalPointsConceded / totalMatches)} icon="📉" />
+            </div>
+          </div>
 
-      <RivalSection clubSlug={clubSlug} rival={rival} rangeLabel={activeRange.label} />
+          <EloChart points={chartPoints} rangeLabel={activeRange.label} />
+          <AchievementSection achievements={achievements} rangeLabel={activeRange.label} />
+          
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <BestPartnersSection clubSlug={clubSlug} partners={topPartners} rangeLabel={activeRange.label} />
+            <RivalSection clubSlug={clubSlug} rival={rival} rangeLabel={activeRange.label} />
+          </div>
 
-      <BestPartnersSection clubSlug={clubSlug} partners={topPartners} rangeLabel={activeRange.label} />
+        </div>
+      )}
 
-      <Link
-        href={`/clubs/${clubSlug}/players/${clubPlayerId}/match-log`}
-        className="block rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-4 text-center text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]"
-      >
-        Match Log
-      </Link>
+      {/* Button diletakkan agak terpisah di bawah sebagai CTA */}
+      <div className="pt-4">
+        <Link
+          href={`/clubs/${clubSlug}/players/${clubPlayerId}/match-log`}
+          className="block w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-4 text-center text-base font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 hover:shadow-cyan-500/30 active:scale-[0.98]"
+        >
+          View Full Match Log
+        </Link>
+      </div>
     </section>
   );
 }
