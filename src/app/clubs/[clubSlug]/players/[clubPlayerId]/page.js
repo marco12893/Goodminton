@@ -1222,37 +1222,6 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
               />
             </div>
           </div>
-
-          {/* Performance Insights */}
-          {totalMatches > 0 && (
-            <div>
-              <h3 className="mb-6 font-mono text-xl font-semibold text-white/90 flex items-center gap-3">
-                <span className="text-[#14d4c6] text-2xl">💡</span>
-                <span>Performance Insights</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
-              </h3>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <StatCard 
-                  label="Point Differential" 
-                  value={totalPointsScored - totalPointsConceded} 
-                  icon={totalPointsScored > totalPointsConceded ? "📈" : "📉"}
-                  color={totalPointsScored > totalPointsConceded ? "success" : "danger"}
-                />
-                <StatCard 
-                  label="Points Per Match" 
-                  value={formatDecimal(totalMatches > 0 ? (totalPointsScored + totalPointsConceded) / totalMatches : 0)} 
-                  icon="🎯"
-                  color="info"
-                />
-                <StatCard 
-                  label="Scoring Efficiency" 
-                  value={`${formatDecimal(totalPointsScored > 0 ? (totalPointsScored / (totalPointsScored + totalPointsConceded)) * 100 : 0)}%`} 
-                  icon="⚡"
-                  color={totalPointsScored > totalPointsConceded ? "success" : "warning"}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="mt-7 rounded-[1.9rem] border border-white/10 bg-white/5 px-5 py-5">
