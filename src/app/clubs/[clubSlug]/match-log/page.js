@@ -8,6 +8,8 @@ import {
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const MATCHES_PER_PAGE = 10;
+
 function StatusBadge({ status }) {
   const styles =
     status === "approved"
@@ -69,6 +71,33 @@ function EloDeltaBadge({ value }) {
   );
 }
 
+function buildMatchLogUrl(clubSlug, options = {}) {
+  const params = new URLSearchParams();
+
+  if (options.dateFrom) {
+    params.set("date_from", options.dateFrom);
+  }
+
+  if (options.dateTo) {
+    params.set("date_to", options.dateTo);
+  }
+
+  if (options.page && options.page > 1) {
+    params.set("page", String(options.page));
+  }
+
+  if (options.success) {
+    params.set("success", options.success);
+  }
+
+  if (options.error) {
+    params.set("error", options.error);
+  }
+
+  const query = params.toString();
+  return query ? `/clubs/${clubSlug}/match-log?${query}` : `/clubs/${clubSlug}/match-log`;
+}
+
 export default async function ClubMatchLogPage({ params, searchParams }) {
   const { clubSlug } = await params;
   const query = await searchParams;
@@ -76,6 +105,10 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
   const success = query?.success;
   const dateFrom = query?.date_from ?? "";
   const dateTo = query?.date_to ?? "";
+  const parsedPage = Number.parseInt(String(query?.page ?? "1"), 10);
+  const currentPage = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+  const rangeFrom = (currentPage - 1) * MATCHES_PER_PAGE;
+  const rangeTo = rangeFrom + MATCHES_PER_PAGE - 1;
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -91,6 +124,11 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
   if (!club) {
     notFound();
   }
+
+  let countQuery = supabase
+    .from("matches")
+    .select("id", { count: "exact", head: true })
+    .eq("club_id", club.id);
 
   let matchesQuery = supabase
     .from("matches")
@@ -117,20 +155,32 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
       `
     )
     .eq("club_id", club.id)
-    .order("played_at", { ascending: false });
+    .order("played_at", { ascending: false })
+    .range(rangeFrom, rangeTo);
 
   if (dateFrom) {
+    countQuery = countQuery.gte("match_date", dateFrom);
     matchesQuery = matchesQuery.gte("match_date", dateFrom);
   }
   if (dateTo) {
+    countQuery = countQuery.lte("match_date", dateTo);
     matchesQuery = matchesQuery.lte("match_date", dateTo);
   }
 
-  const { data: matches, error: matchesError } = await matchesQuery;
+  const [{ count: totalMatches, error: countError }, { data: matches, error: matchesError }] =
+    await Promise.all([countQuery, matchesQuery]);
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
 
   if (matchesError) {
     throw new Error(matchesError.message);
   }
+
+  const totalPages = Math.max(1, Math.ceil((totalMatches ?? 0) / MATCHES_PER_PAGE));
+  const previousPage = currentPage > 1 ? currentPage - 1 : null;
+  const nextPage = currentPage < totalPages ? currentPage + 1 : null;
 
   const normalizedMatches = (matches ?? []).map((match) => {
     const team1 = match.participants
@@ -183,6 +233,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
         method="get"
         className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.9),rgba(5,12,22,0.94))] px-5 py-5 shadow-[0_20px_50px_rgba(3,12,22,0.28)] backdrop-blur-xl"
       >
+        <input type="hidden" name="page" value="1" />
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-2 block text-xs uppercase tracking-[0.22em] text-white/45">
@@ -214,7 +265,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
             Apply filters
           </button>
           <Link
-            href={`/clubs/${clubSlug}/match-log`}
+            href={buildMatchLogUrl(clubSlug)}
             className="rounded-full border border-white/15 px-5 py-3 text-center text-sm font-semibold text-white/85"
           >
             Clear filters
@@ -233,6 +284,16 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
           {success}
         </div>
       ) : null}
+
+      <div className="flex items-center justify-between gap-4 rounded-[1.6rem] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/68">
+        <p>
+          Showing {normalizedMatches.length === 0 ? 0 : rangeFrom + 1}-
+          {Math.min(rangeFrom + normalizedMatches.length, totalMatches ?? 0)} of {totalMatches ?? 0} matches
+        </p>
+        <p>
+          Page {Math.min(currentPage, totalPages)} of {totalPages}
+        </p>
+      </div>
 
       <div className="space-y-4">
         {normalizedMatches.length === 0 ? (
@@ -345,6 +406,44 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
           ))
         )}
       </div>
+
+      {totalMatches ? (
+        <div className="flex items-center justify-between gap-3">
+          {previousPage ? (
+            <Link
+              href={buildMatchLogUrl(clubSlug, {
+                dateFrom,
+                dateTo,
+                page: previousPage,
+              })}
+              className="rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white/85"
+            >
+              Previous
+            </Link>
+          ) : (
+            <span className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white/30">
+              Previous
+            </span>
+          )}
+
+          {nextPage ? (
+            <Link
+              href={buildMatchLogUrl(clubSlug, {
+                dateFrom,
+                dateTo,
+                page: nextPage,
+              })}
+              className="rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-sm font-semibold text-[#062232]"
+            >
+              Next
+            </Link>
+          ) : (
+            <span className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white/30">
+              Next
+            </span>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

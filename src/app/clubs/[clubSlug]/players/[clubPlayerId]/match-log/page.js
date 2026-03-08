@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+const MATCHES_PER_PAGE = 10;
+
 function StatusBadge({ status }) {
   const styles =
     status === "approved"
@@ -62,8 +64,26 @@ function formatPlayedAt(value) {
   }).format(new Date(value));
 }
 
-export default async function PlayerMatchLogPage({ params }) {
+function buildPlayerMatchLogUrl(clubSlug, clubPlayerId, page) {
+  const params = new URLSearchParams();
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const query = params.toString();
+  return query
+    ? `/clubs/${clubSlug}/players/${clubPlayerId}/match-log?${query}`
+    : `/clubs/${clubSlug}/players/${clubPlayerId}/match-log`;
+}
+
+export default async function PlayerMatchLogPage({ params, searchParams }) {
   const { clubSlug, clubPlayerId } = await params;
+  const query = await searchParams;
+  const parsedPage = Number.parseInt(String(query?.page ?? "1"), 10);
+  const currentPage = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+  const rangeFrom = (currentPage - 1) * MATCHES_PER_PAGE;
+  const rangeTo = rangeFrom + MATCHES_PER_PAGE;
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -104,16 +124,31 @@ export default async function PlayerMatchLogPage({ params }) {
 
   const { data: participantRows, error: participantError } = await supabase
     .from("match_participants")
-    .select("match_id")
+    .select(
+      `
+        match_id,
+        match:matches!inner (
+          id,
+          played_at
+        )
+      `
+    )
     .eq("club_player_id", clubPlayerId);
 
   if (participantError) {
     throw new Error(participantError.message);
   }
 
-  const matchIds = [...new Set((participantRows ?? []).map((row) => row.match_id).filter(Boolean))];
+  const orderedMatchIds = [...new Map(
+    (participantRows ?? [])
+      .filter((row) => row.match_id && row.match?.played_at)
+      .sort((a, b) => new Date(b.match.played_at).getTime() - new Date(a.match.played_at).getTime())
+      .map((row) => [row.match_id, row.match_id]),
+  ).values()];
+  const totalMatches = orderedMatchIds.length;
+  const paginatedMatchIds = orderedMatchIds.slice(rangeFrom, rangeTo);
 
-  const { data: matches, error: matchesError } = matchIds.length
+  const { data: matches, error: matchesError } = paginatedMatchIds.length
     ? await supabase
         .from("matches")
         .select(
@@ -137,7 +172,7 @@ export default async function PlayerMatchLogPage({ params }) {
             )
           `
         )
-        .in("id", matchIds)
+        .in("id", paginatedMatchIds)
         .eq("club_id", club.id)
         .order("played_at", { ascending: false })
     : { data: [], error: null };
@@ -145,6 +180,10 @@ export default async function PlayerMatchLogPage({ params }) {
   if (matchesError) {
     throw new Error(matchesError.message);
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalMatches / MATCHES_PER_PAGE));
+  const previousPage = currentPage > 1 ? currentPage - 1 : null;
+  const nextPage = currentPage < totalPages ? currentPage + 1 : null;
 
   const normalizedMatches = (matches ?? []).map((match) => {
     const team1 = match.participants
@@ -193,6 +232,16 @@ export default async function PlayerMatchLogPage({ params }) {
             Back
           </Link>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-[1.6rem] border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/68">
+        <p>
+          Showing {normalizedMatches.length === 0 ? 0 : rangeFrom + 1}-
+          {Math.min(rangeFrom + normalizedMatches.length, totalMatches)} of {totalMatches} matches
+        </p>
+        <p>
+          Page {Math.min(currentPage, totalPages)} of {totalPages}
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -279,6 +328,36 @@ export default async function PlayerMatchLogPage({ params }) {
           ))
         )}
       </div>
+
+      {totalMatches ? (
+        <div className="flex items-center justify-between gap-3">
+          {previousPage ? (
+            <Link
+              href={buildPlayerMatchLogUrl(clubSlug, clubPlayerId, previousPage)}
+              className="rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white/85"
+            >
+              Previous
+            </Link>
+          ) : (
+            <span className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white/30">
+              Previous
+            </span>
+          )}
+
+          {nextPage ? (
+            <Link
+              href={buildPlayerMatchLogUrl(clubSlug, clubPlayerId, nextPage)}
+              className="rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-3 text-sm font-semibold text-[#062232]"
+            >
+              Next
+            </Link>
+          ) : (
+            <span className="rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white/30">
+              Next
+            </span>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }
