@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createMatchLogAction } from "@/app/clubs/[clubSlug]/match-log/actions";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
@@ -35,7 +36,8 @@ export default async function NewMatchLogPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

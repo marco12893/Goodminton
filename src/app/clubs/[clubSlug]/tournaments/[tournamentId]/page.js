@@ -15,6 +15,7 @@ import {
   getTournamentDisplayName,
 } from "@/lib/tournaments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-US", {
@@ -299,7 +300,8 @@ export default async function TournamentDetailPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

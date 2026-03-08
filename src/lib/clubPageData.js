@@ -1,4 +1,7 @@
-export async function getClubPageData(supabase, user, clubSlug) {
+import { unstable_cache } from 'next/cache';
+import { createSupabaseClientForCache } from './supabase/server';
+
+async function getClubPageDataImpl(supabase, userId, clubSlug) {
   const { data: membership, error } = await supabase
     .from("club_members")
     .select(
@@ -16,7 +19,7 @@ export async function getClubPageData(supabase, user, clubSlug) {
         )
       `
     )
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("clubs.slug", clubSlug)
     .maybeSingle();
 
@@ -40,3 +43,18 @@ export async function getClubPageData(supabase, user, clubSlug) {
     role: membership.role,
   };
 }
+
+// Create cached version with proper cache key
+export const getClubPageData = unstable_cache(
+  async (userId, clubSlug, cookies) => {
+    // Create Supabase client with passed cookies
+    const supabase = createSupabaseClientForCache(cookies);
+    
+    return getClubPageDataImpl(supabase, userId, clubSlug);
+  },
+  ['club-page-data'],
+  {
+    revalidate: 300, // 5 minutes
+    tags: ['user-clubs']
+  }
+);

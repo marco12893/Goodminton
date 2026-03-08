@@ -25,3 +25,27 @@ export async function createSupabaseServerClient() {
     }
   );
 }
+
+// Create Supabase client for cached functions (requires cookies as parameter)
+export function createSupabaseClientForCache(cookieStore) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Server Components cannot always write cookies; middleware refresh handles it.
+          }
+        },
+      },
+    }
+  );
+}

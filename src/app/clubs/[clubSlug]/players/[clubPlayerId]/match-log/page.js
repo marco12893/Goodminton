@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 const MATCHES_PER_PAGE = 10;
 
@@ -94,7 +95,8 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

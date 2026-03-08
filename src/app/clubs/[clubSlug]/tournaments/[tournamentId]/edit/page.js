@@ -5,6 +5,7 @@ import TournamentSetupForm from "@/components/TournamentSetupForm";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { cookies } from "next/headers";
 
 function toDateTimeLocal(value) {
   const date = new Date(value);
@@ -28,7 +29,8 @@ export default async function EditTournamentPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { CalendarDays, Trophy, Volleyball } from "lucide-react";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 function StatusBadge({ status }) {
   const styles =
@@ -43,7 +44,8 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();
@@ -88,7 +90,7 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
           {club.role === "admin" ? (
             <Link
               href={`/clubs/${clubSlug}/tournaments/new`}
-              className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/8 text-2xl font-semibold text-white shadow-[0_12px_24px_rgba(2,14,28,0.28)] backdrop-blur-xl"
+              className="flex aspect-square h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/8 text-2xl font-semibold text-white shadow-[0_12px_24px_rgba(2,14,28,0.28)] backdrop-blur-xl hover:bg-white/12 transition-all duration-200"
             >
               +
             </Link>

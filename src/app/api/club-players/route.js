@@ -5,6 +5,48 @@ import {
   optionalDate,
   optionalString,
 } from "@/lib/validators";
+import { unstable_cache } from "next/cache";
+
+// Cached function for fetching club players
+const getCachedClubPlayers = unstable_cache(
+  async (clubId, search, limit) => {
+    let query = supabaseAdmin
+      .from("club_players")
+      .select(
+        `
+          *,
+          player:players (
+            id,
+            full_name,
+            gender,
+            birth_date,
+            handedness,
+            avatar_url
+          )
+        `
+      )
+      .eq("club_id", clubId)
+      .order("elo_current", { ascending: false })
+      .limit(limit);
+
+    if (search) {
+      query = query.ilike("players.full_name", `%${search}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+  ['club-players'],
+  {
+    revalidate: 300, // 5 minutes
+    tags: ['club-players']
+  }
+);
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -16,36 +58,12 @@ export async function GET(request) {
     return badRequest("Parameter clubId wajib diisi.");
   }
 
-  let query = supabaseAdmin
-    .from("club_players")
-    .select(
-      `
-        *,
-        player:players (
-          id,
-          full_name,
-          gender,
-          birth_date,
-          handedness,
-          avatar_url
-        )
-      `
-    )
-    .eq("club_id", clubId)
-    .order("elo_current", { ascending: false })
-    .limit(limit);
-
-  if (search) {
-    query = query.ilike("players.full_name", `%${search}%`);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
+  try {
+    const data = await getCachedClubPlayers(clubId, search, limit);
+    return json({ data });
+  } catch (error) {
     return serverError("Gagal mengambil pemain klub.", error.message);
   }
-
-  return json({ data });
 }
 
 export async function POST(request) {
@@ -99,6 +117,11 @@ export async function POST(request) {
         clubPlayerInsert.error.message
       );
     }
+
+    // Invalidate cache after successful creation
+    const { revalidateTag } = await import('next/cache');
+    revalidateTag('club-players');
+    revalidateTag('club-leaderboard');
 
     return json({ data: clubPlayerInsert.data }, { status: 201 });
   } catch (error) {

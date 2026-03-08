@@ -7,6 +7,7 @@ import {
 } from "@/app/clubs/[clubSlug]/match-log/actions";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 const MATCHES_PER_PAGE = 10;
 
@@ -119,7 +120,8 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();
@@ -222,7 +224,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
           </div>
           <Link
             href={`/clubs/${clubSlug}/match-log/new`}
-            className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/8 text-2xl font-semibold text-white shadow-[0_12px_24px_rgba(2,14,28,0.28)] backdrop-blur-xl"
+            className="flex aspect-square h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/8 text-2xl font-semibold text-white shadow-[0_12px_24px_rgba(2,14,28,0.28)] backdrop-blur-xl hover:bg-white/12 transition-all duration-200"
           >
             +
           </Link>

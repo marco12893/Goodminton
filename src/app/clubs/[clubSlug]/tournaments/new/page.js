@@ -4,6 +4,7 @@ import { createTournamentAction } from "@/app/clubs/[clubSlug]/tournaments/new/a
 import TournamentSetupForm from "@/components/TournamentSetupForm";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,8 @@ export default async function NewTournamentPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

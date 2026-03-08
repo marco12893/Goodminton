@@ -4,8 +4,52 @@ import ClubBottomNav from "@/components/ClubBottomNav";
 import ClubHeader from "@/components/ClubHeader";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseClientForCache } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
+
+// Cache searchable players data
+const getCachedSearchablePlayers = unstable_cache(
+  async (clubId, cookieStore) => {
+    const supabase = createSupabaseClientForCache(cookieStore);
+    const { data: searchablePlayers, error: searchablePlayersError } = await supabase
+      .from("club_players")
+      .select(
+        `
+          id,
+          elo_current,
+          total_matches,
+          player:players (
+            full_name,
+            avatar_url
+          )
+        `
+      )
+      .eq("club_id", clubId)
+      .eq("status", "active")
+      .order("elo_current", { ascending: false })
+      .order("created_at", { ascending: true });
+
+    if (searchablePlayersError) {
+      throw new Error(searchablePlayersError.message);
+    }
+
+    return (searchablePlayers ?? []).map((row) => ({
+      id: row.id,
+      fullName: row.player?.full_name ?? "Unknown player",
+      avatarUrl: row.player?.avatar_url ?? "",
+      elo: row.elo_current ?? 1000,
+      totalMatches: row.total_matches ?? 0,
+    }));
+  },
+  ['searchable-players'],
+  {
+    revalidate: 300, // 5 minutes
+    tags: ['club-players']
+  }
+);
 
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
@@ -19,41 +63,14 @@ export default async function ClubLayout({ children, params }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();
   }
 
-  const { data: searchablePlayers, error: searchablePlayersError } = await supabase
-    .from("club_players")
-    .select(
-      `
-        id,
-        elo_current,
-        total_matches,
-        player:players (
-          full_name,
-          avatar_url
-        )
-      `
-    )
-    .eq("club_id", club.id)
-    .eq("status", "active")
-    .order("elo_current", { ascending: false })
-    .order("created_at", { ascending: true });
-
-  if (searchablePlayersError) {
-    throw new Error(searchablePlayersError.message);
-  }
-
-  const preparedSearchablePlayers = (searchablePlayers ?? []).map((row) => ({
-    id: row.id,
-    fullName: row.player?.full_name ?? "Unknown player",
-    avatarUrl: row.player?.avatar_url ?? "",
-    elo: row.elo_current ?? 1000,
-    totalMatches: row.total_matches ?? 0,
-  }));
+  const preparedSearchablePlayers = await getCachedSearchablePlayers(club.id, cookieStore);
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#07131f] text-white">

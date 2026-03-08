@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import ClubCompareBuilder from "@/components/ClubCompareBuilder";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,8 @@ export default async function ClubComparePage({ params }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

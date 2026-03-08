@@ -11,6 +11,7 @@ import SignedImageUploadField from "@/components/SignedImageUploadField";
 import { getClubPageData } from "@/lib/clubPageData";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
@@ -46,7 +47,8 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();

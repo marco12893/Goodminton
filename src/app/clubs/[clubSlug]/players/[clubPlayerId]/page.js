@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 const RANGE_OPTIONS = [
   { value: "30d", label: "30 days", days: 30 },
@@ -124,11 +125,45 @@ function buildPerformanceSummary(results) {
   };
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, icon, trend, color = "default" }) {
+  const colorVariants = {
+    default: "from-[#14d4c6] to-[#1bc1df]",
+    success: "from-[#2cd85b] to-[#26a846]",
+    danger: "from-[#ff5252] to-[#e63946]",
+    warning: "from-[#ffa726] to-[#fb8c00]",
+    info: "from-[#42a5f5] to-[#2196f3]"
+  };
+
   return (
-    <div className="rounded-[1.3rem] border border-white/10 bg-gradient-to-r from-[#14d4c6] to-[#1bc1df] px-4 py-4 text-center text-[#072233] shadow-[0_16px_34px_rgba(6,28,38,0.24)]">
-      <p className="text-sm font-medium text-[#072233]/80">{label}</p>
-      <p className="mt-2 text-[1.7rem] font-semibold tracking-tight">{value}</p>
+    <div className="group relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-[1px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.18)] hover:scale-[1.02]">
+      <div className="relative h-full rounded-[1.4rem] bg-gradient-to-br from-[#0a1420] to-[#060c14] p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              {icon && (
+                <span className="text-[1.2rem] opacity-70">{icon}</span>
+              )}
+              <p className="text-xs font-medium text-white/60 uppercase tracking-[0.05em]">{label}</p>
+            </div>
+            <p className="mt-3 text-[2rem] font-bold text-white leading-tight">
+              {value}
+            </p>
+            {trend && (
+              <div className="mt-2 flex items-center gap-1">
+                <span className={`text-xs font-medium ${
+                  trend.type === 'up' ? 'text-[#2cd85b]' : 'text-[#ff5252]'
+                }`}>
+                  {trend.type === 'up' ? '↑' : '↓'} {trend.value}
+                </span>
+              </div>
+            )}
+          </div>
+          {color !== 'default' && (
+            <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${colorVariants[color]} opacity-20 blur-xl absolute top-[-20px] right-[-20px]`} />
+          )}
+        </div>
+        <div className={`absolute inset-0 bg-gradient-to-br ${colorVariants[color]} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`} />
+      </div>
     </div>
   );
 }
@@ -797,7 +832,8 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
     redirect("/login");
   }
 
-  const club = await getClubPageData(supabase, user, clubSlug);
+  const cookieStore = await cookies();
+  const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
   if (!club) {
     notFound();
@@ -1112,21 +1148,111 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
           </div>
         ) : null}
 
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatCard label="Total Matches" value={totalMatches} />
-          <StatCard label="Wins" value={totalWins} />
-          <StatCard label="Losses" value={totalLosses} />
-          <StatCard label="Win Rate" value={`${formatDecimal(winRate)}%`} />
-          <StatCard label="Total Points Scored" value={totalPointsScored} />
-          <StatCard
-            label="Average Points Scored"
-            value={formatDecimal(totalMatches > 0 ? totalPointsScored / totalMatches : 0)}
-          />
-          <StatCard label="Total Points Conceded" value={totalPointsConceded} />
-          <StatCard
-            label="Average Points Conceded"
-            value={formatDecimal(totalMatches > 0 ? totalPointsConceded / totalMatches : 0)}
-          />
+        <div className="mt-8 space-y-8">
+          {/* Match Performance Stats */}
+          <div>
+            <h3 className="mb-6 font-mono text-xl font-semibold text-white/90 flex items-center gap-3">
+              <span className="text-[#14d4c6] text-2xl">📊</span>
+              <span>Match Performance</span>
+              <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
+            </h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard 
+                label="Total Matches" 
+                value={totalMatches} 
+                icon="🎮"
+                color="info"
+              />
+              <StatCard 
+                label="Wins" 
+                value={totalWins} 
+                icon="🏆"
+                color="success"
+              />
+              <StatCard 
+                label="Losses" 
+                value={totalLosses} 
+                icon="📉"
+                color="danger"
+              />
+              <StatCard 
+                label="Win Rate" 
+                value={`${formatDecimal(winRate)}%`} 
+                icon="📈"
+                color={winRate >= 60 ? "success" : winRate >= 40 ? "warning" : "danger"}
+                trend={totalMatches > 1 ? {
+                  type: winRate >= 50 ? "up" : "down",
+                  value: `${Math.abs(winRate - 50).toFixed(1)}%`
+                } : null}
+              />
+            </div>
+          </div>
+
+          {/* Points Statistics */}
+          <div>
+            <h3 className="mb-6 font-mono text-xl font-semibold text-white/90 flex items-center gap-3">
+              <span className="text-[#14d4c6] text-2xl">🎯</span>
+              <span>Points Analysis</span>
+              <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
+            </h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard 
+                label="Total Points Scored" 
+                value={totalPointsScored} 
+                icon="⚡"
+                color="success"
+              />
+              <StatCard 
+                label="Avg Points Scored" 
+                value={formatDecimal(totalMatches > 0 ? totalPointsScored / totalMatches : 0)} 
+                icon="📊"
+                color="info"
+              />
+              <StatCard 
+                label="Total Points Conceded" 
+                value={totalPointsConceded} 
+                icon="🛡️"
+                color="warning"
+              />
+              <StatCard 
+                label="Avg Points Conceded" 
+                value={formatDecimal(totalMatches > 0 ? totalPointsConceded / totalMatches : 0)} 
+                icon="📉"
+                color="warning"
+              />
+            </div>
+          </div>
+
+          {/* Performance Insights */}
+          {totalMatches > 0 && (
+            <div>
+              <h3 className="mb-6 font-mono text-xl font-semibold text-white/90 flex items-center gap-3">
+                <span className="text-[#14d4c6] text-2xl">💡</span>
+                <span>Performance Insights</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
+              </h3>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <StatCard 
+                  label="Point Differential" 
+                  value={totalPointsScored - totalPointsConceded} 
+                  icon={totalPointsScored > totalPointsConceded ? "📈" : "📉"}
+                  color={totalPointsScored > totalPointsConceded ? "success" : "danger"}
+                />
+                <StatCard 
+                  label="Points Per Match" 
+                  value={formatDecimal(totalMatches > 0 ? (totalPointsScored + totalPointsConceded) / totalMatches : 0)} 
+                  icon="🎯"
+                  color="info"
+                />
+                <StatCard 
+                  label="Scoring Efficiency" 
+                  value={`${formatDecimal(totalPointsScored > 0 ? (totalPointsScored / (totalPointsScored + totalPointsConceded)) * 100 : 0)}%`} 
+                  icon="⚡"
+                  color={totalPointsScored > totalPointsConceded ? "success" : "warning"}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-7 rounded-[1.9rem] border border-white/10 bg-white/5 px-5 py-5">
