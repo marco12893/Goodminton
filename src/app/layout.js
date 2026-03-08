@@ -17,12 +17,27 @@ export const metadata = {
   description: "Badminton club stats platform for leaderboards, Elo ratings, and player performance analysis.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [
-      { url: "/favicon.png", type: "image/png", sizes: "1536x1536" },
-      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
-    ],
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "1536x1536" }],
     shortcut: "/favicon.png",
     apple: [{ url: "/favicon.png", sizes: "1536x1536", type: "image/png" }],
+  },
+  openGraph: {
+    title: "Goodminton",
+    description: "Badminton club stats platform for leaderboards, Elo ratings, and player performance analysis.",
+    images: [
+      {
+        url: "/favicon.png",
+        width: 1536,
+        height: 1536,
+        alt: "Goodminton",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Goodminton",
+    description: "Badminton club stats platform for leaderboards, Elo ratings, and player performance analysis.",
+    images: ["/favicon.png"],
   },
   appleWebApp: {
     capable: true,
