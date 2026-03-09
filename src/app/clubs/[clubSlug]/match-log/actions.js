@@ -73,7 +73,7 @@ function buildParticipants(formData) {
     { club_player_id: getString(formData, "team1_player2"), team: 1, slot: 2 },
     { club_player_id: getString(formData, "team2_player1"), team: 2, slot: 1 },
     { club_player_id: getString(formData, "team2_player2"), team: 2, slot: 2 },
-  ];
+  ].filter((item) => item.club_player_id);
 }
 
 export async function createMatchLogAction(formData) {
@@ -95,12 +95,26 @@ export async function createMatchLogAction(formData) {
   }
 
   const participants = buildParticipants(formData);
-  if (participants.some((item) => !item.club_player_id)) {
-    redirect(`/clubs/${clubSlug}/match-log/new?error=All four player fields are required.`);
+  const team1Primary = getString(formData, "team1_player1");
+  const team2Primary = getString(formData, "team2_player1");
+  const team1Secondary = getString(formData, "team1_player2");
+  const team2Secondary = getString(formData, "team2_player2");
+
+  if (!team1Primary || !team2Primary) {
+    redirect(`/clubs/${clubSlug}/match-log/new?error=Each team must have at least one player.`);
   }
 
+  const hasTeam1Partner = Boolean(team1Secondary);
+  const hasTeam2Partner = Boolean(team2Secondary);
+
+  if (hasTeam1Partner !== hasTeam2Partner) {
+    redirect(`/clubs/${clubSlug}/match-log/new?error=Choose either singles for both teams or doubles for both teams.`);
+  }
+
+  const matchType = hasTeam1Partner ? "doubles" : "singles";
+
   const uniquePlayerIds = new Set(participants.map((item) => item.club_player_id));
-  if (uniquePlayerIds.size !== 4) {
+  if (uniquePlayerIds.size !== participants.length) {
     redirect(`/clubs/${clubSlug}/match-log/new?error=Each player can only be selected once.`);
   }
 
@@ -126,7 +140,7 @@ export async function createMatchLogAction(formData) {
     .eq("club_id", membership.club.id)
     .in("id", [...uniquePlayerIds]);
 
-  if (clubPlayerCheck.error || (clubPlayerCheck.data?.length ?? 0) !== 4) {
+  if (clubPlayerCheck.error || (clubPlayerCheck.data?.length ?? 0) !== participants.length) {
     redirect(`/clubs/${clubSlug}/match-log/new?error=One or more selected players do not belong to this club.`);
   }
 
@@ -138,6 +152,7 @@ export async function createMatchLogAction(formData) {
       club_id: membership.club.id,
       match_date: playedAt.slice(0, 10),
       played_at: new Date(playedAt).toISOString(),
+      match_type: matchType,
       team1_score: team1Score,
       team2_score: team2Score,
       status: "pending",

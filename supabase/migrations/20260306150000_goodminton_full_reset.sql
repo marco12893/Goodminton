@@ -93,6 +93,7 @@ create table public.matches (
   club_id uuid not null references public.clubs(id) on delete cascade,
   match_date date not null,
   played_at timestamptz not null default timezone('utc', now()),
+  match_type text not null default 'doubles' check (match_type in ('singles', 'doubles')),
   team1_score integer not null check (team1_score >= 0),
   team2_score integer not null check (team2_score >= 0),
   winning_team smallint generated always as (
@@ -373,6 +374,7 @@ declare
   player_delta integer;
   player_elo_before integer;
   player_elo_after integer;
+  expected_team_size integer;
 begin
   select *
   into match_record
@@ -388,6 +390,11 @@ begin
     raise exception 'Only pending matches can be approved.';
   end if;
 
+  expected_team_size := case
+    when match_record.match_type = 'singles' then 1
+    else 2
+  end;
+
   select avg(cp.elo_current)::numeric, count(*)
   into team1_avg, team1_count
   from public.match_participants mp
@@ -402,8 +409,8 @@ begin
   where mp.match_id = target_match_id
     and mp.team = 2;
 
-  if team1_count <> 2 or team2_count <> 2 then
-    raise exception 'A doubles match must have exactly two players on each team.';
+  if team1_count <> expected_team_size or team2_count <> expected_team_size then
+    raise exception 'Match participants do not match the configured match type.';
   end if;
 
   winner_team := case

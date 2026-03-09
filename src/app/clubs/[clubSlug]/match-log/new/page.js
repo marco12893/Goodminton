@@ -60,7 +60,8 @@ export default async function NewMatchLogPage({ params, searchParams }) {
 
       <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
         <p className="mb-8 text-sm font-medium leading-relaxed text-slate-400">
-          All members can submit matches. Admin-created matches are approved immediately and affect ELO ratings.
+          All members can submit matches. Fill only Player 1 on each team for singles, or add both players for doubles.
+          Manager-created matches are approved immediately and affect Elo ratings.
         </p>
 
         <form action={createMatchLogAction} className="space-y-8">
