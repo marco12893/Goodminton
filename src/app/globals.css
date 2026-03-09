@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4efe5;
-  --foreground: #102033;
+  --background: #07131f;
+  --foreground: #ffffff;
   --surface: rgba(255, 255, 255, 0.72);
   --surface-strong: rgba(12, 24, 39, 0.92);
   --muted: #5c6d7f;
-  --line: rgba(16, 32, 51, 0.12);
-  --accent: #ef7d22;
-  --accent-soft: #ffd4a8;
+  --line: rgba(255, 255, 255, 0.12);
+  --accent: #18cec3;
+  --accent-soft: #a8f4f0;
   --success: #1d9b6c;
 }
 
@@ -33,9 +33,9 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
   min-height: 100vh;
   background-image:
-    radial-gradient(circle at top left, rgba(239, 125, 34, 0.18), transparent 28%),
+    radial-gradient(circle at top left, rgba(24, 206, 195, 0.16), transparent 28%),
     radial-gradient(circle at top right, rgba(29, 155, 108, 0.14), transparent 22%),
-    linear-gradient(180deg, #fbf7f0 0%, #f4efe5 48%, #efe7d8 100%);
+    linear-gradient(180deg, #041c2f 0%, #07131f 48%, #0a1520 100%);
 }
 
 a {
@@ -44,7 +44,7 @@ a {
 }
 
 ::selection {
-  background: rgba(239, 125, 34, 0.18);
+  background: rgba(24, 206, 195, 0.18);
 }
 
 .glass-panel {
@@ -56,8 +56,8 @@ a {
 
 .court-grid {
   background-image:
-    linear-gradient(to right, rgba(16, 32, 51, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(16, 32, 51, 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
