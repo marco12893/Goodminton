@@ -5,11 +5,27 @@ delete from auth.users;
 drop view if exists public.club_player_leaderboard cascade;
 
 drop trigger if exists on_auth_user_created on auth.users;
+drop trigger if exists set_tournament_matches_updated_at on public.tournament_matches;
+drop trigger if exists set_tournaments_updated_at on public.tournaments;
 drop function if exists public.handle_new_user() cascade;
 drop function if exists public.is_club_admin(uuid) cascade;
+drop function if exists public.is_club_owner(uuid) cascade;
+drop function if exists public.is_club_admin_only(uuid) cascade;
 drop function if exists public.is_club_member(uuid) cascade;
+drop function if exists public.can_manage_club_member_row(uuid, text) cascade;
+drop function if exists public.can_assign_club_member_role(uuid, text) cascade;
+drop function if exists public.can_manage_club_player_row(uuid, uuid) cascade;
+drop function if exists public.transfer_club_ownership(uuid, uuid, uuid) cascade;
+drop function if exists public.apply_match_elo(uuid) cascade;
+drop function if exists public.rebuild_club_elo(uuid) cascade;
+drop function if exists public.process_match_approval(uuid, uuid) cascade;
 drop function if exists public.set_updated_at() cascade;
 
+drop table if exists public.tournament_matches cascade;
+drop table if exists public.tournament_entry_players cascade;
+drop table if exists public.tournament_entries cascade;
+drop table if exists public.tournament_players cascade;
+drop table if exists public.tournaments cascade;
 drop table if exists public.match_participants cascade;
 drop table if exists public.elo_history cascade;
 drop table if exists public.matches cascade;
@@ -25,6 +41,10 @@ create table public.clubs (
   name text not null,
   slug text not null unique,
   city text,
+  location text,
+  play_schedule text,
+  description text,
+  image_url text,
   join_mode text not null default 'invite_only' check (join_mode in ('open', 'approval', 'invite_only')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -140,6 +160,72 @@ create table public.elo_history (
   elo_delta integer not null
 );
 
+create table public.tournaments (
+  id uuid primary key default gen_random_uuid(),
+  club_id uuid not null references public.clubs(id) on delete cascade,
+  name text not null,
+  scheduled_at timestamptz not null,
+  format text not null check (format in ('round_robin', 'knockout')),
+  category text not null check (category in ('singles', 'doubles')),
+  seeding text not null check (seeding in ('random', 'elo_based')),
+  status text not null default 'upcoming' check (status in ('upcoming', 'in_progress', 'completed')),
+  image_url text,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table public.tournament_players (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  club_player_id uuid not null references public.club_players(id) on delete cascade,
+  seed_number integer,
+  created_at timestamptz not null default timezone('utc', now()),
+  unique (tournament_id, club_player_id)
+);
+
+create table public.tournament_entries (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  seed_number integer,
+  display_name text not null,
+  average_elo integer,
+  created_at timestamptz not null default timezone('utc', now()),
+  unique (tournament_id, seed_number)
+);
+
+create table public.tournament_entry_players (
+  id uuid primary key default gen_random_uuid(),
+  tournament_entry_id uuid not null references public.tournament_entries(id) on delete cascade,
+  club_player_id uuid not null references public.club_players(id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+  unique (tournament_entry_id, club_player_id)
+);
+
+create table public.tournament_matches (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  stage text not null check (stage in ('round_robin', 'knockout', 'third_place')),
+  round_number integer not null check (round_number > 0),
+  match_number integer not null check (match_number > 0),
+  scheduled_at timestamptz not null,
+  entry1_id uuid references public.tournament_entries(id) on delete set null,
+  entry2_id uuid references public.tournament_entries(id) on delete set null,
+  score1 integer check (score1 is null or score1 >= 0),
+  score2 integer check (score2 is null or score2 >= 0),
+  winner_entry_id uuid references public.tournament_entries(id) on delete set null,
+  status text not null default 'pending' check (status in ('pending', 'completed')),
+  next_match_id uuid references public.tournament_matches(id) on delete set null,
+  next_slot smallint check (next_slot in (1, 2)),
+  loser_next_match_id uuid references public.tournament_matches(id) on delete set null,
+  loser_next_slot smallint check (loser_next_slot in (1, 2)),
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint tournament_scores_non_draw check (
+    status <> 'completed' or (score1 is not null and score2 is not null and score1 <> score2)
+  )
+);
+
 create index idx_club_members_user_id on public.club_members(user_id);
 create unique index idx_club_members_single_owner on public.club_members(club_id) where role = 'owner';
 create index idx_club_join_requests_club_id_status on public.club_join_requests(club_id, status);
@@ -151,6 +237,13 @@ create index idx_matches_club_id_match_date on public.matches(club_id, match_dat
 create index idx_match_participants_match_id on public.match_participants(match_id);
 create index idx_match_participants_club_player_id on public.match_participants(club_player_id);
 create index idx_elo_history_club_player_id_recorded_on on public.elo_history(club_player_id, recorded_on desc);
+create index idx_tournaments_club_id_scheduled_at on public.tournaments(club_id, scheduled_at desc);
+create index idx_tournament_players_tournament_id on public.tournament_players(tournament_id);
+create index idx_tournament_players_club_player_id on public.tournament_players(club_player_id);
+create index idx_tournament_entries_tournament_id on public.tournament_entries(tournament_id, seed_number);
+create index idx_tournament_entry_players_entry_id on public.tournament_entry_players(tournament_entry_id);
+create index idx_tournament_entry_players_club_player_id on public.tournament_entry_players(club_player_id);
+create index idx_tournament_matches_tournament_id on public.tournament_matches(tournament_id, stage, round_number, match_number);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -353,7 +446,7 @@ begin
 end;
 $$;
 
-create or replace function public.process_match_approval(target_match_id uuid, reviewer_user_id uuid)
+create or replace function public.apply_match_elo(target_match_id uuid)
 returns void
 language plpgsql
 security definer
@@ -379,15 +472,10 @@ begin
   select *
   into match_record
   from public.matches
-  where id = target_match_id
-  for update;
+  where id = target_match_id;
 
   if not found then
     raise exception 'Match not found.';
-  end if;
-
-  if match_record.status <> 'pending' then
-    raise exception 'Only pending matches can be approved.';
   end if;
 
   expected_team_size := case
@@ -487,6 +575,80 @@ begin
       player_delta
     );
   end loop;
+end;
+$$;
+
+create or replace function public.rebuild_club_elo(target_club_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  match_record record;
+begin
+  update public.club_players
+  set
+    elo_current = elo_initial,
+    total_matches = 0,
+    total_wins = 0,
+    total_losses = 0
+  where club_id = target_club_id;
+
+  update public.match_participants mp
+  set
+    elo_before = 0,
+    elo_after = 0,
+    elo_delta = 0
+  where exists (
+    select 1
+    from public.matches m
+    where m.id = mp.match_id
+      and m.club_id = target_club_id
+  );
+
+  delete from public.elo_history eh
+  where exists (
+    select 1
+    from public.club_players cp
+    where cp.id = eh.club_player_id
+      and cp.club_id = target_club_id
+  );
+
+  for match_record in
+    select id
+    from public.matches
+    where club_id = target_club_id
+      and status = 'approved'
+    order by played_at asc, created_at asc, id asc
+  loop
+    perform public.apply_match_elo(match_record.id);
+  end loop;
+end;
+$$;
+
+create or replace function public.process_match_approval(target_match_id uuid, reviewer_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  match_record public.matches%rowtype;
+begin
+  select *
+  into match_record
+  from public.matches
+  where id = target_match_id
+  for update;
+
+  if not found then
+    raise exception 'Match not found.';
+  end if;
+
+  if match_record.status <> 'pending' then
+    raise exception 'Only pending matches can be approved.';
+  end if;
 
   update public.matches
   set
@@ -495,6 +657,8 @@ begin
     reviewed_at = timezone('utc', now()),
     rejection_reason = null
   where id = target_match_id;
+
+  perform public.apply_match_elo(target_match_id);
 end;
 $$;
 
@@ -520,6 +684,14 @@ for each row execute function public.set_updated_at();
 
 create trigger set_matches_updated_at
 before update on public.matches
+for each row execute function public.set_updated_at();
+
+create trigger set_tournaments_updated_at
+before update on public.tournaments
+for each row execute function public.set_updated_at();
+
+create trigger set_tournament_matches_updated_at
+before update on public.tournament_matches
 for each row execute function public.set_updated_at();
 
 create trigger on_auth_user_created
@@ -574,6 +746,11 @@ alter table public.club_players enable row level security;
 alter table public.matches enable row level security;
 alter table public.match_participants enable row level security;
 alter table public.elo_history enable row level security;
+alter table public.tournaments enable row level security;
+alter table public.tournament_players enable row level security;
+alter table public.tournament_entries enable row level security;
+alter table public.tournament_entry_players enable row level security;
+alter table public.tournament_matches enable row level security;
 
 create policy "club members can read clubs"
 on public.clubs
@@ -777,6 +954,148 @@ with check (
     from public.club_players cp
     where cp.id = elo_history.club_player_id
       and public.is_club_admin(cp.club_id)
+  )
+);
+
+create policy "members can read tournaments"
+on public.tournaments
+for select
+using (public.is_club_member(club_id));
+
+create policy "club admins manage tournaments"
+on public.tournaments
+for all
+using (public.is_club_admin(club_id))
+with check (public.is_club_admin(club_id));
+
+create policy "members can read tournament players"
+on public.tournament_players
+for select
+using (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_players.tournament_id
+      and public.is_club_member(t.club_id)
+  )
+);
+
+create policy "club admins manage tournament players"
+on public.tournament_players
+for all
+using (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_players.tournament_id
+      and public.is_club_admin(t.club_id)
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_players.tournament_id
+      and public.is_club_admin(t.club_id)
+  )
+);
+
+create policy "members can read tournament entries"
+on public.tournament_entries
+for select
+using (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_entries.tournament_id
+      and public.is_club_member(t.club_id)
+  )
+);
+
+create policy "club admins manage tournament entries"
+on public.tournament_entries
+for all
+using (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_entries.tournament_id
+      and public.is_club_admin(t.club_id)
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_entries.tournament_id
+      and public.is_club_admin(t.club_id)
+  )
+);
+
+create policy "members can read tournament entry players"
+on public.tournament_entry_players
+for select
+using (
+  exists (
+    select 1
+    from public.tournament_entries te
+    join public.tournaments t on t.id = te.tournament_id
+    where te.id = tournament_entry_players.tournament_entry_id
+      and public.is_club_member(t.club_id)
+  )
+);
+
+create policy "club admins manage tournament entry players"
+on public.tournament_entry_players
+for all
+using (
+  exists (
+    select 1
+    from public.tournament_entries te
+    join public.tournaments t on t.id = te.tournament_id
+    where te.id = tournament_entry_players.tournament_entry_id
+      and public.is_club_admin(t.club_id)
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.tournament_entries te
+    join public.tournaments t on t.id = te.tournament_id
+    where te.id = tournament_entry_players.tournament_entry_id
+      and public.is_club_admin(t.club_id)
+  )
+);
+
+create policy "members can read tournament matches"
+on public.tournament_matches
+for select
+using (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_matches.tournament_id
+      and public.is_club_member(t.club_id)
+  )
+);
+
+create policy "club admins manage tournament matches"
+on public.tournament_matches
+for all
+using (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_matches.tournament_id
+      and public.is_club_admin(t.club_id)
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.tournaments t
+    where t.id = tournament_matches.tournament_id
+      and public.is_club_admin(t.club_id)
   )
 );
 
