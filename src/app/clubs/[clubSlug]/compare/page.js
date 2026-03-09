@@ -45,11 +45,17 @@ export default async function ClubComparePage({ params }) {
     throw new Error(error.message);
   }
 
-  const players = (roster ?? []).map((entry) => ({
-    id: entry.id,
-    name: entry.player?.full_name ?? "Unknown player",
-    avatarUrl: entry.player?.avatar_url ?? "",
-  }));
+  const players = (roster ?? [])
+    .map((entry) => ({
+      id: entry.id,
+      name: entry.player?.full_name ?? "Unknown player",
+      avatarUrl: entry.player?.avatar_url ?? "",
+    }))
+    .sort((left, right) =>
+      left.name.localeCompare(right.name, undefined, {
+        sensitivity: "base",
+      })
+    );
 
   return (
     <section className="mx-auto w-full max-w-4xl space-y-6 pb-12">
