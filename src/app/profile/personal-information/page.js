@@ -134,7 +134,6 @@ export default async function PersonalInformationPage({ searchParams }) {
                   defaultValue={player?.gender ?? ""}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
                 >
-                  <option className="bg-slate-900 text-white" value="">Prefer not to say</option>
                   <option className="bg-slate-900 text-white" value="male">Male</option>
                   <option className="bg-slate-900 text-white" value="female">Female</option>
                 </select>
