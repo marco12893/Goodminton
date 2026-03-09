@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER, isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import {
   approveClubJoinRequestAction,
@@ -10,11 +11,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { Pencil, MapPin, Calendar, Users, ShieldCheck } from "lucide-react";
 
-function AdminBadge() {
+function RoleBadge({ role }) {
+  const isOwner = role === CLUB_ROLE_OWNER;
   return (
-    <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-teal-400 backdrop-blur-sm">
+    <span
+      className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest backdrop-blur-sm ${
+        isOwner
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+          : "border-teal-500/30 bg-teal-500/10 text-teal-400"
+      }`}
+    >
       <ShieldCheck size={12} />
-      Admin
+      {isOwner ? "Owner" : "Admin"}
     </span>
   );
 }
@@ -52,7 +60,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
   const availableManualPlayers = (members ?? []).filter((member) => !member.player?.user_id);
 
-  const { data: rawJoinRequests, error: joinRequestsError } = club.role === "admin"
+  const { data: rawJoinRequests, error: joinRequestsError } = isClubManager(club.role)
     ? await supabase
         .from("club_join_requests")
         .select("id, user_id, created_at")
@@ -99,7 +107,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
               Manage club identity, schedules, and your member community roster.
             </p>
           </div>
-          {club.role === "admin" && (
+          {isClubManager(club.role) && (
             <Link
               href={`/clubs/${clubSlug}/settings/edit`}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 hover:text-teal-400 active:scale-95"
@@ -180,14 +188,16 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                   <span className="truncate text-sm font-bold text-white group-hover:text-teal-300 transition-colors">
                     {member.player?.full_name}
                   </span>
-                  {roleMap.get(member.player?.user_id) === "admin" && <AdminBadge />}
+                  {[CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN].includes(roleMap.get(member.player?.user_id)) && (
+                    <RoleBadge role={roleMap.get(member.player?.user_id)} />
+                  )}
                 </Link>
               ))
             )}
           </div>
         </div>
 
-        {club.role === "admin" && (
+        {isClubManager(club.role) && (
           <div className="mt-10 border-t border-white/5 pt-8">
             <div className="flex items-center justify-between gap-4">
               <div>

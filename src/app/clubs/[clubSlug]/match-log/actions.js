@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { isClubManager } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -27,20 +28,21 @@ async function getClubMembership(clubSlug, userId) {
       `
     )
     .eq("user_id", userId)
-    .eq("clubs.slug", clubSlug)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  if (!data?.club?.id) {
+  const membership = (data ?? []).find((item) => item.club?.slug === clubSlug) ?? null;
+
+  if (!membership?.club?.id) {
     throw new Error("You do not have access to this club.");
   }
 
   return {
-    role: data.role,
-    club: data.club,
+    role: membership.role,
+    club: membership.club,
   };
 }
 
@@ -128,7 +130,7 @@ export async function createMatchLogAction(formData) {
     redirect(`/clubs/${clubSlug}/match-log/new?error=One or more selected players do not belong to this club.`);
   }
 
-  const isAdmin = membership.role === "admin";
+  const isAdmin = isClubManager(membership.role);
 
   const matchInsert = await supabaseAdmin
     .from("matches")
@@ -203,8 +205,8 @@ export async function approveMatchLogAction(formData) {
     redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);
   }
 
-  if (membership.role !== "admin") {
-    redirect(`/clubs/${clubSlug}/match-log?error=Only admins can review submitted matches.`);
+  if (!isClubManager(membership.role)) {
+    redirect(`/clubs/${clubSlug}/match-log?error=Only club managers can review submitted matches.`);
   }
 
   const { data: match, error: matchError } = await supabaseAdmin
@@ -259,8 +261,8 @@ export async function rejectMatchLogAction(formData) {
     redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);
   }
 
-  if (membership.role !== "admin") {
-    redirect(`/clubs/${clubSlug}/match-log?error=Only admins can review submitted matches.`);
+  if (!isClubManager(membership.role)) {
+    redirect(`/clubs/${clubSlug}/match-log?error=Only club managers can review submitted matches.`);
   }
 
   const { error } = await supabaseAdmin
@@ -306,8 +308,8 @@ export async function deleteMatchLogAction(formData) {
     redirect(`/clubs/${clubSlug}/match-log?error=${encodeURIComponent(error.message)}`);
   }
 
-  if (membership.role !== "admin") {
-    redirect(`/clubs/${clubSlug}/match-log?error=Only admins can delete matches.`);
+  if (!isClubManager(membership.role)) {
+    redirect(`/clubs/${clubSlug}/match-log?error=Only club managers can delete matches.`);
   }
 
   const { data: match, error: matchError } = await supabaseAdmin

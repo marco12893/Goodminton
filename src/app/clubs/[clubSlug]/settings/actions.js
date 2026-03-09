@@ -3,6 +3,13 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  CLUB_ROLE_ADMIN,
+  CLUB_ROLE_OWNER,
+  CLUB_ROLE_PLAYER,
+  isClubManager,
+  isClubOwner,
+} from "@/lib/clubRoles";
+import {
   addUserToClubWithNewPlayer,
   attachUserToClubPlayer,
 } from "@/lib/clubJoin";
@@ -25,7 +32,11 @@ function revalidateClubViews(clubSlug) {
   revalidatePath(`/clubs/${clubSlug}/settings/edit`);
 }
 
-async function getAuthorizedClub(clubSlug, userId) {
+async function getAuthorizedClub(
+  clubSlug,
+  userId,
+  allowedRoles = [CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN]
+) {
   const { data, error } = await supabaseAdmin
     .from("club_members")
     .select(
@@ -38,20 +49,25 @@ async function getAuthorizedClub(clubSlug, userId) {
       `
     )
     .eq("user_id", userId)
-    .eq("role", "admin")
     .order("created_at", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const membership = (data ?? []).find((item) => item.club?.slug === clubSlug) ?? null;
+  const membership =
+    (data ?? []).find(
+      (item) => item.club?.slug === clubSlug && allowedRoles.includes(item.role)
+    ) ?? null;
 
   if (!membership?.club?.id) {
-    throw new Error("You do not have admin access to this club.");
+    throw new Error("You do not have access to manage this club.");
   }
 
-  return membership.club;
+  return {
+    ...membership.club,
+    role: membership.role,
+  };
 }
 
 export async function updateClubSettingsAction(formData) {
@@ -356,8 +372,9 @@ export async function removeClubPlayerAction(formData) {
     redirect("/login");
   }
 
+  let actingClub;
   try {
-    await getAuthorizedClub(clubSlug, user.id);
+    actingClub = await getAuthorizedClub(clubSlug, user.id);
   } catch (error) {
     redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
   }
@@ -403,9 +420,14 @@ export async function removeClubPlayerAction(formData) {
     }
 
     const membership = membershipLookup.data?.[0] ?? null;
+    const targetRole = membership?.role ?? CLUB_ROLE_PLAYER;
 
-    if (membership?.role === "admin") {
-      redirect(`/clubs/${clubSlug}/settings/edit?error=Admin accounts cannot be removed from the club roster here.`);
+    if (targetRole === CLUB_ROLE_OWNER) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=The club owner cannot be removed from the club roster.`);
+    }
+
+    if (!isClubOwner(actingClub.role) && isClubManager(targetRole)) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=Admins cannot remove other admins or the owner.`);
     }
   }
 
@@ -429,7 +451,7 @@ export async function removeClubPlayerAction(formData) {
       .delete()
       .eq("club_id", clubPlayer.club_id)
       .eq("user_id", linkedUserId)
-      .eq("role", "player");
+      .neq("role", CLUB_ROLE_OWNER);
 
     if (membershipDelete.error) {
       redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipDelete.error.message)}`);
@@ -499,12 +521,33 @@ export async function promoteClubMemberAction(formData) {
     );
   }
 
+  const targetMembershipLookup = await supabaseAdmin
+    .from("club_members")
+    .select("role")
+    .eq("club_id", club.id)
+    .eq("user_id", linkedUserId)
+    .limit(1);
+
+  if (targetMembershipLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(targetMembershipLookup.error.message)}`);
+  }
+
+  const targetRole = targetMembershipLookup.data?.[0]?.role ?? CLUB_ROLE_PLAYER;
+
+  if (targetRole === CLUB_ROLE_OWNER) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=The club owner already has higher access than admin.`);
+  }
+
+  if (targetRole === CLUB_ROLE_ADMIN) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=This member is already an admin.`);
+  }
+
   const membershipUpsert = await supabaseAdmin.from("club_members").upsert(
     [
       {
         club_id: club.id,
         user_id: linkedUserId,
-        role: "admin",
+        role: CLUB_ROLE_ADMIN,
       },
     ],
     {
@@ -517,7 +560,143 @@ export async function promoteClubMemberAction(formData) {
   }
 
   revalidateClubViews(clubSlug);
-  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Player promoted to admin successfully.")}`);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Member promoted to admin successfully.")}`);
+}
+
+export async function demoteClubMemberAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const clubPlayerId = getString(formData, "club_player_id");
+
+  if (!clubSlug || !clubPlayerId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid player data.`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let club;
+  try {
+    club = await getAuthorizedClub(clubSlug, user.id, [CLUB_ROLE_OWNER]);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const clubPlayerLookup = await supabaseAdmin
+    .from("club_players")
+    .select(`id, player:players (user_id)`)
+    .eq("id", clubPlayerId)
+    .eq("club_id", club.id)
+    .limit(1);
+
+  if (clubPlayerLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerLookup.error.message)}`);
+  }
+
+  const linkedUserId = clubPlayerLookup.data?.[0]?.player?.user_id ?? null;
+
+  if (!linkedUserId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Only linked admins can be demoted.`);
+  }
+
+  const membershipLookup = await supabaseAdmin
+    .from("club_members")
+    .select("role")
+    .eq("club_id", club.id)
+    .eq("user_id", linkedUserId)
+    .limit(1);
+
+  if (membershipLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipLookup.error.message)}`);
+  }
+
+  const targetRole = membershipLookup.data?.[0]?.role ?? null;
+
+  if (targetRole === CLUB_ROLE_OWNER) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Ownership must be transferred instead of demoted.`);
+  }
+
+  if (targetRole !== CLUB_ROLE_ADMIN) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=This member is not an admin.`);
+  }
+
+  const demoteResult = await supabaseAdmin
+    .from("club_members")
+    .update({ role: CLUB_ROLE_PLAYER })
+    .eq("club_id", club.id)
+    .eq("user_id", linkedUserId)
+    .eq("role", CLUB_ROLE_ADMIN);
+
+  if (demoteResult.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(demoteResult.error.message)}`);
+  }
+
+  revalidateClubViews(clubSlug);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Admin demoted to player successfully.")}`);
+}
+
+export async function transferClubOwnershipAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const clubPlayerId = getString(formData, "club_player_id");
+
+  if (!clubSlug || !clubPlayerId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid player data.`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let club;
+  try {
+    club = await getAuthorizedClub(clubSlug, user.id, [CLUB_ROLE_OWNER]);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const clubPlayerLookup = await supabaseAdmin
+    .from("club_players")
+    .select(`id, player:players (user_id)`)
+    .eq("id", clubPlayerId)
+    .eq("club_id", club.id)
+    .limit(1);
+
+  if (clubPlayerLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerLookup.error.message)}`);
+  }
+
+  const nextOwnerUserId = clubPlayerLookup.data?.[0]?.player?.user_id ?? null;
+
+  if (!nextOwnerUserId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Ownership can only be transferred to a linked account.`);
+  }
+
+  if (nextOwnerUserId === user.id) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=You already own this club.`);
+  }
+
+  const transferResult = await supabaseAdmin.rpc("transfer_club_ownership", {
+    target_club_id: club.id,
+    current_owner_user_id: user.id,
+    new_owner_user_id: nextOwnerUserId,
+  });
+
+  if (transferResult.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(transferResult.error.message)}`);
+  }
+
+  revalidateClubViews(clubSlug);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Ownership transferred successfully.")}`);
 }
 
 export async function approveClubJoinRequestAction(formData) {
@@ -684,7 +863,7 @@ export async function dissolveClubAction(formData) {
 
   let club;
   try {
-    club = await getAuthorizedClub(clubSlug, user.id);
+    club = await getAuthorizedClub(clubSlug, user.id, [CLUB_ROLE_OWNER]);
   } catch (error) {
     redirect(`/?error=${encodeURIComponent(error.message)}`);
   }

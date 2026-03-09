@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { CLUB_ROLE_OWNER } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildPublicImageUrl, deleteStorageObject } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -96,7 +97,7 @@ export async function createClubAction(formData) {
   const membershipInsert = await supabaseAdmin.from("club_members").insert({
     club_id: club.id,
     user_id: user.id,
-    role: "admin",
+    role: CLUB_ROLE_OWNER,
   });
 
   if (membershipInsert.error) {

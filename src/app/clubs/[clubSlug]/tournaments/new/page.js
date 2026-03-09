@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createTournamentAction } from "@/app/clubs/[clubSlug]/tournaments/new/actions";
 import TournamentSetupForm from "@/components/TournamentSetupForm";
+import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -29,8 +30,8 @@ export default async function NewTournamentPage({ params, searchParams }) {
     notFound();
   }
 
-  if (club.role !== "admin") {
-    redirect(`/clubs/${clubSlug}/tournaments?error=${encodeURIComponent("Only admins can create tournaments.")}`);
+  if (!isClubManager(club.role)) {
+    redirect(`/clubs/${clubSlug}/tournaments?error=${encodeURIComponent("Only club managers can create tournaments.")}`);
   }
 
   const { data: players, error: playersError } = await supabase

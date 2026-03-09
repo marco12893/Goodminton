@@ -54,7 +54,7 @@ create table public.club_members (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null references public.clubs(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  role text not null check (role in ('admin', 'player')),
+  role text not null check (role in ('owner', 'admin', 'player')),
   created_at timestamptz not null default timezone('utc', now()),
   unique (club_id, user_id)
 );
@@ -140,6 +140,7 @@ create table public.elo_history (
 );
 
 create index idx_club_members_user_id on public.club_members(user_id);
+create unique index idx_club_members_single_owner on public.club_members(club_id) where role = 'owner';
 create index idx_club_join_requests_club_id_status on public.club_join_requests(club_id, status);
 create index idx_club_join_requests_user_id on public.club_join_requests(user_id);
 create index idx_club_players_club_id on public.club_players(club_id);
@@ -187,8 +188,71 @@ as $$
     from public.club_members cm
     where cm.club_id = target_club_id
       and cm.user_id = auth.uid()
-      and cm.role = 'admin'
+      and cm.role in ('owner', 'admin')
   );
+$$;
+
+create or replace function public.is_club_owner(target_club_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.club_members cm
+    where cm.club_id = target_club_id
+      and cm.user_id = auth.uid()
+      and cm.role = 'owner'
+  );
+$$;
+
+create or replace function public.transfer_club_ownership(
+  target_club_id uuid,
+  current_owner_user_id uuid,
+  new_owner_user_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if current_owner_user_id = new_owner_user_id then
+    raise exception 'Ownership is already assigned to this user.';
+  end if;
+
+  if not exists (
+    select 1
+    from public.club_members
+    where club_id = target_club_id
+      and user_id = current_owner_user_id
+      and role = 'owner'
+  ) then
+    raise exception 'Current owner was not found.';
+  end if;
+
+  if not exists (
+    select 1
+    from public.club_members
+    where club_id = target_club_id
+      and user_id = new_owner_user_id
+  ) then
+    raise exception 'New owner must already be a club member.';
+  end if;
+
+  update public.club_members
+  set role = 'admin'
+  where club_id = target_club_id
+    and user_id = current_owner_user_id
+    and role = 'owner';
+
+  update public.club_members
+  set role = 'owner'
+  where club_id = target_club_id
+    and user_id = new_owner_user_id;
+end;
 $$;
 
 create or replace function public.handle_new_user()

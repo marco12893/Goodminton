@@ -5,6 +5,7 @@ import {
   deleteMatchLogAction,
   rejectMatchLogAction,
 } from "@/app/clubs/[clubSlug]/match-log/actions";
+import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -221,7 +222,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
                 </div>
 
                 {/* Admin Actions Footer */}
-                {club.role === "admin" && (
+                {isClubManager(club.role) && (
                   <div className="mt-8 flex flex-col gap-3 border-t border-white/5 pt-6 sm:flex-row sm:justify-end">
                     {match.status === "pending" && (
                       <>

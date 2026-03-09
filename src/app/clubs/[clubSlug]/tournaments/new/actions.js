@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -23,19 +24,24 @@ async function getAuthorizedClub(clubSlug, userId) {
       `
     )
     .eq("user_id", userId)
-    .eq("role", "admin")
-    .eq("clubs.slug", clubSlug)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  if (!data?.club?.id) {
-    throw new Error("You do not have admin access to this club.");
+  const membership =
+    (data ?? []).find(
+      (item) =>
+        item.club?.slug === clubSlug &&
+        [CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN].includes(item.role)
+    ) ?? null;
+
+  if (!membership?.club?.id) {
+    throw new Error("You do not have manager access to this club.");
   }
 
-  return data.club;
+  return membership.club;
 }
 
 export async function createTournamentAction(formData) {

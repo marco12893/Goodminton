@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CalendarDays, Trophy, Volleyball } from "lucide-react";
+import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -93,7 +94,7 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
               Track club tournaments and upcoming events. Tournament brackets will be added later.
             </p>
           </div>
-          {club.role === "admin" ? (
+          {isClubManager(club.role) ? (
             <Link
               href={`/clubs/${clubSlug}/tournaments/new`}
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-3xl font-light text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 hover:opacity-90 hover:shadow-cyan-500/40 active:scale-95"

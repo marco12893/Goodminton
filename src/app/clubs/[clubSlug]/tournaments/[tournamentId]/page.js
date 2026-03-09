@@ -6,6 +6,7 @@ import {
   saveTournamentMatchAction,
   updateTournamentStatusAction,
 } from "@/app/clubs/[clubSlug]/tournaments/[tournamentId]/actions";
+import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import {
   getCategoryLabel,
@@ -470,7 +471,7 @@ export default async function TournamentDetailPage({ params, searchParams }) {
           </div>
 
           {/* Admin Controls */}
-          {club.role === "admin" && (
+          {isClubManager(club.role) && (
             <div className="flex w-full flex-col gap-3 rounded-2xl bg-white/5 p-4 lg:w-auto lg:items-end lg:bg-transparent lg:p-0">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 lg:hidden">Admin Controls</p>
               
@@ -585,7 +586,7 @@ export default async function TournamentDetailPage({ params, searchParams }) {
                   </h2>
                   <div className="mt-5 grid gap-3 sm:mt-6 lg:grid-cols-2">
                     {roundRobinRounds[roundNumber].map((match) => (
-                      <MatchScoreForm key={match.id} clubSlug={clubSlug} tournamentId={tournamentId} match={match} admin={club.role === "admin"} />
+                      <MatchScoreForm key={match.id} clubSlug={clubSlug} tournamentId={tournamentId} match={match} admin={isClubManager(club.role)} />
                     ))}
                   </div>
                 </div>
@@ -596,7 +597,7 @@ export default async function TournamentDetailPage({ params, searchParams }) {
               <h2 className="font-mono text-xl font-bold text-white sm:text-2xl">All Matches</h2>
               <div className="mt-5 grid gap-3 sm:mt-6 lg:grid-cols-2">
                 {matches.map((match) => (
-                  <MatchScoreForm key={match.id} clubSlug={clubSlug} tournamentId={tournamentId} match={match} admin={club.role === "admin"} />
+                  <MatchScoreForm key={match.id} clubSlug={clubSlug} tournamentId={tournamentId} match={match} admin={isClubManager(club.role)} />
                 ))}
               </div>
             </div>

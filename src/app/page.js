@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getClubRoleLabel } from "@/lib/clubRoles";
 import { getHomepageData } from "@/lib/homepageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 function RoleBadge({ role }) {
-  const copy = role === "admin" ? "Admin club" : "Member";
+  const copy = getClubRoleLabel(role);
   return (
     <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm">
       {copy}

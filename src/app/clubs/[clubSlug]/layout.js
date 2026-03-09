@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ClubBottomNav from "@/components/ClubBottomNav";
 import ClubHeaderWrapper from "@/components/ClubHeaderWrapper";
+import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseClientForCache } from "@/lib/supabase/server";
@@ -73,7 +74,7 @@ export default async function ClubLayout({ children, params }) {
   const preparedSearchablePlayers = await getCachedSearchablePlayers(club.id, cookieStore);
   let pendingJoinRequestsCount = 0;
 
-  if (club.role === "admin") {
+  if (isClubManager(club.role)) {
     const pendingJoinRequests = await supabase
       .from("club_join_requests")
       .select("id", { count: "exact", head: true })

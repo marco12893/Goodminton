@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { computeTournamentStatus } from "@/lib/tournaments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -28,23 +29,27 @@ export async function getAuthorizedTournament(clubSlug, tournamentId, userId) {
       `
     )
     .eq("user_id", userId)
-    .eq("role", "admin")
-    .eq("clubs.slug", clubSlug)
-    .eq("clubs.tournaments.id", tournamentId)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const tournament = data?.club?.tournaments?.[0];
+  const membership =
+    (data ?? []).find(
+      (item) =>
+        item.club?.slug === clubSlug &&
+        [CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN].includes(item.role) &&
+        item.club?.tournaments?.some((tournament) => tournament.id === tournamentId)
+    ) ?? null;
+  const tournament = membership?.club?.tournaments?.find((entry) => entry.id === tournamentId);
 
-  if (!data?.club?.id || !tournament?.id) {
-    throw new Error("You do not have admin access to this tournament.");
+  if (!membership?.club?.id || !tournament?.id) {
+    throw new Error("You do not have manager access to this tournament.");
   }
 
   return {
-    clubId: data.club.id,
+    clubId: membership.club.id,
     tournamentId: tournament.id,
     format: tournament.format,
   };

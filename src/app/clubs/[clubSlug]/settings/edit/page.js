@@ -2,12 +2,20 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   addClubPlayerAction,
+  demoteClubMemberAction,
   dissolveClubAction,
   linkClubPlayerAction,
   promoteClubMemberAction,
   removeClubPlayerAction,
+  transferClubOwnershipAction,
   updateClubSettingsAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
+import {
+  CLUB_ROLE_ADMIN,
+  CLUB_ROLE_OWNER,
+  isClubManager,
+  isClubOwner,
+} from "@/lib/clubRoles";
 import SignedImageUploadField from "@/components/SignedImageUploadField";
 import { getClubPageData } from "@/lib/clubPageData";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
@@ -25,11 +33,18 @@ function ErrorMessage({ value }) {
   );
 }
 
-function AdminBadge() {
+function RoleBadge({ role }) {
+  const isOwner = role === CLUB_ROLE_OWNER;
   return (
-    <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-teal-400">
+    <span
+      className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${
+        isOwner
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+          : "border-teal-500/30 bg-teal-500/10 text-teal-400"
+      }`}
+    >
       <ShieldCheck size={12} />
-      Admin
+      {isOwner ? "Owner" : "Admin"}
     </span>
   );
 }
@@ -48,7 +63,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   const cookieStore = await cookies();
   const club = await getClubPageData(user.id, clubSlug, cookieStore);
 
-  if (!club || club.role !== "admin") {
+  if (!club || !isClubManager(club.role)) {
     redirect(`/clubs/${clubSlug}/settings`);
   }
 
@@ -207,7 +222,9 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   >
                     {member.player?.full_name}
                   </Link>
-                  {roleMap.get(member.player?.user_id) === "admin" && <AdminBadge />}
+                  {[CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN].includes(roleMap.get(member.player?.user_id)) && (
+                    <RoleBadge role={roleMap.get(member.player?.user_id)} />
+                  )}
                 </div>
                 <div className="mt-1 flex items-center gap-2">
                   <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
@@ -243,7 +260,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   </form>
                 )}
 
-                {member.player?.user_id && roleMap.get(member.player?.user_id) !== "admin" && (
+                {member.player?.user_id && ![CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER].includes(roleMap.get(member.player?.user_id)) && (
                   <form action={promoteClubMemberAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="club_player_id" value={member.id} />
@@ -253,20 +270,45 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   </form>
                 )}
 
-                <form action={removeClubPlayerAction}>
-                  <input type="hidden" name="club_slug" value={clubSlug} />
-                  <input type="hidden" name="club_player_id" value={member.id} />
-                  <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
-                    <UserMinus size={14} />
-                    Remove
-                  </button>
-                </form>
+                {isClubOwner(club.role) && roleMap.get(member.player?.user_id) === CLUB_ROLE_ADMIN && (
+                  <form action={demoteClubMemberAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="club_player_id" value={member.id} />
+                    <button className="rounded-lg bg-slate-500/20 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-500/30 transition-colors">
+                      Demote
+                    </button>
+                  </form>
+                )}
+
+                {isClubOwner(club.role) && member.player?.user_id && roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER && (
+                  <form action={transferClubOwnershipAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="club_player_id" value={member.id} />
+                    <button className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/30 transition-colors">
+                      Make Owner
+                    </button>
+                  </form>
+                )}
+
+                {(!member.player?.user_id ||
+                  (roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER &&
+                    (isClubOwner(club.role) || roleMap.get(member.player?.user_id) !== CLUB_ROLE_ADMIN))) && (
+                  <form action={removeClubPlayerAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="club_player_id" value={member.id} />
+                    <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
+                      <UserMinus size={14} />
+                      Remove
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           ))}
         </div>
       </div>
 
+      {isClubOwner(club.role) && (
       <div className="rounded-[2rem] border border-rose-500/20 bg-rose-950/20 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
         <h2 className="mb-2 font-mono text-xl font-bold text-white flex items-center gap-2">
           <span className="text-rose-400">03.</span> Danger Zone
@@ -294,6 +336,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           </button>
         </form>
       </div>
+      )}
 
     </section>
   );
