@@ -43,9 +43,9 @@ export async function updateClubSettingsAction(formData) {
   const location = getString(formData, "location");
   const playSchedule = getString(formData, "play_schedule");
   const description = getString(formData, "description");
-  const imageUrl = getString(formData, "image_url") || null;
-  const imageStoragePath = getString(formData, "image_storage_path") || null;
-  const currentImageUrl = getString(formData, "current_image_url") || null;
+  const imageUrl = getString(formData, "image_url");
+  const imageStoragePath = getString(formData, "image_storage_path");
+  const currentImageUrl = getString(formData, "current_image_url");
   const currentImageStoragePath =
     getString(formData, "current_image_storage_path") || parseStoragePathFromPublicUrl(currentImageUrl);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, useTransition } from "react";
+import { useEffect, useId, useState, useRef } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 function getInitials(label) {
@@ -32,8 +32,20 @@ export default function SignedImageUploadField({
   const [uploadedPath, setUploadedPath] = useState(initialPath);
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
   const [objectPreviewUrl, setObjectPreviewUrl] = useState("");
+  
+  // Refs to always have latest values
+  const uploadedUrlRef = useRef(uploadedUrl);
+  const uploadedPathRef = useRef(uploadedPath);
+
+  // Update refs when state changes
+  useEffect(() => {
+    uploadedUrlRef.current = uploadedUrl;
+  }, [uploadedUrl]);
+
+  useEffect(() => {
+    uploadedPathRef.current = uploadedPath;
+  }, [uploadedPath]);
 
   useEffect(() => {
     return () => {
@@ -57,41 +69,39 @@ export default function SignedImageUploadField({
     setObjectPreviewUrl(nextPreviewUrl);
     setPreviewUrl(nextPreviewUrl);
 
-    startTransition(async () => {
-      try {
-        const response = await fetch("/api/storage/sign-upload", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            folder,
-            objectId,
-            fileName: file.name,
-            contentType: file.type,
-          }),
-        });
+    try {
+      const response = await fetch("/api/storage/sign-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          folder,
+          objectId,
+          fileName: file.name,
+          contentType: file.type,
+        }),
+      });
 
-        const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload.error || "Failed to prepare image upload.");
-        }
-
-        const supabase = createSupabaseBrowserClient();
-        const { error: uploadError } = await supabase.storage
-          .from(payload.bucket)
-          .uploadToSignedUrl(payload.path, payload.token, file);
-
-        if (uploadError) {
-          throw new Error(uploadError.message);
-        }
-
-        setUploadedUrl(payload.publicUrl);
-        setUploadedPath(payload.path);
-      } catch (uploadErr) {
-        setError(uploadErr.message);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to prepare image upload.");
       }
-    });
+
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadError } = await supabase.storage
+        .from(payload.bucket)
+        .uploadToSignedUrl(payload.path, payload.token, file);
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+
+      setUploadedUrl(payload.publicUrl);
+      setUploadedPath(payload.path);
+    } catch (uploadErr) {
+      setError(uploadErr.message);
+    }
   }
 
   function handleRemove() {
@@ -105,13 +115,33 @@ export default function SignedImageUploadField({
     setUploadedPath("");
     setFileName("");
     setError("");
+    
+    // Update refs immediately
+    uploadedUrlRef.current = "";
+    uploadedPathRef.current = "";
   }
 
   return (
     <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-4">
       <p className="text-sm font-medium text-white/70">{label}</p>
-      <input type="hidden" name={urlInputName} value={uploadedUrl} />
-      <input type="hidden" name={pathInputName} value={uploadedPath} />
+      <input 
+        type="hidden" 
+        name={urlInputName} 
+        value={uploadedUrl} 
+        onChange={(e) => {
+          setUploadedUrl(e.target.value);
+          uploadedUrlRef.current = e.target.value;
+        }}
+      />
+      <input 
+        type="hidden" 
+        name={pathInputName} 
+        value={uploadedPath}
+        onChange={(e) => {
+          setUploadedPath(e.target.value);
+          uploadedPathRef.current = e.target.value;
+        }}
+      />
       <input type="hidden" name={currentUrlInputName} value={initialUrl} />
       <input type="hidden" name={currentPathInputName} value={initialPath} />
 
@@ -148,7 +178,7 @@ export default function SignedImageUploadField({
             className="sr-only"
           />
           <p className="mt-2 truncate text-sm text-white/75">
-            {isPending ? "Uploading image..." : fileName || "No file selected"}
+            {fileName ? fileName : "No file selected"}
           </p>
           <p className="mt-2 text-xs leading-5 text-white/45">
             Upload a JPG, PNG, WebP, GIF, or AVIF image up to 5 MB.

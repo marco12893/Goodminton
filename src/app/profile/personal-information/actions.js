@@ -14,9 +14,9 @@ export async function updatePersonalInformationAction(formData) {
   const gender = getString(formData, "gender") || null;
   const birthDate = getString(formData, "birth_date") || null;
   const handedness = getString(formData, "handedness") || null;
-  const avatarUrl = getString(formData, "avatar_url") || null;
-  const avatarStoragePath = getString(formData, "avatar_storage_path") || null;
-  const currentAvatarUrl = getString(formData, "current_avatar_url") || null;
+  const avatarUrl = getString(formData, "avatar_url");
+  const avatarStoragePath = getString(formData, "avatar_storage_path");
+  const currentAvatarUrl = getString(formData, "current_avatar_url");
   const currentAvatarStoragePath =
     getString(formData, "current_avatar_storage_path") || parseStoragePathFromPublicUrl(currentAvatarUrl);
 
@@ -51,7 +51,7 @@ export async function updatePersonalInformationAction(formData) {
           gender,
           birth_date: birthDate,
           handedness,
-          avatar_url: avatarUrl,
+          avatar_url: avatarUrl || null,
         },
       ],
       {
