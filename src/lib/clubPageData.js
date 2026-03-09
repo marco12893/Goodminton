@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { createSupabaseClientForCache } from './supabase/server';
 
 async function getClubPageDataImpl(supabase, userId, clubSlug) {
-  const { data: membership, error } = await supabase
+  const { data: memberships, error } = await supabase
     .from("club_members")
     .select(
       `
@@ -15,17 +15,19 @@ async function getClubPageDataImpl(supabase, userId, clubSlug) {
           location,
           play_schedule,
           description,
-          image_url
+          image_url,
+          join_mode
         )
       `
     )
     .eq("user_id", userId)
-    .eq("clubs.slug", clubSlug)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
+
+  const membership = (memberships ?? []).find((item) => item.club?.slug === clubSlug) ?? null;
 
   if (!membership?.club) {
     return null;
@@ -40,6 +42,7 @@ async function getClubPageDataImpl(supabase, userId, clubSlug) {
     playSchedule: membership.club.play_schedule,
     description: membership.club.description,
     imageUrl: membership.club.image_url,
+    joinMode: membership.club.join_mode ?? "invite_only",
     role: membership.role,
   };
 }

@@ -14,7 +14,10 @@ function RoleBadge({ role }) {
   );
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }) {
+  const query = await searchParams;
+  const success = query?.success;
+  const error = query?.error;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -61,6 +64,18 @@ export default async function Home() {
         </header>
 
         {/* Greeting Section */}
+        {(success || error) && (
+          <div
+            className={`mt-8 rounded-2xl border px-4 py-3 text-sm font-medium ${
+              success
+                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
+                : "border-rose-500/20 bg-rose-500/10 text-rose-200"
+            }`}
+          >
+            {success || error}
+          </div>
+        )}
+
         <section className="mt-10 rounded-3xl border border-white/10 bg-white/5 px-6 py-7 shadow-xl backdrop-blur-lg">
           <div className="border-l-4 border-teal-400 pl-4">
             <h1 className="text-2xl font-bold leading-tight tracking-tight text-white">
@@ -96,6 +111,13 @@ export default async function Home() {
             className="mt-6 block w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-center text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]"
           >
             New Club
+          </Link>
+
+          <Link
+            href="/clubs/discover"
+            className="mt-3 block w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-center text-base font-bold text-white transition-all hover:bg-white/10"
+          >
+            Find Clubs
           </Link>
         </section>
 

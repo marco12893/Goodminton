@@ -12,7 +12,7 @@ const navItems = [
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
-export default function ClubBottomNav({ clubSlug }) {
+export default function ClubBottomNav({ clubSlug, pendingJoinRequestsCount = 0 }) {
   const pathname = usePathname();
 
   return (
@@ -23,16 +23,23 @@ export default function ClubBottomNav({ clubSlug }) {
           const isActive = pathname === href;
           const Icon = item.icon;
 
+          const showBadge = item.label === "Settings" && pendingJoinRequestsCount > 0;
+
           return (
             <Link
               key={item.label}
               href={href}
-              className={`flex flex-1 flex-col items-center justify-center rounded-xl py-2.5 transition-all duration-200 ${
+              className={`relative flex flex-1 flex-col items-center justify-center rounded-xl py-2.5 transition-all duration-200 ${
                 isActive
                   ? "bg-white text-[#1c1d22] shadow-sm" // Background putih, teks parent gelap
                   : "bg-transparent text-white/50 hover:text-white/90"
               }`}
             >
+              {showBadge && (
+                <span className="absolute right-2 top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-black leading-none text-white shadow-lg">
+                  {pendingJoinRequestsCount > 9 ? "9+" : pendingJoinRequestsCount}
+                </span>
+              )}
               <Icon 
                 className="mb-1 h-5 w-5" 
                 strokeWidth={isActive ? 2.5 : 1.5}

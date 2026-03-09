@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   addClubPlayerAction,
+  dissolveClubAction,
   linkClubPlayerAction,
   promoteClubMemberAction,
   removeClubPlayerAction,
@@ -147,6 +148,20 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             />
           </label>
 
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">Join Mode</span>
+            <select
+              name="join_mode"
+              defaultValue={club.joinMode ?? "invite_only"}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
+              style={{ colorScheme: "dark" }}
+            >
+              <option value="invite_only" className="bg-slate-900 text-white">Invite only</option>
+              <option value="approval" className="bg-slate-900 text-white">Approval required</option>
+              <option value="open" className="bg-slate-900 text-white">Open join</option>
+            </select>
+          </label>
+
           <button className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]">
             Save Club Settings
           </button>
@@ -251,6 +266,35 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
           ))}
         </div>
       </div>
+
+      <div className="rounded-[2rem] border border-rose-500/20 bg-rose-950/20 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+        <h2 className="mb-2 font-mono text-xl font-bold text-white flex items-center gap-2">
+          <span className="text-rose-400">03.</span> Danger Zone
+        </h2>
+        <p className="text-sm font-medium leading-relaxed text-rose-100/80">
+          Dissolving a club permanently deletes the club, members, join requests, matches,
+          Elo history, tournaments, and all tournament data tied to this club.
+        </p>
+
+        <form action={dissolveClubAction} className="mt-6 space-y-4">
+          <input type="hidden" name="club_slug" value={clubSlug} />
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-rose-300/80">
+              Type the exact club name to confirm
+            </span>
+            <input
+              name="confirmation_name"
+              placeholder={club.name}
+              className="w-full rounded-xl border border-rose-400/20 bg-slate-950/40 px-4 py-3 text-base text-white outline-none transition-all focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
+            />
+          </label>
+
+          <button className="w-full rounded-xl border border-rose-400/20 bg-rose-500 px-5 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:bg-rose-400 active:scale-[0.98]">
+            Dissolve Club
+          </button>
+        </form>
+      </div>
+
     </section>
   );
 }

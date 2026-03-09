@@ -13,6 +13,7 @@ drop function if exists public.set_updated_at() cascade;
 drop table if exists public.match_participants cascade;
 drop table if exists public.elo_history cascade;
 drop table if exists public.matches cascade;
+drop table if exists public.club_join_requests cascade;
 drop table if exists public.club_players cascade;
 drop table if exists public.club_members cascade;
 drop table if exists public.players cascade;
@@ -24,6 +25,7 @@ create table public.clubs (
   name text not null,
   slug text not null unique,
   city text,
+  join_mode text not null default 'invite_only' check (join_mode in ('open', 'approval', 'invite_only')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -54,6 +56,18 @@ create table public.club_members (
   user_id uuid not null references auth.users(id) on delete cascade,
   role text not null check (role in ('admin', 'player')),
   created_at timestamptz not null default timezone('utc', now()),
+  unique (club_id, user_id)
+);
+
+create table public.club_join_requests (
+  id uuid primary key default gen_random_uuid(),
+  club_id uuid not null references public.clubs(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  resolved_at timestamptz,
+  resolved_by uuid references auth.users(id) on delete set null,
   unique (club_id, user_id)
 );
 
@@ -126,6 +140,8 @@ create table public.elo_history (
 );
 
 create index idx_club_members_user_id on public.club_members(user_id);
+create index idx_club_join_requests_club_id_status on public.club_join_requests(club_id, status);
+create index idx_club_join_requests_user_id on public.club_join_requests(user_id);
 create index idx_club_players_club_id on public.club_players(club_id);
 create index idx_club_players_player_id on public.club_players(player_id);
 create index idx_players_user_id on public.players(user_id);
@@ -363,6 +379,10 @@ create trigger set_club_players_updated_at
 before update on public.club_players
 for each row execute function public.set_updated_at();
 
+create trigger set_club_join_requests_updated_at
+before update on public.club_join_requests
+for each row execute function public.set_updated_at();
+
 create trigger set_matches_updated_at
 before update on public.matches
 for each row execute function public.set_updated_at();
@@ -414,6 +434,7 @@ alter table public.clubs enable row level security;
 alter table public.profiles enable row level security;
 alter table public.players enable row level security;
 alter table public.club_members enable row level security;
+alter table public.club_join_requests enable row level security;
 alter table public.club_players enable row level security;
 alter table public.matches enable row level security;
 alter table public.match_participants enable row level security;
@@ -492,6 +513,28 @@ using (user_id = auth.uid() or public.is_club_admin(club_id));
 
 create policy "club admins manage memberships"
 on public.club_members
+for all
+using (public.is_club_admin(club_id))
+with check (public.is_club_admin(club_id));
+
+create policy "users can read own join requests"
+on public.club_join_requests
+for select
+using (user_id = auth.uid());
+
+create policy "users can create own join requests"
+on public.club_join_requests
+for insert
+with check (user_id = auth.uid());
+
+create policy "users can update own pending join requests"
+on public.club_join_requests
+for update
+using (user_id = auth.uid() and status = 'pending')
+with check (user_id = auth.uid());
+
+create policy "club admins manage join requests"
+on public.club_join_requests
 for all
 using (public.is_club_admin(club_id))
 with check (public.is_club_admin(club_id));

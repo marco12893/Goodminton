@@ -48,6 +48,7 @@ export async function createClubAction(formData) {
   const location = getString(formData, "location");
   const playSchedule = getString(formData, "play_schedule");
   const description = getString(formData, "description");
+  const joinMode = getString(formData, "join_mode") || "invite_only";
   const imageUrl = getString(formData, "image_url") || null;
   const imageStoragePath = getString(formData, "image_storage_path") || null;
 
@@ -75,6 +76,7 @@ export async function createClubAction(formData) {
       location: location || null,
       play_schedule: playSchedule || null,
       description: description || null,
+      join_mode: joinMode,
       image_url: imageUrl || null,
     })
     .select()

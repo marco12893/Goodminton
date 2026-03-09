@@ -115,6 +115,20 @@ export default async function NewClubPage({ searchParams }) {
               />
             </label>
 
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-slate-300">Join mode</span>
+              <select
+                name="join_mode"
+                defaultValue="invite_only"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
+                style={{ colorScheme: "dark" }}
+              >
+                <option value="invite_only" className="bg-slate-900 text-white">Invite only</option>
+                <option value="approval" className="bg-slate-900 text-white">Approval required</option>
+                <option value="open" className="bg-slate-900 text-white">Open join</option>
+              </select>
+            </label>
+
             <button className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]">
               Create Club
             </button>

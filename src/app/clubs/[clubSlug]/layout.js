@@ -71,6 +71,19 @@ export default async function ClubLayout({ children, params }) {
   }
 
   const preparedSearchablePlayers = await getCachedSearchablePlayers(club.id, cookieStore);
+  let pendingJoinRequestsCount = 0;
+
+  if (club.role === "admin") {
+    const pendingJoinRequests = await supabase
+      .from("club_join_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("club_id", club.id)
+      .eq("status", "pending");
+
+    if (!pendingJoinRequests.error) {
+      pendingJoinRequestsCount = pendingJoinRequests.count ?? 0;
+    }
+  }
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#07131f] text-white">
@@ -81,7 +94,10 @@ export default async function ClubLayout({ children, params }) {
 
         <div className="flex flex-1 flex-col gap-5 pb-24 pt-6">{children}</div>
 
-        <ClubBottomNav clubSlug={clubSlug} />
+        <ClubBottomNav
+          clubSlug={clubSlug}
+          pendingJoinRequestsCount={pendingJoinRequestsCount}
+        />
       </div>
     </main>
   );
