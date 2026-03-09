@@ -648,6 +648,26 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
           
           {/* Stats Grid - Disatukan untuk Efisiensi Layar */}
           <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-teal-300">Rating Snapshot</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <StatCard label="Current Elo" value={displayedElo ?? "N/A"} icon="⚡" />
+              <StatCard
+                label={`Peak Rating (${activeRange.label})`}
+                value={peakRating ?? "N/A"}
+                icon="📈"
+                trend={
+                  peakRating != null && displayedElo != null
+                    ? {
+                        type: peakRating >= displayedElo ? "up" : "down",
+                        value: `${Math.abs(peakRating - displayedElo)}`,
+                      }
+                    : null
+                }
+              />
+            </div>
+
+            <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
             <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-teal-400">Match Overview</h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatCard label="Matches" value={totalMatches} icon="🎮" />

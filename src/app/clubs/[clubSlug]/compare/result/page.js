@@ -225,6 +225,7 @@ export default async function ClubCompareResultPage({ params, searchParams }) {
 
   const statRows = [
     { label: mode === "singles" ? "Elo" : "Avg Elo", left: formatNumber(leftEntity.elo, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.elo, mode === "singles" ? 0 : 1) },
+    { label: mode === "singles" ? "Peak Rating" : "Avg Peak Rating", left: formatNumber(leftEntity.peakRating, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.peakRating, mode === "singles" ? 0 : 1) },
     { label: mode === "singles" ? "Rank" : "Avg Rank", left: `#${formatNumber(leftEntity.rank, mode === "singles" ? 0 : 1)}`, right: `#${formatNumber(rightEntity.rank, mode === "singles" ? 0 : 1)}` },
     { label: "Matches", left: formatNumber(leftEntity.totalMatches, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.totalMatches, mode === "singles" ? 0 : 1) },
     { label: "Win Rate", left: `${formatNumber(leftEntity.winRate, 1)}%`, right: `${formatNumber(rightEntity.winRate, 1)}%` },
