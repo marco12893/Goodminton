@@ -11,7 +11,7 @@ export function isClubManager(role) {
 }
 
 export function getClubRoleLabel(role) {
-  if (role === CLUB_ROLE_OWNER) return "Owner club";
-  if (role === CLUB_ROLE_ADMIN) return "Admin club";
+  if (role === CLUB_ROLE_OWNER) return "Club owner";
+  if (role === CLUB_ROLE_ADMIN) return "Club admin";
   return "Member";
 }

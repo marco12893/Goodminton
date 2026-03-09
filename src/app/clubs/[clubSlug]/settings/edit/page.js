@@ -19,6 +19,7 @@ import {
 import SignedImageUploadField from "@/components/SignedImageUploadField";
 import { getClubPageData } from "@/lib/clubPageData";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { ShieldCheck, UserPlus, Link as LinkIcon, UserMinus } from "lucide-react";
@@ -67,7 +68,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
     redirect(`/clubs/${clubSlug}/settings`);
   }
 
-  const { data: members, error: membersError } = await supabase
+  const { data: members, error: membersError } = await supabaseAdmin
     .from("club_players")
     .select(`id, player:players (id, full_name, user_id, profile:profiles!players_user_id_fkey (email, full_name))`)
     .eq("club_id", club.id)
@@ -78,7 +79,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   const linkedUserIds = (members ?? []).map((m) => m.player?.user_id).filter(Boolean);
 
   const { data: memberships } = linkedUserIds.length
-    ? await supabase.from("club_members").select("user_id, role").eq("club_id", club.id).in("user_id", linkedUserIds)
+    ? await supabaseAdmin.from("club_members").select("user_id, role").eq("club_id", club.id).in("user_id", linkedUserIds)
     : { data: [] };
 
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));

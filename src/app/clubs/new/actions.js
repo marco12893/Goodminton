@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { CLUB_ROLE_OWNER } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -19,6 +20,8 @@ function slugify(value) {
     .replace(/[-\s]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+const CLUB_JOIN_MODES = new Set(["invite_only", "approval", "open"]);
 
 async function buildUniqueSlug(name) {
   const base = slugify(name) || "club";
@@ -55,6 +58,10 @@ export async function createClubAction(formData) {
 
   if (!name) {
     redirect("/clubs/new?error=Club name is required.");
+  }
+
+  if (!CLUB_JOIN_MODES.has(joinMode)) {
+    redirect("/clubs/new?error=Choose a valid join mode.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -112,7 +119,8 @@ export async function createClubAction(formData) {
     .from("players")
     .select("id, full_name")
     .eq("user_id", user.id)
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .limit(1);
 
   if (playerLookup.error) {
     if (imageStoragePath) {
@@ -123,7 +131,7 @@ export async function createClubAction(formData) {
     redirect(`/clubs/new?error=${encodeURIComponent(playerLookup.error.message)}`);
   }
 
-  let playerId = playerLookup.data?.id;
+  let playerId = playerLookup.data?.[0]?.id ?? null;
 
   if (!playerId) {
     const fallbackName =
@@ -173,5 +181,9 @@ export async function createClubAction(formData) {
     redirect(`/clubs/new?error=${encodeURIComponent(clubPlayerInsert.error.message)}`);
   }
 
+  revalidateTag("user-clubs");
+  revalidateTag("club-players");
+  revalidatePath("/");
+  revalidatePath(`/clubs/${club.slug}`, "layout");
   redirect("/");
 }

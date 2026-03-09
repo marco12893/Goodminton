@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   addUserToClubWithNewPlayer,
@@ -11,6 +12,17 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function revalidateClubJoinViews(clubSlug) {
+  revalidateTag("user-clubs");
+  revalidateTag("club-players");
+  revalidatePath("/");
+  revalidatePath("/clubs/discover");
+  revalidatePath(`/join-club/${clubSlug}`);
+  revalidatePath(`/clubs/${clubSlug}`, "layout");
+  revalidatePath(`/clubs/${clubSlug}`);
+  revalidatePath(`/clubs/${clubSlug}/settings`);
 }
 
 export async function joinOpenClubAction(formData) {
@@ -46,13 +58,13 @@ export async function joinOpenClubAction(formData) {
     .select("id")
     .eq("club_id", club.id)
     .eq("user_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
   if (membershipLookup.error) {
     redirect(`/clubs/discover?error=${encodeURIComponent(membershipLookup.error.message)}`);
   }
 
-  if (membershipLookup.data) {
+  if (membershipLookup.data?.length) {
     redirect(`/clubs/${club.slug}`);
   }
 
@@ -79,5 +91,6 @@ export async function joinOpenClubAction(formData) {
     redirect(`/join-club/${club.slug}?error=${encodeURIComponent(error.message)}`);
   }
 
+  revalidateClubJoinViews(club.slug);
   redirect(`/clubs/${club.slug}`);
 }

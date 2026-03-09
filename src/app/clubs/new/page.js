@@ -54,7 +54,7 @@ export default async function NewClubPage({ searchParams }) {
           </div>
 
           <p className="mt-4 text-center text-sm font-medium text-slate-300">
-            Create a new club and you will automatically become its admin and member.
+            Create a new club and you will automatically become its owner and first member.
           </p>
 
           <div className="mt-6 empty:hidden">

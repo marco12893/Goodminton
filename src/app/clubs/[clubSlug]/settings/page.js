@@ -43,7 +43,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
 
   if (!club) notFound();
 
-  const { data: members, error: membersError } = await supabase
+  const { data: members, error: membersError } = await supabaseAdmin
     .from("club_players")
     .select(`id, player:players (id, full_name, user_id)`)
     .eq("club_id", club.id)
@@ -54,14 +54,14 @@ export default async function ClubSettingsPage({ params, searchParams }) {
   const linkedUserIds = (members ?? []).map((m) => m.player?.user_id).filter(Boolean);
 
   const { data: memberships } = linkedUserIds.length
-    ? await supabase.from("club_members").select("user_id, role").eq("club_id", club.id).in("user_id", linkedUserIds)
+    ? await supabaseAdmin.from("club_members").select("user_id, role").eq("club_id", club.id).in("user_id", linkedUserIds)
     : { data: [] };
 
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
   const availableManualPlayers = (members ?? []).filter((member) => !member.player?.user_id);
 
   const { data: rawJoinRequests, error: joinRequestsError } = isClubManager(club.role)
-    ? await supabase
+    ? await supabaseAdmin
         .from("club_join_requests")
         .select("id, user_id, created_at")
         .eq("club_id", club.id)
@@ -209,9 +209,9 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                 </p>
               </div>
               {!!joinRequests.length && (
-                <span className="rounded-full bg-rose-500 px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
-                  {joinRequests.length} Pending
-                </span>
+                  <span className="rounded-full bg-rose-500 px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
+                    {joinRequests.length} Pending
+                  </span>
               )}
             </div>
 
@@ -258,10 +258,11 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                         <select
                           name="target_club_player_id"
                           className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none focus:border-teal-400"
+                          style={{ colorScheme: "dark" }}
                         >
-                          <option value="">Create or use a fresh player slot</option>
+                          <option value="" className="bg-slate-900 text-white">Create or use a fresh player slot</option>
                           {availableManualPlayers.map((player) => (
-                            <option key={player.id} value={player.id}>
+                            <option key={player.id} value={player.id} className="bg-slate-900 text-white">
                               Link to {player.player?.full_name}
                             </option>
                           ))}

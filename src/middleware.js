@@ -1,7 +1,28 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+function isProtectedRoute(pathname) {
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/clubs") ||
+    pathname.startsWith("/join-club") ||
+    pathname.startsWith("/profile")
+  );
+}
+
+function isAuthRoute(pathname) {
+  return pathname === "/login" || pathname === "/register";
+}
+
 export async function middleware(request) {
+  const { pathname, search } = request.nextUrl;
+
+  if (!isProtectedRoute(pathname) && !isAuthRoute(pathname)) {
+    return NextResponse.next({
+      request,
+    });
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -24,13 +45,33 @@ export async function middleware(request) {
     }
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (isProtectedRoute(pathname) && !user) {
+    const loginUrl = new URL("/login", request.url);
+    const nextPath = `${pathname}${search || ""}`;
+    if (nextPath && nextPath !== "/") {
+      loginUrl.searchParams.set("next", nextPath);
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (isAuthRoute(pathname) && user) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
   return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/",
+    "/clubs/:path*",
+    "/join-club/:path*",
+    "/profile/:path*",
+    "/login",
+    "/register",
   ],
 };

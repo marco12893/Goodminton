@@ -11,6 +11,27 @@ async function deleteOrphanPlayer(playerId) {
   }
 }
 
+async function resolvePendingJoinRequest(clubId, userId) {
+  const requestUpdate = await supabaseAdmin
+    .from("club_join_requests")
+    .update({
+      status: "approved",
+      resolved_at: new Date().toISOString(),
+      resolved_by: null,
+    })
+    .eq("club_id", clubId)
+    .eq("user_id", userId)
+    .eq("status", "pending");
+
+  if (
+    requestUpdate.error &&
+    !requestUpdate.error.message?.includes("club_join_requests") &&
+    !requestUpdate.error.message?.includes("relation")
+  ) {
+    throw new Error(requestUpdate.error.message);
+  }
+}
+
 export async function getClubBySlug(clubSlug) {
   const { data, error } = await supabaseAdmin
     .from("clubs")
@@ -55,6 +76,7 @@ export async function getOrCreateUserPlayer({ userId, preferredName }) {
     .from("players")
     .select("id, full_name")
     .eq("user_id", userId)
+    .order("created_at", { ascending: true })
     .limit(1);
 
   if (existingPlayer.error) {
@@ -202,6 +224,7 @@ export async function attachUserToClubPlayer({
   }
 
   await ensureClubMember({ clubId, userId });
+  await resolvePendingJoinRequest(clubId, userId);
 
   return userPlayer;
 }
@@ -241,6 +264,7 @@ export async function addUserToClubWithNewPlayer({
   }
 
   await ensureClubMember({ clubId, userId });
+  await resolvePendingJoinRequest(clubId, userId);
 
   return userPlayer;
 }

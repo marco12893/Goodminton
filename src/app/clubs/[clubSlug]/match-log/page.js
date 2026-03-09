@@ -132,7 +132,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
           <div>
             <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Club Match Log</h1>
             <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
-              Review and manage every match. Submissions require admin approval to affect ELO.
+              Review and manage every match. Submissions require manager approval to affect Elo.
             </p>
           </div>
           <Link

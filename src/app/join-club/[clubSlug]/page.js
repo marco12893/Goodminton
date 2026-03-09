@@ -56,7 +56,12 @@ export default async function JoinOpenClubPublicPage({ params, searchParams }) {
       )
       .eq("club_id", club.id)
       .order("created_at", { ascending: true }),
-    supabase.from("players").select("full_name").eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("players")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1),
   ]);
 
   if (manualPlayersError) {
@@ -109,12 +114,12 @@ export default async function JoinOpenClubPublicPage({ params, searchParams }) {
 
           <label className="mt-5 block">
             <span className="mb-1.5 block text-sm font-medium text-slate-300">New player name</span>
-            <input
-              name="new_player_name"
-              defaultValue={userPlayer?.full_name ?? ""}
-              placeholder="Your player name"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base text-white outline-none transition-all placeholder:text-slate-500 focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
-            />
+              <input
+                name="new_player_name"
+                defaultValue={userPlayer?.[0]?.full_name ?? ""}
+                placeholder="Your player name"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base text-white outline-none transition-all placeholder:text-slate-500 focus:border-teal-400 focus:bg-white/10 focus:ring-1 focus:ring-teal-400"
+              />
           </label>
 
           <button className="mt-6 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90">

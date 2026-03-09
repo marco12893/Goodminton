@@ -271,7 +271,7 @@ export async function rejectMatchLogAction(formData) {
       status: "rejected",
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
-      rejection_reason: "Rejected by club admin.",
+      rejection_reason: "Rejected by club manager.",
     })
     .eq("id", matchId)
     .eq("club_id", membership.club.id)

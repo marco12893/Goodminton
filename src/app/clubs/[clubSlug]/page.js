@@ -1,48 +1,39 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseClientForCache } from "@/lib/supabase/server";
-import { unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 export const dynamic = "force-dynamic";
 
-// Cache the leaderboard data
-const getCachedLeaderboard = unstable_cache(
-  async (clubId, cookieStore) => {
-    const supabase = createSupabaseClientForCache(cookieStore);
-    const { data: leaderboard, error } = await supabase
-      .from("club_players")
-      .select(
-        `
-          id,
-          elo_current,
-          total_matches,
-          total_wins,
-          player:players (
-            full_name
-          )
-        `
-      )
-      .eq("club_id", clubId)
-      .eq("status", "active")
-      .order("elo_current", { ascending: false })
-      .order("total_wins", { ascending: false })
-      .order("created_at", { ascending: true });
+const getLeaderboard = cache(async (clubId) => {
+  const { data: leaderboard, error } = await supabaseAdmin
+    .from("club_players")
+    .select(
+      `
+        id,
+        elo_current,
+        total_matches,
+        total_wins,
+        player:players (
+          full_name
+        )
+      `
+    )
+    .eq("club_id", clubId)
+    .eq("status", "active")
+    .order("elo_current", { ascending: false })
+    .order("total_wins", { ascending: false })
+    .order("created_at", { ascending: true });
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return leaderboard;
-  },
-  ['club-leaderboard'],
-  {
-    revalidate: 300, // 5 minutes
-    tags: ['club-leaderboard']
+  if (error) {
+    throw new Error(error.message);
   }
-);
+
+  return leaderboard;
+});
 
 function getInitials(name) {
   return name
@@ -158,7 +149,7 @@ export default async function ClubHomePage({ params, searchParams }) {
     notFound();
   }
 
-  const leaderboard = await getCachedLeaderboard(club.id, cookieStore);
+  const leaderboard = await getLeaderboard(club.id);
 
   const entries = (leaderboard ?? []).map((row) => {
     const totalMatches = row.total_matches ?? 0;

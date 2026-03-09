@@ -4,53 +4,44 @@ import ClubBottomNav from "@/components/ClubBottomNav";
 import ClubHeaderWrapper from "@/components/ClubHeaderWrapper";
 import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseClientForCache } from "@/lib/supabase/server";
-import { unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 export const dynamic = "force-dynamic";
 
-// Cache searchable players data
-const getCachedSearchablePlayers = unstable_cache(
-  async (clubId, cookieStore) => {
-    const supabase = createSupabaseClientForCache(cookieStore);
-    const { data: searchablePlayers, error: searchablePlayersError } = await supabase
-      .from("club_players")
-      .select(
-        `
-          id,
-          elo_current,
-          total_matches,
-          player:players (
-            full_name,
-            avatar_url
-          )
-        `
-      )
-      .eq("club_id", clubId)
-      .eq("status", "active")
-      .order("elo_current", { ascending: false })
-      .order("created_at", { ascending: true });
+const getSearchablePlayers = cache(async (clubId) => {
+  const { data: searchablePlayers, error: searchablePlayersError } = await supabaseAdmin
+    .from("club_players")
+    .select(
+      `
+        id,
+        elo_current,
+        total_matches,
+        player:players (
+          full_name,
+          avatar_url
+        )
+      `
+    )
+    .eq("club_id", clubId)
+    .eq("status", "active")
+    .order("elo_current", { ascending: false })
+    .order("created_at", { ascending: true });
 
-    if (searchablePlayersError) {
-      throw new Error(searchablePlayersError.message);
-    }
-
-    return (searchablePlayers ?? []).map((row) => ({
-      id: row.id,
-      fullName: row.player?.full_name ?? "Unknown player",
-      avatarUrl: row.player?.avatar_url ?? "",
-      elo: row.elo_current ?? 1000,
-      totalMatches: row.total_matches ?? 0,
-    }));
-  },
-  ['searchable-players'],
-  {
-    revalidate: 300, // 5 minutes
-    tags: ['club-players']
+  if (searchablePlayersError) {
+    throw new Error(searchablePlayersError.message);
   }
-);
+
+  return (searchablePlayers ?? []).map((row) => ({
+    id: row.id,
+    fullName: row.player?.full_name ?? "Unknown player",
+    avatarUrl: row.player?.avatar_url ?? "",
+    elo: row.elo_current ?? 1000,
+    totalMatches: row.total_matches ?? 0,
+  }));
+});
 
 export default async function ClubLayout({ children, params }) {
   const { clubSlug } = await params;
@@ -71,11 +62,11 @@ export default async function ClubLayout({ children, params }) {
     notFound();
   }
 
-  const preparedSearchablePlayers = await getCachedSearchablePlayers(club.id, cookieStore);
+  const preparedSearchablePlayers = await getSearchablePlayers(club.id);
   let pendingJoinRequestsCount = 0;
 
   if (isClubManager(club.role)) {
-    const pendingJoinRequests = await supabase
+    const pendingJoinRequests = await supabaseAdmin
       .from("club_join_requests")
       .select("id", { count: "exact", head: true })
       .eq("club_id", club.id)

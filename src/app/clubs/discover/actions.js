@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { getClubBySlug } from "@/lib/clubJoin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -7,6 +8,16 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function revalidateClubJoinViews(clubSlug) {
+  revalidateTag("user-clubs");
+  revalidateTag("club-players");
+  revalidatePath("/");
+  revalidatePath("/clubs/discover");
+  revalidatePath(`/clubs/${clubSlug}`, "layout");
+  revalidatePath(`/clubs/${clubSlug}`);
+  revalidatePath(`/clubs/${clubSlug}/settings`);
 }
 
 export async function requestClubJoinAction(formData) {
@@ -40,13 +51,13 @@ export async function requestClubJoinAction(formData) {
     .select("id")
     .eq("club_id", club.id)
     .eq("user_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
   if (membershipLookup.error) {
     redirect(`/clubs/discover?error=${encodeURIComponent(membershipLookup.error.message)}`);
   }
 
-  if (membershipLookup.data) {
+  if (membershipLookup.data?.length) {
     redirect(`/clubs/${club.slug}`);
   }
 
@@ -55,17 +66,19 @@ export async function requestClubJoinAction(formData) {
     .select("id, status")
     .eq("club_id", club.id)
     .eq("user_id", user.id)
-    .maybeSingle();
+    .limit(1);
 
   if (requestLookup.error) {
     redirect(`/clubs/discover?error=${encodeURIComponent(requestLookup.error.message)}`);
   }
 
-  if (requestLookup.data?.status === "pending") {
+  const existingRequest = requestLookup.data?.[0] ?? null;
+
+  if (existingRequest?.status === "pending") {
     redirect("/clubs/discover?success=Your join request is already pending.");
   }
 
-  if (requestLookup.data) {
+  if (existingRequest) {
     const requestUpdate = await supabaseAdmin
       .from("club_join_requests")
       .update({
@@ -73,7 +86,7 @@ export async function requestClubJoinAction(formData) {
         resolved_at: null,
         resolved_by: null,
       })
-      .eq("id", requestLookup.data.id);
+      .eq("id", existingRequest.id);
 
     if (requestUpdate.error) {
       redirect(`/clubs/discover?error=${encodeURIComponent(requestUpdate.error.message)}`);
@@ -90,5 +103,6 @@ export async function requestClubJoinAction(formData) {
     }
   }
 
+  revalidateClubJoinViews(club.slug);
   redirect("/clubs/discover?success=Join request submitted successfully.");
 }

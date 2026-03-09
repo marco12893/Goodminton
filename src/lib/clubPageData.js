@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache';
+import { cache } from 'react';
 import { createSupabaseClientForCache } from './supabase/server';
 
 async function getClubPageDataImpl(supabase, userId, clubSlug) {
@@ -47,17 +47,7 @@ async function getClubPageDataImpl(supabase, userId, clubSlug) {
   };
 }
 
-// Create cached version with proper cache key
-export const getClubPageData = unstable_cache(
-  async (userId, clubSlug, cookies) => {
-    // Create Supabase client with passed cookies
-    const supabase = createSupabaseClientForCache(cookies);
-    
-    return getClubPageDataImpl(supabase, userId, clubSlug);
-  },
-  ['club-page-data'],
-  {
-    revalidate: 300, // 5 minutes
-    tags: ['user-clubs']
-  }
-);
+export const getClubPageData = cache(async (userId, clubSlug, cookieStore) => {
+  const supabase = createSupabaseClientForCache(cookieStore);
+  return getClubPageDataImpl(supabase, userId, clubSlug);
+});

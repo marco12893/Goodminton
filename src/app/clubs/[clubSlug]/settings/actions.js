@@ -21,11 +21,14 @@ function getString(formData, key) {
   return String(formData.get(key) ?? "").trim();
 }
 
+const CLUB_JOIN_MODES = new Set(["invite_only", "approval", "open"]);
+
 function revalidateClubViews(clubSlug) {
   revalidateTag("user-clubs");
   revalidateTag("club-players");
   revalidatePath("/");
   revalidatePath("/clubs/discover");
+  revalidatePath(`/join-club/${clubSlug}`);
   revalidatePath(`/clubs/${clubSlug}`, "layout");
   revalidatePath(`/clubs/${clubSlug}`);
   revalidatePath(`/clubs/${clubSlug}/settings`);
@@ -85,6 +88,10 @@ export async function updateClubSettingsAction(formData) {
 
   if (!clubSlug || !name) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=Club name is required.`);
+  }
+
+  if (!CLUB_JOIN_MODES.has(joinMode)) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Choose a valid join mode.`);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -259,96 +266,15 @@ export async function linkClubPlayerAction(formData) {
     );
   }
 
-  const membershipLookup = await supabaseAdmin
-    .from("club_members")
-    .select("id")
-    .eq("club_id", club.id)
-    .eq("user_id", profile.id)
-    .limit(1);
-
-  if (membershipLookup.error) {
-    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipLookup.error.message)}`);
-  }
-
-  if (!membershipLookup.data?.length) {
-    const membershipInsert = await supabaseAdmin.from("club_members").insert({
-      club_id: club.id,
-      user_id: profile.id,
-      role: "player",
+  try {
+    await attachUserToClubPlayer({
+      clubId: club.id,
+      clubPlayerId,
+      userId: profile.id,
+      preferredName: currentPlayer.full_name || profile.full_name,
     });
-
-    if (membershipInsert.error) {
-      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipInsert.error.message)}`);
-    }
-  }
-
-  const existingLinkedPlayer = await supabaseAdmin
-    .from("players")
-    .select("id, full_name")
-    .eq("user_id", profile.id)
-    .limit(1);
-
-  if (existingLinkedPlayer.error) {
-    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(existingLinkedPlayer.error.message)}`);
-  }
-
-  const linkedPlayer = existingLinkedPlayer.data?.[0] ?? null;
-
-  if (linkedPlayer && linkedPlayer.id !== currentPlayer.id) {
-    const duplicateClubPlayer = await supabaseAdmin
-      .from("club_players")
-      .select("id")
-      .eq("club_id", club.id)
-      .eq("player_id", linkedPlayer.id)
-      .limit(1);
-
-    if (duplicateClubPlayer.error) {
-      redirect(
-        `/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(duplicateClubPlayer.error.message)}`
-      );
-    }
-
-    if (duplicateClubPlayer.data?.length) {
-      redirect(
-        `/clubs/${clubSlug}/settings/edit?error=That account is already linked to another player in this club.`
-      );
-    }
-
-    const clubPlayerUpdate = await supabaseAdmin
-      .from("club_players")
-      .update({
-        player_id: linkedPlayer.id,
-      })
-      .eq("id", clubPlayerId);
-
-    if (clubPlayerUpdate.error) {
-      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerUpdate.error.message)}`);
-    }
-
-    const remainingUsage = await supabaseAdmin
-      .from("club_players")
-      .select("id", { head: true, count: "exact" })
-      .eq("player_id", currentPlayer.id);
-
-    if (!remainingUsage.error && remainingUsage.count === 0) {
-      await supabaseAdmin
-        .from("players")
-        .delete()
-        .eq("id", currentPlayer.id)
-        .is("user_id", null);
-    }
-  } else {
-    const playerUpdate = await supabaseAdmin
-      .from("players")
-      .update({
-        user_id: profile.id,
-        full_name: currentPlayer.full_name || profile.full_name,
-      })
-      .eq("id", currentPlayer.id);
-
-    if (playerUpdate.error) {
-      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(playerUpdate.error.message)}`);
-    }
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(error.message)}`);
   }
 
   revalidateClubViews(clubSlug);
