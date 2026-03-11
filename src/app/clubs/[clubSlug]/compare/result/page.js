@@ -28,6 +28,12 @@ function formatNumber(value, fractionDigits = 0) {
   }).format(value);
 }
 
+function getStreakTextClass(type) {
+  if (type === "W") return "text-emerald-300";
+  if (type === "L") return "text-rose-300";
+  return "text-white";
+}
+
 function AvatarStack({ items, title, subtitle, stacked = false, align = "center" }) {
   const alignmentClass = align === "left" ? "items-start" : align === "right" ? "items-end" : "items-center";
   const textAlignClass = align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center";
@@ -226,6 +232,21 @@ export default async function ClubCompareResultPage({ params, searchParams }) {
   const statRows = [
     { label: mode === "singles" ? "Elo" : "Avg Elo", left: formatNumber(leftEntity.elo, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.elo, mode === "singles" ? 0 : 1) },
     { label: mode === "singles" ? "Peak Rating" : "Avg Peak Rating", left: formatNumber(leftEntity.peakRating, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.peakRating, mode === "singles" ? 0 : 1) },
+    {
+      label: mode === "singles" ? "Current Streak" : "Team Streak",
+      left: (
+        <span className={`inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-xs font-black uppercase tracking-widest ${getStreakTextClass(leftEntity.currentStreakType)}`}>
+          {leftEntity.currentStreakLabel}
+        </span>
+      ),
+      right: (
+        <span className={`inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-xs font-black uppercase tracking-widest ${getStreakTextClass(rightEntity.currentStreakType)}`}>
+          {rightEntity.currentStreakLabel}
+        </span>
+      ),
+    },
+    { label: mode === "singles" ? "Longest Win Streak" : "Avg Longest Win Streak", left: formatNumber(leftEntity.longestWinStreak, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.longestWinStreak, mode === "singles" ? 0 : 1) },
+    { label: mode === "singles" ? "Longest Lose Streak" : "Avg Longest Lose Streak", left: formatNumber(leftEntity.longestLoseStreak, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.longestLoseStreak, mode === "singles" ? 0 : 1) },
     { label: mode === "singles" ? "Rank" : "Avg Rank", left: `#${formatNumber(leftEntity.rank, mode === "singles" ? 0 : 1)}`, right: `#${formatNumber(rightEntity.rank, mode === "singles" ? 0 : 1)}` },
     { label: "Matches", left: formatNumber(leftEntity.totalMatches, mode === "singles" ? 0 : 1), right: formatNumber(rightEntity.totalMatches, mode === "singles" ? 0 : 1) },
     { label: "Win Rate", left: `${formatNumber(leftEntity.winRate, 1)}%`, right: `${formatNumber(rightEntity.winRate, 1)}%` },

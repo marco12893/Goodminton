@@ -79,6 +79,8 @@ function buildPerformanceSummary(results) {
       longestWinStreak: 0,
       longestLoseStreak: 0,
       currentStreakLabel: "No streak",
+      currentStreakType: null,
+      currentStreakLength: 0,
     };
   }
 
@@ -103,11 +105,11 @@ function buildPerformanceSummary(results) {
   }
 
   const recentDescending = [...results].reverse().slice(0, 5);
-  const currentStreakType = recentDescending[0];
+  const currentStreakType = results.at(-1);
   let currentStreakLength = 0;
 
-  for (const result of recentDescending) {
-    if (result === currentStreakType) {
+  for (let idx = results.length - 1; idx >= 0; idx -= 1) {
+    if (results[idx] === currentStreakType) {
       currentStreakLength += 1;
     } else {
       break;
@@ -118,6 +120,8 @@ function buildPerformanceSummary(results) {
     recent: recentDescending,
     longestWinStreak,
     longestLoseStreak,
+    currentStreakType,
+    currentStreakLength,
     currentStreakLabel:
       currentStreakType === "W"
         ? `Win streak (${currentStreakLength})`
@@ -142,6 +146,12 @@ function StatCard({ label, value, icon, trend }) {
       </div>
     </div>
   );
+}
+
+function getStreakTextClass(type) {
+  if (type === "W") return "text-emerald-300";
+  if (type === "L") return "text-rose-300";
+  return "text-white";
 }
 
 function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
@@ -622,6 +632,15 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
                 <span className="rounded-full bg-teal-500/20 px-3 py-1 font-mono text-lg font-bold text-teal-300 ring-1 ring-teal-500/30">
                   {displayedElo != null ? `ELO ${displayedElo}` : 'No matches'}
                 </span>
+                {performance.currentStreakLabel !== "No streak" && (
+                  <span
+                    className={`rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest shadow-inner ${getStreakTextClass(
+                      performance.currentStreakType
+                    )}`}
+                  >
+                    {performance.currentStreakLabel}
+                  </span>
+                )}
                 {performance.recent.length > 0 && (
                   <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold tracking-widest text-white shadow-inner">
                     {performance.recent.join("")}
@@ -677,7 +696,15 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
             </div>
 
             <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            
+
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-emerald-300">Streaks</h3>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <StatCard label="Longest Win Streak" value={performance.longestWinStreak} icon="🏅" />
+              <StatCard label="Longest Lose Streak" value={performance.longestLoseStreak} icon="🧱" />
+            </div>
+
+            <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
             <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-cyan-400">Points Analysis</h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatCard label="Scored" value={totalPointsScored} icon="⚡" />
