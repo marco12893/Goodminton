@@ -102,7 +102,7 @@ function MatchScoreForm({ clubSlug, tournamentId, match, admin }) {
             
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <label className="block">
-                <span className="mb-2 block line-clamp-1 text-[10px] font-bold uppercase tracking-widest text-slate-400" title={match.entry1.display_name}>
+                <span className="mb-2 block min-h-[1rem] truncate text-[10px] font-bold uppercase tracking-widest text-slate-400" title={match.entry1.display_name}>
                   {match.entry1.display_name}
                 </span>
                 <input
@@ -115,7 +115,7 @@ function MatchScoreForm({ clubSlug, tournamentId, match, admin }) {
                 />
               </label>
               <label className="block">
-                <span className="mb-2 block line-clamp-1 text-[10px] font-bold uppercase tracking-widest text-slate-400" title={match.entry2.display_name}>
+                <span className="mb-2 block min-h-[1rem] truncate text-[10px] font-bold uppercase tracking-widest text-slate-400" title={match.entry2.display_name}>
                   {match.entry2.display_name}
                 </span>
                 <input

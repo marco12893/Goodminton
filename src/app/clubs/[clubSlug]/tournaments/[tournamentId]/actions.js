@@ -131,6 +131,11 @@ export async function saveTournamentMatchAction(formData) {
   matchMap.forEach((match) => {
     updates.push({
       id: match.id,
+      tournament_id: tournamentId,
+      stage: match.stage,
+      round_number: match.round_number,
+      match_number: match.match_number,
+      scheduled_at: match.scheduled_at,
       entry1_id: match.entry1_id,
       entry2_id: match.entry2_id,
       score1: match.score1,
@@ -140,7 +145,9 @@ export async function saveTournamentMatchAction(formData) {
     });
   });
 
-  const { error: updateError } = await supabaseAdmin.from("tournament_matches").upsert(updates);
+  const { error: updateError } = await supabaseAdmin
+    .from("tournament_matches")
+    .upsert(updates, { onConflict: "id" });
 
   if (updateError) {
     redirect(`/clubs/${clubSlug}/tournaments/${tournamentId}?error=${encodeURIComponent(updateError.message)}`);

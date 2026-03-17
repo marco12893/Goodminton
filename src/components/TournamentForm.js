@@ -1,3 +1,5 @@
+import FormSubmitButton from "@/components/FormSubmitButton";
+
 export default function TournamentForm({
   action,
   clubSlug,
@@ -153,9 +155,11 @@ export default function TournamentForm({
         )}
       </div>
 
-      <button className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-4 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
-        {submitLabel}
-      </button>
+      <FormSubmitButton
+        idleLabel={submitLabel}
+        pendingLabel={tournament?.id ? "Saving changes..." : "Creating tournament..."}
+        className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-4 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)] disabled:cursor-not-allowed disabled:opacity-70"
+      />
     </form>
   );
 }

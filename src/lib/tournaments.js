@@ -63,17 +63,45 @@ export function buildTournamentEntries(clubPlayers, category, seeding) {
   }
 
   const entries = [];
-  for (let index = 0; index < orderedPlayers.length; index += 2) {
-    const pair = orderedPlayers.slice(index, index + 2);
-    if (pair.length < 2) break;
-    const averageElo = Math.round(pair.reduce((sum, player) => sum + (player.elo_current ?? 1000), 0) / pair.length);
-    entries.push({
-      id: crypto.randomUUID(),
-      seed_number: entries.length + 1,
-      display_name: buildEntryLabel(pair),
-      average_elo: averageElo,
-      players: pair,
-    });
+  if (orderedPlayers.length % 2 !== 0) {
+    throw new Error("Doubles tournaments require an even number of players.");
+  }
+
+  if (seeding === "elo_based") {
+    let left = 0;
+    let right = orderedPlayers.length - 1;
+    while (left < right) {
+      const pair = [orderedPlayers[left], orderedPlayers[right]];
+      const averageElo = Math.round(pair.reduce((sum, player) => sum + (player.elo_current ?? 1000), 0) / pair.length);
+      entries.push({
+        id: crypto.randomUUID(),
+        seed_number: entries.length + 1,
+        display_name: buildEntryLabel(pair),
+        average_elo: averageElo,
+        players: pair,
+      });
+      left += 1;
+      right -= 1;
+    }
+
+    entries
+      .sort((a, b) => (b.average_elo ?? 1000) - (a.average_elo ?? 1000))
+      .forEach((entry, index) => {
+        entry.seed_number = index + 1;
+      });
+  } else {
+    for (let index = 0; index < orderedPlayers.length; index += 2) {
+      const pair = orderedPlayers.slice(index, index + 2);
+      if (pair.length < 2) break;
+      const averageElo = Math.round(pair.reduce((sum, player) => sum + (player.elo_current ?? 1000), 0) / pair.length);
+      entries.push({
+        id: crypto.randomUUID(),
+        seed_number: entries.length + 1,
+        display_name: buildEntryLabel(pair),
+        average_elo: averageElo,
+        players: pair,
+      });
+    }
   }
 
   return entries;
