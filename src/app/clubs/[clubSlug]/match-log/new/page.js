@@ -41,11 +41,13 @@ export default async function NewMatchLogPage({ params, searchParams }) {
     .from("club_players")
     .select(`id, player:players (full_name)`)
     .eq("club_id", club.id)
-    .order("created_at", { ascending: true });
+    .order("full_name", { ascending: true, foreignTable: "players" });
 
   if (clubPlayersError) throw new Error(clubPlayersError.message);
 
-  const options = clubPlayers ?? [];
+  const options = (clubPlayers ?? []).slice().sort((a, b) =>
+    (a.player?.full_name ?? "").localeCompare(b.player?.full_name ?? "", "id", { sensitivity: "base" })
+  );
 
   return (
     <section className="mx-auto w-full max-w-2xl space-y-6 pb-12">
