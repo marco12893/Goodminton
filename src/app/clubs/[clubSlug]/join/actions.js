@@ -5,13 +5,20 @@ import { redirect } from "next/navigation";
 import {
   addUserToClubWithNewPlayer,
   attachUserToClubPlayer,
+  ensureClubMember,
   getClubBySlug,
 } from "@/lib/clubJoin";
+import { CLUB_ROLE_PLAYER, CLUB_ROLE_SPECTATOR } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function getJoinRole(formData) {
+  const value = getString(formData, "join_role") || CLUB_ROLE_PLAYER;
+  return value === CLUB_ROLE_SPECTATOR ? CLUB_ROLE_SPECTATOR : CLUB_ROLE_PLAYER;
 }
 
 function revalidateClubJoinViews(clubSlug) {
@@ -29,6 +36,7 @@ export async function joinOpenClubAction(formData) {
   const clubSlug = getString(formData, "club_slug");
   const targetClubPlayerId = getString(formData, "target_club_player_id");
   const newPlayerName = getString(formData, "new_player_name");
+  const joinRole = getJoinRole(formData);
 
   if (!clubSlug) {
     redirect("/clubs/discover?error=Club was not found.");
@@ -68,12 +76,14 @@ export async function joinOpenClubAction(formData) {
     redirect(`/clubs/${club.slug}`);
   }
 
-  if (!targetClubPlayerId && !newPlayerName) {
+  if (joinRole === CLUB_ROLE_PLAYER && !targetClubPlayerId && !newPlayerName) {
     redirect(`/join-club/${club.slug}?error=Choose an existing player or create a new one.`);
   }
 
   try {
-    if (targetClubPlayerId) {
+    if (joinRole === CLUB_ROLE_SPECTATOR) {
+      await ensureClubMember({ clubId: club.id, userId: user.id, role: CLUB_ROLE_SPECTATOR });
+    } else if (targetClubPlayerId) {
       await attachUserToClubPlayer({
         clubId: club.id,
         clubPlayerId: targetClubPlayerId,

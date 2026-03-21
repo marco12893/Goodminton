@@ -7,9 +7,11 @@ import {
   linkClubPlayerAction,
   promoteClubMemberAction,
   removeClubPlayerAction,
+  removeClubSpectatorAction,
   transferClubOwnershipAction,
   updateClubSettingsAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
+import { demotePlayerToSpectatorAction } from "@/app/clubs/[clubSlug]/players/[clubPlayerId]/actions";
 import {
   CLUB_ROLE_ADMIN,
   CLUB_ROLE_OWNER,
@@ -83,6 +85,37 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
     : { data: [] };
 
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
+  const filteredMembers = (members ?? []).filter((member) => {
+    const role = member.player?.user_id ? roleMap.get(member.player.user_id) : null;
+    return role !== "spectator";
+  });
+
+  const { data: spectators, error: spectatorsError } = await supabaseAdmin
+    .from("club_members")
+    .select("id, user_id, created_at")
+    .eq("club_id", club.id)
+    .eq("role", "spectator")
+    .order("created_at", { ascending: true });
+
+  if (spectatorsError) {
+    throw new Error(spectatorsError.message);
+  }
+
+  const spectatorUserIds = (spectators ?? []).map((item) => item.user_id).filter(Boolean);
+  const { data: spectatorProfiles, error: spectatorProfilesError } = spectatorUserIds.length
+    ? await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", spectatorUserIds)
+    : { data: [], error: null };
+
+  if (spectatorProfilesError) {
+    throw new Error(spectatorProfilesError.message);
+  }
+
+  const spectatorProfileMap = new Map(
+    (spectatorProfiles ?? []).map((profile) => [profile.id, profile])
+  );
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-6 pb-12">
@@ -210,7 +243,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
         </form>
 
         <div className="mt-8 space-y-3">
-          {(members ?? []).map((member) => (
+        {filteredMembers.map((member) => (
             <div
               key={member.id}
               className="group flex flex-col gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 transition-all hover:bg-white/10 sm:flex-row sm:items-center sm:justify-between"
@@ -271,6 +304,16 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   </form>
                 )}
 
+                {member.player?.user_id && ![CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER].includes(roleMap.get(member.player?.user_id)) && (
+                  <form action={demotePlayerToSpectatorAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="club_player_id" value={member.id} />
+                    <button className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-500/20 transition-colors">
+                      Convert to Spectator
+                    </button>
+                  </form>
+                )}
+
                 {isClubOwner(club.role) && roleMap.get(member.player?.user_id) === CLUB_ROLE_ADMIN && (
                   <form action={demoteClubMemberAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
@@ -309,10 +352,51 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
         </div>
       </div>
 
+      <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+        <h2 className="font-mono text-xl font-bold text-white flex items-center gap-2">
+          <span className="text-teal-400">03.</span> Spectators
+        </h2>
+        <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
+          Spectators can view club activity but won&apos;t appear on the leaderboard.
+        </p>
+
+        {(spectators ?? []).length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-6 text-sm font-medium text-slate-500">
+            No spectators yet.
+          </div>
+        ) : (
+          <div className="mt-6 space-y-3">
+            {spectators.map((spectator) => {
+              const profile = spectatorProfileMap.get(spectator.user_id) ?? null;
+              return (
+              <div
+                key={spectator.id}
+                className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-base font-bold text-white">
+                    {profile?.full_name || profile?.email || "Unknown user"}
+                  </p>
+                  <p className="truncate text-xs text-slate-400">{profile?.email}</p>
+                </div>
+                <form action={removeClubSpectatorAction}>
+                  <input type="hidden" name="club_slug" value={clubSlug} />
+                  <input type="hidden" name="membership_id" value={spectator.id} />
+                  <button className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors">
+                    Remove
+                  </button>
+                </form>
+              </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {isClubOwner(club.role) && (
       <div className="rounded-[2rem] border border-rose-500/20 bg-rose-950/20 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
         <h2 className="mb-2 font-mono text-xl font-bold text-white flex items-center gap-2">
-          <span className="text-rose-400">03.</span> Danger Zone
+          <span className="text-rose-400">04.</span> Danger Zone
         </h2>
         <p className="text-sm font-medium leading-relaxed text-rose-100/80">
           Dissolving a club permanently deletes the club, members, join requests, matches,

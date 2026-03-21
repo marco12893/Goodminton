@@ -627,7 +627,7 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
               <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">
                 {clubPlayer.player?.full_name ?? "Unknown player"}
               </h1>
-              
+
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                 <span className="rounded-full bg-teal-500/20 px-3 py-1 font-mono text-lg font-bold text-teal-300 ring-1 ring-teal-500/30">
                   {displayedElo != null ? `ELO ${displayedElo}` : 'No matches'}

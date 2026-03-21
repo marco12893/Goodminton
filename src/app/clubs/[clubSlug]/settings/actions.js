@@ -6,12 +6,14 @@ import {
   CLUB_ROLE_ADMIN,
   CLUB_ROLE_OWNER,
   CLUB_ROLE_PLAYER,
+  CLUB_ROLE_SPECTATOR,
   isClubManager,
   isClubOwner,
 } from "@/lib/clubRoles";
 import {
   addUserToClubWithNewPlayer,
   attachUserToClubPlayer,
+  ensureClubMember,
 } from "@/lib/clubJoin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { deleteStorageObject, parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
@@ -630,6 +632,7 @@ export async function approveClubJoinRequestAction(formData) {
   const requestId = getString(formData, "request_id");
   const targetClubPlayerId = getString(formData, "target_club_player_id");
   const newPlayerName = getString(formData, "new_player_name");
+  const approvedRole = getString(formData, "approved_role") || CLUB_ROLE_PLAYER;
   const returnTo = getString(formData, "return_to") || `/clubs/${clubSlug}/settings/edit`;
 
   if (!clubSlug || !requestId) {
@@ -658,7 +661,8 @@ export async function approveClubJoinRequestAction(formData) {
       `
         id,
         user_id,
-        status
+        status,
+        requested_role
       `
     )
     .eq("id", requestId)
@@ -684,6 +688,14 @@ export async function approveClubJoinRequestAction(formData) {
   }
 
   const targetUserId = requestLookup.data.user_id;
+  const resolvedRole =
+    approvedRole === CLUB_ROLE_SPECTATOR
+      ? CLUB_ROLE_SPECTATOR
+      : approvedRole === CLUB_ROLE_PLAYER
+        ? CLUB_ROLE_PLAYER
+        : requestLookup.data.requested_role === CLUB_ROLE_SPECTATOR
+          ? CLUB_ROLE_SPECTATOR
+          : CLUB_ROLE_PLAYER;
   const fallbackName =
     newPlayerName ||
     requesterProfile.data?.full_name ||
@@ -691,7 +703,9 @@ export async function approveClubJoinRequestAction(formData) {
     "Player";
 
   try {
-    if (targetClubPlayerId) {
+    if (resolvedRole === CLUB_ROLE_SPECTATOR) {
+      await ensureClubMember({ clubId: club.id, userId: targetUserId, role: CLUB_ROLE_SPECTATOR });
+    } else if (targetClubPlayerId) {
       await attachUserToClubPlayer({
         clubId: club.id,
         clubPlayerId: targetClubPlayerId,
@@ -725,6 +739,62 @@ export async function approveClubJoinRequestAction(formData) {
   revalidateClubViews(clubSlug);
   redirect(`${returnTo}?success=${encodeURIComponent("Join request approved successfully.")}`);
 }
+
+export async function removeClubSpectatorAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const membershipId = getString(formData, "membership_id");
+
+  if (!clubSlug || !membershipId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid spectator data.`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let club;
+  try {
+    club = await getAuthorizedClub(clubSlug, user.id);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const membershipLookup = await supabaseAdmin
+    .from("club_members")
+    .select("id, role")
+    .eq("id", membershipId)
+    .eq("club_id", club.id)
+    .limit(1);
+
+  if (membershipLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipLookup.error.message)}`);
+  }
+
+  const membership = membershipLookup.data?.[0] ?? null;
+
+  if (!membership || membership.role !== CLUB_ROLE_SPECTATOR) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Spectator was not found.`);
+  }
+
+  const deleteResult = await supabaseAdmin
+    .from("club_members")
+    .delete()
+    .eq("id", membershipId)
+    .eq("role", CLUB_ROLE_SPECTATOR);
+
+  if (deleteResult.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(deleteResult.error.message)}`);
+  }
+
+  revalidateClubViews(clubSlug);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Spectator removed successfully.")}`);
+}
+
 
 export async function rejectClubJoinRequestAction(formData) {
   const clubSlug = getString(formData, "club_slug");

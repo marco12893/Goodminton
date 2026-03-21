@@ -58,12 +58,43 @@ export default async function ClubSettingsPage({ params, searchParams }) {
     : { data: [] };
 
   const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
-  const availableManualPlayers = (members ?? []).filter((member) => !member.player?.user_id);
+  const filteredMembers = (members ?? []).filter((member) => {
+    const role = member.player?.user_id ? roleMap.get(member.player.user_id) : null;
+    return role !== "spectator";
+  });
+  const availableManualPlayers = filteredMembers.filter((member) => !member.player?.user_id);
+
+  const { data: spectators, error: spectatorsError } = await supabaseAdmin
+    .from("club_members")
+    .select("id, user_id, created_at")
+    .eq("club_id", club.id)
+    .eq("role", "spectator")
+    .order("created_at", { ascending: true });
+
+  if (spectatorsError) {
+    throw new Error(spectatorsError.message);
+  }
+
+  const spectatorUserIds = (spectators ?? []).map((item) => item.user_id).filter(Boolean);
+  const { data: spectatorProfiles, error: spectatorProfilesError } = spectatorUserIds.length
+    ? await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", spectatorUserIds)
+    : { data: [], error: null };
+
+  if (spectatorProfilesError) {
+    throw new Error(spectatorProfilesError.message);
+  }
+
+  const spectatorProfileMap = new Map(
+    (spectatorProfiles ?? []).map((profile) => [profile.id, profile])
+  );
 
   const { data: rawJoinRequests, error: joinRequestsError } = isClubManager(club.role)
     ? await supabaseAdmin
         .from("club_join_requests")
-        .select("id, user_id, created_at")
+        .select("id, user_id, created_at, requested_role")
         .eq("club_id", club.id)
         .eq("status", "pending")
         .order("created_at", { ascending: true })
@@ -169,17 +200,17 @@ export default async function ClubSettingsPage({ params, searchParams }) {
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-teal-500">Member Roster</h3>
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
               <Users size={14} />
-              <span>{members?.length || 0} Members</span>
+              <span>{filteredMembers.length} Members</span>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {(members ?? []).length === 0 ? (
+            {filteredMembers.length === 0 ? (
               <div className="col-span-full rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm font-medium text-slate-500">
                 No members found in this club.
               </div>
             ) : (
-              members.map((member) => (
+              filteredMembers.map((member) => (
                 <Link
                   key={member.id}
                   href={`/clubs/${clubSlug}/players/${member.id}`}
@@ -193,6 +224,39 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                   )}
                 </Link>
               ))
+            )}
+          </div>
+        </div>
+
+        <div className="mt-10 border-t border-white/5 pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-teal-500">Spectators</h3>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+              <Users size={14} />
+              <span>{spectators?.length || 0} Spectators</span>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(spectators ?? []).length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm font-medium text-slate-500">
+                No spectators yet.
+              </div>
+            ) : (
+              spectators.map((spectator) => {
+                const profile = spectatorProfileMap.get(spectator.user_id) ?? null;
+                return (
+                <div
+                  key={spectator.id}
+                  className="flex flex-col gap-1 rounded-2xl border border-white/5 bg-white/5 p-4"
+                >
+                  <span className="truncate text-sm font-bold text-white">
+                    {profile?.full_name || profile?.email || "Unknown user"}
+                  </span>
+                  <span className="truncate text-xs text-slate-400">{profile?.email}</span>
+                </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -236,6 +300,9 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                           {request.profile?.full_name || request.profile?.email || "Unknown user"}
                         </p>
                         <p className="text-sm text-slate-400">{request.profile?.email}</p>
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-teal-400">
+                          {request.requested_role === "spectator" ? "Requested spectator" : "Requested player"}
+                        </p>
                       </div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                         Requested{" "}
@@ -255,6 +322,15 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                         <input type="hidden" name="club_slug" value={clubSlug} />
                         <input type="hidden" name="request_id" value={request.id} />
                         <input type="hidden" name="return_to" value={`/clubs/${clubSlug}/settings`} />
+                        <select
+                          name="approved_role"
+                          defaultValue={request.requested_role || "player"}
+                          className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none focus:border-teal-400"
+                          style={{ colorScheme: "dark" }}
+                        >
+                          <option value="player" className="bg-slate-900 text-white">Approve as player</option>
+                          <option value="spectator" className="bg-slate-900 text-white">Approve as spectator</option>
+                        </select>
                         <select
                           name="target_club_player_id"
                           className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none focus:border-teal-400"

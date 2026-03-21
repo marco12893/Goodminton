@@ -74,7 +74,7 @@ create table public.club_members (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null references public.clubs(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  role text not null check (role in ('owner', 'admin', 'player')),
+  role text not null check (role in ('owner', 'admin', 'player', 'spectator')),
   created_at timestamptz not null default timezone('utc', now()),
   unique (club_id, user_id)
 );
@@ -84,6 +84,7 @@ create table public.club_join_requests (
   club_id uuid not null references public.clubs(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  requested_role text not null default 'player' check (requested_role in ('player', 'spectator')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   resolved_at timestamptz,
@@ -327,7 +328,7 @@ set search_path = public
 as $$
   select case
     when public.is_club_owner(target_club_id) then target_role <> 'owner'
-    when public.is_club_admin_only(target_club_id) then target_role = 'player'
+    when public.is_club_admin_only(target_club_id) then target_role in ('player', 'spectator')
     else false
   end;
 $$;
@@ -340,7 +341,7 @@ security definer
 set search_path = public
 as $$
   select public.is_club_admin(target_club_id)
-    and target_role in ('player', 'admin');
+    and target_role in ('player', 'admin', 'spectator');
 $$;
 
 create or replace function public.can_manage_club_player_row(target_club_id uuid, target_player_id uuid)
@@ -735,7 +736,11 @@ select
     else round((cp.total_wins::numeric / cp.total_matches::numeric) * 100, 2)
   end as win_rate
 from public.club_players cp
-join public.players p on p.id = cp.player_id;
+join public.players p on p.id = cp.player_id
+left join public.club_members cm
+  on cm.user_id = p.user_id
+ and cm.club_id = cp.club_id
+where coalesce(cm.role, 'player') <> 'spectator';
 
 alter table public.clubs enable row level security;
 alter table public.profiles enable row level security;

@@ -18,7 +18,8 @@ const getLeaderboard = cache(async (clubId) => {
         total_matches,
         total_wins,
         player:players (
-          full_name
+          full_name,
+          user_id
         )
       `
     )
@@ -32,7 +33,26 @@ const getLeaderboard = cache(async (clubId) => {
     throw new Error(error.message);
   }
 
-  return leaderboard;
+  const userIds = (leaderboard ?? []).map((row) => row.player?.user_id).filter(Boolean);
+  const { data: memberships, error: membershipError } = userIds.length
+    ? await supabaseAdmin
+        .from("club_members")
+        .select("user_id, role")
+        .eq("club_id", clubId)
+        .in("user_id", userIds)
+    : { data: [], error: null };
+
+  if (membershipError) {
+    throw new Error(membershipError.message);
+  }
+
+  const roleMap = new Map((memberships ?? []).map((item) => [item.user_id, item.role]));
+  const filtered = (leaderboard ?? []).filter((row) => {
+    const role = row.player?.user_id ? roleMap.get(row.player.user_id) : null;
+    return role !== "spectator";
+  });
+
+  return filtered;
 });
 
 function getInitials(name) {

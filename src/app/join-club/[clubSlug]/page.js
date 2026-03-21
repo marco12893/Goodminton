@@ -93,7 +93,24 @@ export default async function JoinOpenClubPublicPage({ params, searchParams }) {
           <input type="hidden" name="club_slug" value={club.slug} />
 
           <p className="text-sm font-medium leading-relaxed text-slate-300">
-            Pick an existing manual player slot or create a fresh player entry for your account.
+            Choose how you want to join. Spectators can browse everything without appearing on the leaderboard.
+          </p>
+
+          <label className="mt-5 block">
+            <span className="mb-1.5 block text-sm font-medium text-slate-300">Join as</span>
+            <select
+              name="join_role"
+              defaultValue="player"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-base text-white outline-none transition-all focus:border-teal-400 focus:bg-white/10"
+              style={{ colorScheme: "dark" }}
+            >
+              <option value="player" className="bg-slate-900 text-white">Player (shows on leaderboard)</option>
+              <option value="spectator" className="bg-slate-900 text-white">Spectator (view-only)</option>
+            </select>
+          </label>
+
+          <p className="mt-4 text-xs text-slate-400">
+            Player slots are required only if you join as a player.
           </p>
 
           <label className="mt-5 block">

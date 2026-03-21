@@ -168,6 +168,20 @@ export default async function DiscoverClubsPage({ searchParams }) {
                       ) : (
                         <form action={requestClubJoinAction}>
                           <input type="hidden" name="club_slug" value={club.slug} />
+                          <label className="mb-3 block text-left">
+                            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                              Join as
+                            </span>
+                            <select
+                              name="requested_role"
+                              defaultValue="player"
+                              className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-2.5 text-sm text-white outline-none focus:border-teal-400"
+                              style={{ colorScheme: "dark" }}
+                            >
+                              <option value="player" className="bg-slate-900 text-white">Player</option>
+                              <option value="spectator" className="bg-slate-900 text-white">Spectator</option>
+                            </select>
+                          </label>
                           <button className="w-full rounded-xl bg-gradient-to-r from-amber-300 to-orange-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg transition-all hover:opacity-90 hover:shadow-orange-500/20 active:scale-[0.98]">
                             Request to Join
                           </button>

@@ -3,11 +3,17 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { getClubBySlug } from "@/lib/clubJoin";
+import { CLUB_ROLE_PLAYER, CLUB_ROLE_SPECTATOR } from "@/lib/clubRoles";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getString(formData, key) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function getRequestedRole(formData) {
+  const value = getString(formData, "requested_role") || CLUB_ROLE_PLAYER;
+  return value === CLUB_ROLE_SPECTATOR ? CLUB_ROLE_SPECTATOR : CLUB_ROLE_PLAYER;
 }
 
 function revalidateClubJoinViews(clubSlug) {
@@ -22,6 +28,7 @@ function revalidateClubJoinViews(clubSlug) {
 
 export async function requestClubJoinAction(formData) {
   const clubSlug = getString(formData, "club_slug");
+  const requestedRole = getRequestedRole(formData);
 
   if (!clubSlug) {
     redirect("/clubs/discover?error=Club was not found.");
@@ -85,6 +92,7 @@ export async function requestClubJoinAction(formData) {
         status: "pending",
         resolved_at: null,
         resolved_by: null,
+        requested_role: requestedRole,
       })
       .eq("id", existingRequest.id);
 
@@ -96,6 +104,7 @@ export async function requestClubJoinAction(formData) {
       club_id: club.id,
       user_id: user.id,
       status: "pending",
+      requested_role: requestedRole,
     });
 
     if (requestInsert.error) {
