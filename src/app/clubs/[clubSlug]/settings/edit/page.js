@@ -8,6 +8,7 @@ import {
   promoteClubMemberAction,
   removeClubPlayerAction,
   removeClubSpectatorAction,
+  promoteSpectatorToPlayerAction,
   transferClubOwnershipAction,
   updateClubSettingsAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
@@ -57,6 +58,9 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
   const query = await searchParams;
   const error = query?.error;
   const success = query?.success;
+  const warning = query?.warning;
+  const confirmPlayerId = query?.confirm_player_id ?? null;
+  const confirmMatchCount = Number(query?.match_count ?? 0);
 
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -131,6 +135,18 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             {success}
           </div>
         )}
+        {warning === "player_has_matches" && confirmPlayerId ? (
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-200">
+            This player has {confirmMatchCount} recorded match{confirmMatchCount === 1 ? "" : "es"}.
+            Removing them will not delete matches but will detach them from the roster.
+          </div>
+        ) : null}
+        {warning === "transfer_ownership" && confirmPlayerId ? (
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-200">
+            You are about to transfer club ownership. This action will demote you to admin and grant full
+            control to the selected member.
+          </div>
+        ) : null}
       </div>
 
       {/* Club Configuration Card */}
@@ -328,8 +344,11 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   <form action={transferClubOwnershipAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="club_player_id" value={member.id} />
+                    {confirmPlayerId === member.id ? (
+                      <input type="hidden" name="confirm_transfer" value="1" />
+                    ) : null}
                     <button className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/30 transition-colors">
-                      Make Owner
+                      {confirmPlayerId === member.id ? "Confirm Owner" : "Make Owner"}
                     </button>
                   </form>
                 )}
@@ -340,9 +359,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   <form action={removeClubPlayerAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="club_player_id" value={member.id} />
+                    {confirmPlayerId === member.id ? (
+                      <input type="hidden" name="confirm_remove" value="1" />
+                    ) : null}
                     <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
                       <UserMinus size={14} />
-                      Remove
+                      {confirmPlayerId === member.id ? "Remove Anyway" : "Remove"}
                     </button>
                   </form>
                 )}
@@ -379,13 +401,22 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   </p>
                   <p className="truncate text-xs text-slate-400">{profile?.email}</p>
                 </div>
-                <form action={removeClubSpectatorAction}>
-                  <input type="hidden" name="club_slug" value={clubSlug} />
-                  <input type="hidden" name="membership_id" value={spectator.id} />
-                  <button className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors">
-                    Remove
-                  </button>
-                </form>
+                <div className="flex flex-wrap items-center gap-2">
+                  <form action={promoteSpectatorToPlayerAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="membership_id" value={spectator.id} />
+                    <button className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-teal-200 hover:bg-teal-500/20 transition-colors">
+                      Promote to Player
+                    </button>
+                  </form>
+                  <form action={removeClubSpectatorAction}>
+                    <input type="hidden" name="club_slug" value={clubSlug} />
+                    <input type="hidden" name="membership_id" value={spectator.id} />
+                    <button className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors">
+                      Remove
+                    </button>
+                  </form>
+                </div>
               </div>
               );
             })}

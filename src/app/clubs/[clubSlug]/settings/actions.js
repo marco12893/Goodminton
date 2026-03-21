@@ -286,6 +286,7 @@ export async function linkClubPlayerAction(formData) {
 export async function removeClubPlayerAction(formData) {
   const clubSlug = getString(formData, "club_slug");
   const clubPlayerId = getString(formData, "club_player_id");
+  const confirmRemove = getString(formData, "confirm_remove") === "1";
 
   if (!clubSlug || !clubPlayerId) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid player data.`);
@@ -331,6 +332,23 @@ export async function removeClubPlayerAction(formData) {
 
   if (!clubPlayer) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=Club player was not found.`);
+  }
+
+  const matchCountLookup = await supabaseAdmin
+    .from("match_participants")
+    .select("id", { head: true, count: "exact" })
+    .eq("club_player_id", clubPlayerId);
+
+  if (matchCountLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(matchCountLookup.error.message)}`);
+  }
+
+  const matchCount = matchCountLookup.count ?? 0;
+
+  if (matchCount > 0 && !confirmRemove) {
+    redirect(
+      `/clubs/${clubSlug}/settings/edit?warning=player_has_matches&confirm_player_id=${clubPlayerId}&match_count=${matchCount}`
+    );
   }
 
   const linkedUserId = clubPlayer.player?.user_id ?? null;
@@ -571,6 +589,7 @@ export async function demoteClubMemberAction(formData) {
 export async function transferClubOwnershipAction(formData) {
   const clubSlug = getString(formData, "club_slug");
   const clubPlayerId = getString(formData, "club_player_id");
+  const confirmTransfer = getString(formData, "confirm_transfer") === "1";
 
   if (!clubSlug || !clubPlayerId) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid player data.`);
@@ -611,6 +630,12 @@ export async function transferClubOwnershipAction(formData) {
 
   if (nextOwnerUserId === user.id) {
     redirect(`/clubs/${clubSlug}/settings/edit?error=You already own this club.`);
+  }
+
+  if (!confirmTransfer) {
+    redirect(
+      `/clubs/${clubSlug}/settings/edit?warning=transfer_ownership&confirm_player_id=${clubPlayerId}`
+    );
   }
 
   const transferResult = await supabaseAdmin.rpc("transfer_club_ownership", {
@@ -793,6 +818,130 @@ export async function removeClubSpectatorAction(formData) {
 
   revalidateClubViews(clubSlug);
   redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Spectator removed successfully.")}`);
+}
+
+export async function promoteSpectatorToPlayerAction(formData) {
+  const clubSlug = getString(formData, "club_slug");
+  const membershipId = getString(formData, "membership_id");
+
+  if (!clubSlug || !membershipId) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Invalid spectator data.`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  let club;
+  try {
+    club = await getAuthorizedClub(clubSlug, user.id);
+  } catch (error) {
+    redirect(`/clubs/${clubSlug}/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const membershipLookup = await supabaseAdmin
+    .from("club_members")
+    .select("id, user_id, role")
+    .eq("id", membershipId)
+    .eq("club_id", club.id)
+    .limit(1);
+
+  if (membershipLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipLookup.error.message)}`);
+  }
+
+  const membership = membershipLookup.data?.[0] ?? null;
+
+  if (!membership || membership.role !== CLUB_ROLE_SPECTATOR) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=Spectator was not found.`);
+  }
+
+  const profileLookup = await supabaseAdmin
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", membership.user_id)
+    .maybeSingle();
+
+  if (profileLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(profileLookup.error.message)}`);
+  }
+
+  const fallbackName =
+    profileLookup.data?.full_name ||
+    profileLookup.data?.email?.split("@")[0] ||
+    "Player";
+
+  const existingPlayer = await supabaseAdmin
+    .from("players")
+    .select("id")
+    .eq("user_id", membership.user_id)
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  if (existingPlayer.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(existingPlayer.error.message)}`);
+  }
+
+  let playerId = existingPlayer.data?.[0]?.id ?? null;
+
+  if (!playerId) {
+    const playerInsert = await supabaseAdmin
+      .from("players")
+      .insert({
+        user_id: membership.user_id,
+        full_name: fallbackName,
+      })
+      .select("id")
+      .single();
+
+    if (playerInsert.error) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(playerInsert.error.message)}`);
+    }
+
+    playerId = playerInsert.data.id;
+  }
+
+  const clubPlayerLookup = await supabaseAdmin
+    .from("club_players")
+    .select("id")
+    .eq("club_id", club.id)
+    .eq("player_id", playerId)
+    .limit(1);
+
+  if (clubPlayerLookup.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerLookup.error.message)}`);
+  }
+
+  if (!clubPlayerLookup.data?.length) {
+    const clubPlayerInsert = await supabaseAdmin.from("club_players").insert({
+      club_id: club.id,
+      player_id: playerId,
+      joined_at: new Date().toISOString().slice(0, 10),
+      status: "active",
+    });
+
+    if (clubPlayerInsert.error) {
+      redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(clubPlayerInsert.error.message)}`);
+    }
+  }
+
+  const membershipUpdate = await supabaseAdmin
+    .from("club_members")
+    .update({ role: CLUB_ROLE_PLAYER })
+    .eq("id", membership.id)
+    .eq("role", CLUB_ROLE_SPECTATOR);
+
+  if (membershipUpdate.error) {
+    redirect(`/clubs/${clubSlug}/settings/edit?error=${encodeURIComponent(membershipUpdate.error.message)}`);
+  }
+
+  revalidateClubViews(clubSlug);
+  redirect(`/clubs/${clubSlug}/settings/edit?success=${encodeURIComponent("Spectator promoted to player.")}`);
 }
 
 
