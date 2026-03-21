@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { ChevronRight, LockKeyhole, LogOut, Share2, UserRound } from "lucide-react";
+import { ChevronRight, FileText, LockKeyhole, LogOut, Share2, ShieldCheck, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/auth/actions";
+import { deleteAccountAction } from "@/app/profile/actions";
 import PendingButton from "@/components/PendingButton";
 import BackNavIcon from "@/components/BackNavIcon";
 import { FullscreenNavLink, FullscreenNavProvider } from "@/components/FullscreenNavOverlay";
@@ -30,7 +31,10 @@ function AccountMenuItem({ href, icon: Icon, title, description }) {
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }) {
+  const query = await searchParams;
+  const errorMessage = query?.error;
+  const successMessage = query?.message;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -134,9 +138,34 @@ export default async function ProfilePage() {
               title="Invite a Friend"
               description="Invite a friend to join Goodminton"
             />
+            <AccountMenuItem
+              href="/profile/privacy-policy"
+              icon={ShieldCheck}
+              title="Privacy Policy"
+              description="How we handle your data"
+            />
+            <AccountMenuItem
+              href="/profile/terms-of-service"
+              icon={FileText}
+              title="Terms of Service"
+              description="Rules, rights, and responsibilities"
+            />
           </div>
 
-          <form action={logoutAction} className="mt-8">
+          <div className="mt-6 space-y-3 empty:hidden">
+            {errorMessage ? (
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-200 backdrop-blur-sm">
+                {errorMessage}
+              </div>
+            ) : null}
+            {successMessage ? (
+              <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-4 py-3 text-sm font-medium text-teal-200 backdrop-blur-sm">
+                {successMessage}
+              </div>
+            ) : null}
+          </div>
+
+          <form action={logoutAction} className="mt-6">
             <PendingButton
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-base font-bold text-rose-400 shadow-lg transition-all hover:bg-rose-500/20 hover:text-rose-300 active:scale-[0.98]"
               pendingLabel="Signing out..."
@@ -145,6 +174,34 @@ export default async function ProfilePage() {
               Logout
             </PendingButton>
           </form>
+
+          <div className="mt-6 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-rose-300">
+              Danger Zone
+            </p>
+            <p className="mt-2 text-sm font-medium text-rose-100/80">
+              Deleting your account will remove your login access and unlink your data. Match history will remain
+              for club records, but your profile will be removed.
+            </p>
+            <form action={deleteAccountAction} className="mt-4 space-y-3">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-rose-200/80">
+                  Type DELETE to confirm
+                </span>
+                <input
+                  name="confirmation"
+                  placeholder="DELETE"
+                  className="w-full rounded-xl border border-rose-400/20 bg-slate-950/40 px-4 py-3 text-base text-white outline-none transition-all focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
+                />
+              </label>
+              <PendingButton
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500 px-5 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:bg-rose-400 active:scale-[0.98]"
+                pendingLabel="Deleting..."
+              >
+                Delete Account
+              </PendingButton>
+            </form>
+          </div>
         </section>
 
       </div>
