@@ -290,7 +290,7 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+              <div className={`flex flex-wrap items-center gap-2 sm:shrink-0 ${member.player?.user_id ? "w-full sm:w-auto" : ""}`}>
                 {!member.player?.user_id && (
                   <form action={linkClubPlayerAction} className="flex flex-1 items-center gap-2 sm:flex-initial">
                     <input type="hidden" name="club_slug" value={clubSlug} />
@@ -310,63 +310,82 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   </form>
                 )}
 
-                {member.player?.user_id && ![CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER].includes(roleMap.get(member.player?.user_id)) && (
-                  <form action={promoteClubMemberAction}>
-                    <input type="hidden" name="club_slug" value={clubSlug} />
-                    <input type="hidden" name="club_player_id" value={member.id} />
-                    <button className="rounded-lg bg-amber-500/20 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/30 transition-colors">
-                      Promote
-                    </button>
-                  </form>
-                )}
+                {member.player?.user_id ? (
+                  <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
+                    {member.player?.user_id && ![CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER].includes(roleMap.get(member.player?.user_id)) && (
+                      <form action={promoteClubMemberAction} className="w-full">
+                        <input type="hidden" name="club_slug" value={clubSlug} />
+                        <input type="hidden" name="club_player_id" value={member.id} />
+                        <button className="flex h-10 w-full items-center justify-center rounded-lg bg-amber-500/20 px-3 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/30">
+                          Promote
+                        </button>
+                      </form>
+                    )}
 
-                {member.player?.user_id && ![CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER].includes(roleMap.get(member.player?.user_id)) && (
-                  <form action={demotePlayerToSpectatorAction}>
-                    <input type="hidden" name="club_slug" value={clubSlug} />
-                    <input type="hidden" name="club_player_id" value={member.id} />
-                    <button className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-500/20 transition-colors">
-                      Convert to Spectator
-                    </button>
-                  </form>
-                )}
+                    {member.player?.user_id && ![CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER].includes(roleMap.get(member.player?.user_id)) && (
+                      <form action={demotePlayerToSpectatorAction} className="w-full">
+                        <input type="hidden" name="club_slug" value={clubSlug} />
+                        <input type="hidden" name="club_player_id" value={member.id} />
+                        <button className="flex h-10 w-full items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-[11px] font-bold uppercase tracking-widest text-amber-200 transition-colors hover:bg-amber-500/20">
+                          Convert to Spectator
+                        </button>
+                      </form>
+                    )}
 
-                {isClubOwner(club.role) && roleMap.get(member.player?.user_id) === CLUB_ROLE_ADMIN && (
-                  <form action={demoteClubMemberAction}>
-                    <input type="hidden" name="club_slug" value={clubSlug} />
-                    <input type="hidden" name="club_player_id" value={member.id} />
-                    <button className="rounded-lg bg-slate-500/20 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-500/30 transition-colors">
-                      Demote
-                    </button>
-                  </form>
-                )}
+                    {isClubOwner(club.role) && roleMap.get(member.player?.user_id) === CLUB_ROLE_ADMIN && (
+                      <form action={demoteClubMemberAction} className="w-full">
+                        <input type="hidden" name="club_slug" value={clubSlug} />
+                        <input type="hidden" name="club_player_id" value={member.id} />
+                        <button className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-500/20 px-3 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-500/30">
+                          Demote
+                        </button>
+                      </form>
+                    )}
 
-                {isClubOwner(club.role) && member.player?.user_id && roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER && (
-                  <form action={transferClubOwnershipAction}>
-                    <input type="hidden" name="club_slug" value={clubSlug} />
-                    <input type="hidden" name="club_player_id" value={member.id} />
-                    {confirmPlayerId === member.id ? (
-                      <input type="hidden" name="confirm_transfer" value="1" />
-                    ) : null}
-                    <button className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-500/30 transition-colors">
-                      {confirmPlayerId === member.id ? "Confirm Owner" : "Make Owner"}
-                    </button>
-                  </form>
-                )}
+                    {isClubOwner(club.role) && member.player?.user_id && roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER && (
+                      <form action={transferClubOwnershipAction} className="w-full">
+                        <input type="hidden" name="club_slug" value={clubSlug} />
+                        <input type="hidden" name="club_player_id" value={member.id} />
+                        {confirmPlayerId === member.id ? (
+                          <input type="hidden" name="confirm_transfer" value="1" />
+                        ) : null}
+                        <button className="flex h-10 w-full items-center justify-center rounded-lg bg-cyan-500/20 px-3 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-500/30">
+                          {confirmPlayerId === member.id ? "Confirm Owner" : "Make Owner"}
+                        </button>
+                      </form>
+                    )}
 
-                {(!member.player?.user_id ||
-                  (roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER &&
-                    (isClubOwner(club.role) || roleMap.get(member.player?.user_id) !== CLUB_ROLE_ADMIN))) && (
-                  <form action={removeClubPlayerAction}>
-                    <input type="hidden" name="club_slug" value={clubSlug} />
-                    <input type="hidden" name="club_player_id" value={member.id} />
-                    {confirmPlayerId === member.id ? (
-                      <input type="hidden" name="confirm_remove" value="1" />
-                    ) : null}
-                    <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
-                      <UserMinus size={14} />
-                      {confirmPlayerId === member.id ? "Remove Anyway" : "Remove"}
-                    </button>
-                  </form>
+                    {(roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER &&
+                      (isClubOwner(club.role) || roleMap.get(member.player?.user_id) !== CLUB_ROLE_ADMIN)) && (
+                      <form action={removeClubPlayerAction} className="w-full">
+                        <input type="hidden" name="club_slug" value={clubSlug} />
+                        <input type="hidden" name="club_player_id" value={member.id} />
+                        {confirmPlayerId === member.id ? (
+                          <input type="hidden" name="confirm_remove" value="1" />
+                        ) : null}
+                        <button className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20">
+                          <UserMinus size={14} />
+                          {confirmPlayerId === member.id ? "Remove Anyway" : "Remove"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ) : (
+                  (!member.player?.user_id ||
+                    (roleMap.get(member.player?.user_id) !== CLUB_ROLE_OWNER &&
+                      (isClubOwner(club.role) || roleMap.get(member.player?.user_id) !== CLUB_ROLE_ADMIN))) && (
+                    <form action={removeClubPlayerAction}>
+                      <input type="hidden" name="club_slug" value={clubSlug} />
+                      <input type="hidden" name="club_player_id" value={member.id} />
+                      {confirmPlayerId === member.id ? (
+                        <input type="hidden" name="confirm_remove" value="1" />
+                      ) : null}
+                      <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
+                        <UserMinus size={14} />
+                        {confirmPlayerId === member.id ? "Remove Anyway" : "Remove"}
+                      </button>
+                    </form>
+                  )
                 )}
               </div>
             </div>

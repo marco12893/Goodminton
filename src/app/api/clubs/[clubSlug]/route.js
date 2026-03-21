@@ -3,11 +3,11 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { optionalString } from "@/lib/validators";
 
 export async function GET(_, { params }) {
-  const { clubId } = await params;
+  const { clubSlug } = await params;
   const { data, error } = await supabaseAdmin
     .from("clubs")
     .select("*")
-    .eq("id", clubId)
+    .eq("slug", clubSlug)
     .maybeSingle();
 
   if (error) {
@@ -23,7 +23,7 @@ export async function GET(_, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { clubId } = await params;
+    const { clubSlug } = await params;
     const body = await request.json();
     const payload = {};
 
@@ -38,7 +38,7 @@ export async function PATCH(request, { params }) {
     const { data, error } = await supabaseAdmin
       .from("clubs")
       .update(payload)
-      .eq("id", clubId)
+      .eq("slug", clubSlug)
       .select()
       .maybeSingle();
 
@@ -57,11 +57,11 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(_, { params }) {
-  const { clubId } = await params;
+  const { clubSlug } = await params;
   const { error, count } = await supabaseAdmin
     .from("clubs")
     .delete({ count: "exact" })
-    .eq("id", clubId);
+    .eq("slug", clubSlug);
 
   if (error) {
     return serverError("Gagal menghapus klub.", error.message);

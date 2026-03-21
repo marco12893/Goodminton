@@ -9,7 +9,7 @@ import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { Calendar, Filter, Plus, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { Calendar, Filter, Plus, Trash2, CheckCircle2, XCircle, Download } from "lucide-react";
 
 const MATCHES_PER_PAGE = 10;
 
@@ -81,6 +81,16 @@ function buildMatchLogUrl(clubSlug, options = {}) {
   return query ? `/clubs/${clubSlug}/match-log?${query}` : `/clubs/${clubSlug}/match-log`;
 }
 
+function buildMatchLogExportUrl(clubSlug, options = {}) {
+  const params = new URLSearchParams();
+  if (options.dateFrom) params.set("date_from", options.dateFrom);
+  if (options.dateTo) params.set("date_to", options.dateTo);
+  const query = params.toString();
+  return query
+    ? `/api/clubs/${clubSlug}/match-log/export?${query}`
+    : `/api/clubs/${clubSlug}/match-log/export`;
+}
+
 export default async function ClubMatchLogPage({ params, searchParams }) {
   const { clubSlug } = await params;
   const query = await searchParams;
@@ -92,6 +102,7 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
   const currentPage = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
   const rangeFrom = (currentPage - 1) * MATCHES_PER_PAGE;
   const rangeTo = rangeFrom + MATCHES_PER_PAGE - 1;
+  const exportUrl = buildMatchLogExportUrl(clubSlug, { dateFrom, dateTo });
 
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -135,12 +146,21 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
               Review and manage every match. Submissions require manager approval to affect Elo.
             </p>
           </div>
-          <Link
-            href={`/clubs/${clubSlug}/match-log/new`}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95"
-          >
-            <Plus className="h-6 w-6" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href={exportUrl}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 active:scale-95"
+              title="Export match log"
+            >
+              <Download className="h-6 w-6" />
+            </Link>
+            <Link
+              href={`/clubs/${clubSlug}/match-log/new`}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <Plus className="h-6 w-6" />
+            </Link>
+          </div>
         </div>
       </div>
 
