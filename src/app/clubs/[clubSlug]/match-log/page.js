@@ -140,13 +140,8 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
       {/* Header Card */}
       <div className="rounded-[2rem] border border-white/10 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl sm:p-8">
         <div className="flex items-start justify-between gap-6">
-          <div>
-            <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Club Match Log</h1>
-            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-400">
-              Review and manage every match. Submissions require manager approval to affect Elo.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+          <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Club Match Log</h1>
+          <div className="flex items-center gap-3 shrink-0">
             <Link
               href={exportUrl}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 active:scale-95"
@@ -162,6 +157,9 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
             </Link>
           </div>
         </div>
+        <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400">
+          Review and manage every match. Submissions require manager approval to affect Elo.
+        </p>
       </div>
 
       {/* Date Filter Toolbar */}
