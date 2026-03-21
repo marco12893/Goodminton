@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ChevronRight, FileText, LockKeyhole, LogOut, Share2, ShieldCheck, UserRound } from "lucide-react";
+import { ChevronRight, FileText, LockKeyhole, LogOut, Mail, Share2, ShieldCheck, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/auth/actions";
 import { deleteAccountAction } from "@/app/profile/actions";
 import PendingButton from "@/components/PendingButton";
@@ -133,12 +133,6 @@ export default async function ProfilePage({ searchParams }) {
               description="Manage your account settings"
             />
             <AccountMenuItem
-              href="/profile/invite-a-friend"
-              icon={Share2}
-              title="Invite a Friend"
-              description="Invite a friend to join Goodminton"
-            />
-            <AccountMenuItem
               href="/profile/privacy-policy"
               icon={ShieldCheck}
               title="Privacy Policy"
@@ -149,6 +143,18 @@ export default async function ProfilePage({ searchParams }) {
               icon={FileText}
               title="Terms of Service"
               description="Rules, rights, and responsibilities"
+            />
+            <AccountMenuItem
+              href="/profile/contact"
+              icon={Mail}
+              title="Contact"
+              description="Get in touch with the team"
+            />
+            <AccountMenuItem
+              href="/profile/invite-a-friend"
+              icon={Share2}
+              title="Invite a Friend"
+              description="Invite a friend to join Goodminton"
             />
           </div>
 
