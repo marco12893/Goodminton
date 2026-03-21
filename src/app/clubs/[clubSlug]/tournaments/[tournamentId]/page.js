@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CalendarDays, Pencil, Trophy, Trash2 } from "lucide-react";
 import {
@@ -17,6 +16,8 @@ import {
 } from "@/lib/tournaments";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import PendingButton from "@/components/PendingButton";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("en-US", {
@@ -129,9 +130,12 @@ function MatchScoreForm({ clubSlug, tournamentId, match, admin }) {
               </label>
             </div>
             
-            <button className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-4 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]">
+            <PendingButton
+              className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-4 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]"
+              pendingLabel="Saving..."
+            >
               Save Match Score
-            </button>
+            </PendingButton>
           </form>
         </div>
       )}
@@ -172,7 +176,7 @@ function BracketCard({ match }) {
 
 function TabLink({ href, active, children }) {
   return (
-    <Link
+    <FullscreenNavLink
       href={href}
       className={`flex-1 rounded-full px-2 py-2.5 text-center text-[11px] font-bold transition-all sm:px-4 sm:text-sm ${
         active
@@ -181,7 +185,7 @@ function TabLink({ href, active, children }) {
       }`}
     >
       {children}
-    </Link>
+    </FullscreenNavLink>
   );
 }
 
@@ -487,24 +491,30 @@ export default async function TournamentDetailPage({ params, searchParams }) {
                   <option value="in_progress">In Progress</option>
                   <option value="completed">Completed</option>
                 </select>
-                <button className="rounded-xl bg-teal-500/20 px-4 py-2.5 text-xs font-bold text-teal-400 transition-colors hover:bg-teal-500/30 sm:py-2 sm:text-sm">
+                <PendingButton
+                  className="rounded-xl bg-teal-500/20 px-4 py-2.5 text-xs font-bold text-teal-400 transition-colors hover:bg-teal-500/30 sm:py-2 sm:text-sm"
+                  pendingLabel="Saving..."
+                >
                   Save
-                </button>
+                </PendingButton>
               </form>
               
               <div className="flex w-full items-center gap-2">
-                <Link
+                <FullscreenNavLink
                   href={`/clubs/${clubSlug}/tournaments/${tournamentId}/edit`}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-white/10 sm:px-4 sm:py-2 sm:text-sm"
                 >
                   <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Edit
-                </Link>
+                </FullscreenNavLink>
                 <form action={deleteTournamentAction} className="flex-1">
                   <input type="hidden" name="club_slug" value={clubSlug} />
                   <input type="hidden" name="tournament_id" value={tournamentId} />
-                  <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20 sm:px-4 sm:py-2 sm:text-sm">
+                  <PendingButton
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20 sm:px-4 sm:py-2 sm:text-sm"
+                    pendingLabel="Deleting..."
+                  >
                     <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Delete
-                  </button>
+                  </PendingButton>
                 </form>
               </div>
             </div>

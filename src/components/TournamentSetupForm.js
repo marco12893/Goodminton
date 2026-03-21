@@ -1,3 +1,5 @@
+import PendingButton from "@/components/PendingButton";
+
 export default function TournamentSetupForm({
   action,
   clubSlug,
@@ -164,9 +166,12 @@ export default function TournamentSetupForm({
           )}
         </div>
 
-        <button className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-4 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]">
+        <PendingButton
+          className="w-full rounded-full bg-gradient-to-r from-[#12d8c9] to-[#18c3e5] px-5 py-4 text-lg font-semibold text-[#062232] shadow-[0_14px_30px_rgba(18,216,201,0.35)]"
+          pendingLabel="Saving..."
+        >
           {submitLabel}
-        </button>
+        </PendingButton>
       </form>
     </div>
   );

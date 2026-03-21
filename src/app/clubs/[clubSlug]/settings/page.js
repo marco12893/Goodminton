@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CLUB_ROLE_ADMIN, CLUB_ROLE_OWNER, isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
@@ -6,6 +5,8 @@ import {
   approveClubJoinRequestAction,
   rejectClubJoinRequestAction,
 } from "@/app/clubs/[clubSlug]/settings/actions";
+import PendingButton from "@/components/PendingButton";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -139,12 +140,12 @@ export default async function ClubSettingsPage({ params, searchParams }) {
             </p>
           </div>
           {isClubManager(club.role) && (
-            <Link
+            <FullscreenNavLink
               href={`/clubs/${clubSlug}/settings/edit`}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 hover:text-teal-400 active:scale-95"
             >
               <Pencil size={22} />
-            </Link>
+            </FullscreenNavLink>
           )}
         </div>
       </div>
@@ -211,7 +212,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
               </div>
             ) : (
               filteredMembers.map((member) => (
-                <Link
+                <FullscreenNavLink
                   key={member.id}
                   href={`/clubs/${clubSlug}/players/${member.id}`}
                   className="group flex items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-4 transition-all hover:border-teal-500/30 hover:bg-white/10"
@@ -222,7 +223,7 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                   {[CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN].includes(roleMap.get(member.player?.user_id)) && (
                     <RoleBadge role={roleMap.get(member.player?.user_id)} />
                   )}
-                </Link>
+                </FullscreenNavLink>
               ))
             )}
           </div>
@@ -349,18 +350,24 @@ export default async function ClubSettingsPage({ params, searchParams }) {
                           placeholder="New player name"
                           className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none focus:border-teal-400"
                         />
-                        <button className="rounded-xl bg-teal-400 px-4 py-3 text-sm font-bold text-slate-950 transition-all hover:opacity-90">
+                        <PendingButton
+                          className="rounded-xl bg-teal-400 px-4 py-3 text-sm font-bold text-slate-950 transition-all hover:opacity-90"
+                          pendingLabel="Approving..."
+                        >
                           Approve
-                        </button>
+                        </PendingButton>
                       </form>
 
                       <form action={rejectClubJoinRequestAction}>
                         <input type="hidden" name="club_slug" value={clubSlug} />
                         <input type="hidden" name="request_id" value={request.id} />
                         <input type="hidden" name="return_to" value={`/clubs/${clubSlug}/settings`} />
-                        <button className="w-full rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition-all hover:bg-rose-500/20 lg:w-auto">
+                        <PendingButton
+                          className="w-full rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-300 transition-all hover:bg-rose-500/20 lg:w-auto"
+                          pendingLabel="Rejecting..."
+                        >
                           Reject
-                        </button>
+                        </PendingButton>
                       </form>
                     </div>
                   </div>

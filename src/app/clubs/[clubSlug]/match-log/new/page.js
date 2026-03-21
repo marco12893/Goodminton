@@ -4,6 +4,7 @@ import { createMatchLogAction } from "@/app/clubs/[clubSlug]/match-log/actions";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import PendingButton from "@/components/PendingButton";
 
 function ErrorMessage({ value }) {
   if (!value) return null;
@@ -171,9 +172,12 @@ export default async function NewMatchLogPage({ params, searchParams }) {
           </div>
 
           {/* Submit Button */}
-          <button className="mt-4 w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-4 text-base font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 hover:shadow-cyan-500/30 active:scale-[0.98]">
+          <PendingButton
+            className="mt-4 w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-4 text-base font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 hover:shadow-cyan-500/30 active:scale-[0.98]"
+            pendingLabel="Submitting..."
+          >
             Submit Match Result
-          </button>
+          </PendingButton>
         </form>
       </div>
     </section>

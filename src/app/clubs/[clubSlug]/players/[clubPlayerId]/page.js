@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 const RANGE_OPTIONS = [
   { value: "30d", label: "30 days", days: 30 },
@@ -171,7 +171,7 @@ function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
       ) : (
         <div className="space-y-3">
           {partners.map((partner, index) => (
-            <Link
+            <FullscreenNavLink
               key={partner.id}
               href={`/clubs/${clubSlug}/players/${partner.id}`}
               className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-3 transition-all hover:bg-white/10 hover:shadow-md active:scale-[0.98]"
@@ -194,7 +194,7 @@ function BestPartnersSection({ clubSlug, partners, rangeLabel }) {
                   <span className="text-slate-400">{formatDecimal(partner.winRate)}%</span>
                 </div>
               </div>
-            </Link>
+            </FullscreenNavLink>
           ))}
         </div>
       )}
@@ -265,7 +265,7 @@ function RivalSection({ clubSlug, rival, rangeLabel }) {
           No rival found in this range.
         </div>
       ) : (
-        <Link
+        <FullscreenNavLink
           href={`/clubs/${clubSlug}/players/${rival.id}`}
           className="group flex items-center gap-4 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4 transition-all hover:bg-rose-500/10 hover:shadow-lg active:scale-[0.98]"
         >
@@ -288,7 +288,7 @@ function RivalSection({ clubSlug, rival, rangeLabel }) {
               Elo {rival.elo} • {formatDecimal(rival.playerWinRate)}% WR
             </p>
           </div>
-        </Link>
+        </FullscreenNavLink>
       )}
     </div>
   );
@@ -351,7 +351,7 @@ function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
         {RANGE_OPTIONS.map((option) => {
           const isActive = option.value === activeRange;
           return (
-            <Link
+            <FullscreenNavLink
               key={option.value}
               href={`/clubs/${clubSlug}/players/${clubPlayerId}?range=${option.value}`}
               className={`flex-1 rounded-full px-3 py-2 text-center text-xs font-bold transition-all sm:text-sm ${
@@ -361,7 +361,7 @@ function RangeTabs({ clubSlug, clubPlayerId, activeRange }) {
               }`}
             >
               {option.label}
-            </Link>
+            </FullscreenNavLink>
           );
         })}
       </div>
@@ -727,12 +727,12 @@ export default async function ClubPlayerProfilePage({ params, searchParams }) {
 
       {/* Button diletakkan agak terpisah di bawah sebagai CTA */}
       <div className="pt-4">
-        <Link
+        <FullscreenNavLink
           href={`/clubs/${clubSlug}/players/${clubPlayerId}/match-log`}
           className="block w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-4 text-center text-base font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 hover:shadow-cyan-500/30 active:scale-[0.98]"
         >
           View Full Match Log
-        </Link>
+        </FullscreenNavLink>
       </div>
     </section>
   );

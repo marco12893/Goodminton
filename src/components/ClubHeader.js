@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 import SearchModal from "./SearchModal";
 
 export default function ClubHeader({ club, searchablePlayers = [], backTo = "/" }) {
@@ -11,7 +11,7 @@ export default function ClubHeader({ club, searchablePlayers = [], backTo = "/" 
     <>
       <header className="pt-2">
         <div className="flex items-start justify-between gap-3">
-          <Link
+          <FullscreenNavLink
             href={backTo}
             className="inline-flex shrink-0 items-center justify-center rounded-full bg-white/8 p-3 text-white/92 backdrop-blur-xl transition-all hover:bg-white/12 hover:scale-105"
             aria-label="Back to previous page"
@@ -29,7 +29,7 @@ export default function ClubHeader({ club, searchablePlayers = [], backTo = "/" 
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-          </Link>
+          </FullscreenNavLink>
           
           <div className="min-w-0 flex-1 text-center">
             <p className="break-words font-mono text-3xl font-semibold leading-tight text-white">

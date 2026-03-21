@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 const MATCHES_PER_PAGE = 10;
 
@@ -338,12 +338,12 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
       {totalMatches > 0 && (
         <div className="flex items-center justify-between gap-4 pt-4">
           {previousPage ? (
-            <Link
+            <FullscreenNavLink
               href={buildPlayerMatchLogUrl(clubSlug, clubPlayerId, previousPage)}
               className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-center text-sm font-bold text-white transition-all hover:bg-white/10 active:scale-[0.98]"
             >
               Previous
-            </Link>
+            </FullscreenNavLink>
           ) : (
             <span className="flex-1 cursor-not-allowed rounded-2xl border border-white/5 bg-white/5 px-6 py-4 text-center text-sm font-bold text-slate-600">
               Previous
@@ -351,12 +351,12 @@ export default async function PlayerMatchLogPage({ params, searchParams }) {
           )}
 
           {nextPage ? (
-            <Link
+            <FullscreenNavLink
               href={buildPlayerMatchLogUrl(clubSlug, clubPlayerId, nextPage)}
               className="flex-1 rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-6 py-4 text-center text-sm font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:opacity-90 active:scale-[0.98]"
             >
               Next Page
-            </Link>
+            </FullscreenNavLink>
           ) : (
             <span className="flex-1 cursor-not-allowed rounded-2xl border border-white/5 bg-white/5 px-6 py-4 text-center text-sm font-bold text-slate-600">
               Next Page

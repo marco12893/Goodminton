@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   approveMatchLogAction,
@@ -10,6 +9,9 @@ import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { Calendar, Filter, Plus, Trash2, CheckCircle2, XCircle, Download } from "lucide-react";
+import PendingButton from "@/components/PendingButton";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
+import DownloadLink from "@/components/DownloadLink";
 
 const MATCHES_PER_PAGE = 10;
 
@@ -142,19 +144,19 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
         <div className="flex items-start justify-between gap-6">
           <h1 className="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">Club Match Log</h1>
           <div className="flex items-center gap-3 shrink-0">
-            <Link
+            <DownloadLink
               href={exportUrl}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 active:scale-95"
               title="Export match log"
             >
               <Download className="h-6 w-6" />
-            </Link>
-            <Link
+            </DownloadLink>
+            <FullscreenNavLink
               href={`/clubs/${clubSlug}/match-log/new`}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95"
             >
               <Plus className="h-6 w-6" />
-            </Link>
+            </FullscreenNavLink>
           </div>
         </div>
         <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400">
@@ -180,8 +182,18 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
           </div>
         </div>
         <div className="mt-4 flex items-center gap-3">
-          <button className="flex-1 rounded-xl bg-white/10 py-2.5 text-xs font-bold text-white transition-all hover:bg-white/15 active:scale-[0.98]">Apply Filters</button>
-          <Link href={buildMatchLogUrl(clubSlug)} className="flex-1 rounded-xl border border-white/10 py-2.5 text-center text-xs font-bold text-slate-400 transition-all hover:bg-white/5">Clear</Link>
+          <PendingButton
+            className="flex-1 rounded-xl bg-white/10 py-2.5 text-xs font-bold text-white transition-all hover:bg-white/15 active:scale-[0.98]"
+            pendingLabel="Filtering..."
+          >
+            Apply Filters
+          </PendingButton>
+          <FullscreenNavLink
+            href={buildMatchLogUrl(clubSlug)}
+            className="flex-1 rounded-xl border border-white/10 py-2.5 text-center text-xs font-bold text-slate-400 transition-all hover:bg-white/5"
+          >
+            Clear
+          </FullscreenNavLink>
         </div>
       </form>
 
@@ -247,25 +259,34 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
                         <form action={approveMatchLogAction} className="sm:w-36">
                           <input type="hidden" name="club_slug" value={clubSlug} />
                           <input type="hidden" name="match_id" value={match.id} />
-                          <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500/10 px-4 py-2.5 text-xs font-bold text-teal-400 transition-colors hover:bg-teal-500/20">
+                          <PendingButton
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500/10 px-4 py-2.5 text-xs font-bold text-teal-400 transition-colors hover:bg-teal-500/20"
+                            pendingLabel="Approving..."
+                          >
                             <CheckCircle2 className="h-4 w-4" /> Approve
-                          </button>
+                          </PendingButton>
                         </form>
                         <form action={rejectMatchLogAction} className="sm:w-36">
                           <input type="hidden" name="club_slug" value={clubSlug} />
                           <input type="hidden" name="match_id" value={match.id} />
-                          <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/20">
+                          <PendingButton
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500/10 px-4 py-2.5 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/20"
+                            pendingLabel="Rejecting..."
+                          >
                             <XCircle className="h-4 w-4" /> Reject
-                          </button>
+                          </PendingButton>
                         </form>
                       </>
                     )}
                     <form action={deleteMatchLogAction} className="sm:w-36">
                       <input type="hidden" name="club_slug" value={clubSlug} />
                       <input type="hidden" name="match_id" value={match.id} />
-                      <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500/10 px-4 py-2.5 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20">
+                      <PendingButton
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500/10 px-4 py-2.5 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20"
+                        pendingLabel="Deleting..."
+                      >
                         <Trash2 className="h-3.5 w-3.5" /> Delete
-                      </button>
+                      </PendingButton>
                     </form>
                   </div>
                 )}
@@ -278,8 +299,8 @@ export default async function ClubMatchLogPage({ params, searchParams }) {
       {/* Pagination Footer */}
       {totalMatches > 0 && (
         <div className="flex items-center justify-between gap-4 pt-4">
-          <Link href={buildMatchLogUrl(clubSlug, { dateFrom, dateTo, page: previousPage })} className={`flex-1 rounded-2xl border border-white/10 bg-white/5 py-4 text-center text-sm font-bold transition-all ${!previousPage ? "pointer-events-none opacity-20" : "hover:bg-white/10 active:scale-95 text-white"}`}>Previous</Link>
-          <Link href={buildMatchLogUrl(clubSlug, { dateFrom, dateTo, page: nextPage })} className={`flex-1 rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 py-4 text-center text-sm font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all ${!nextPage ? "pointer-events-none opacity-20" : "hover:opacity-90 active:scale-95"}`}>Next Page</Link>
+          <FullscreenNavLink href={buildMatchLogUrl(clubSlug, { dateFrom, dateTo, page: previousPage })} className={`flex-1 rounded-2xl border border-white/10 bg-white/5 py-4 text-center text-sm font-bold transition-all ${!previousPage ? "pointer-events-none opacity-20" : "hover:bg-white/10 active:scale-95 text-white"}`}>Previous</FullscreenNavLink>
+          <FullscreenNavLink href={buildMatchLogUrl(clubSlug, { dateFrom, dateTo, page: nextPage })} className={`flex-1 rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 py-4 text-center text-sm font-bold text-slate-900 shadow-lg shadow-cyan-500/20 transition-all ${!nextPage ? "pointer-events-none opacity-20" : "hover:opacity-90 active:scale-95"}`}>Next Page</FullscreenNavLink>
         </div>
       )}
     </section>

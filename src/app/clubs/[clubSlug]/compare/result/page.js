@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   buildDoublesHeadToHead,
@@ -11,6 +10,7 @@ import {
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 function getInitials(name) {
   return name
@@ -309,11 +309,13 @@ export default async function ClubCompareResultPage({ params, searchParams }) {
       />
 
       <div className="pt-4 text-center">
-        <Link href={`/clubs/${clubSlug}/compare`} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-white/10 active:scale-95 sm:px-8 sm:py-3 sm:text-sm">
+        <FullscreenNavLink href={`/clubs/${clubSlug}/compare`} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-white/10 active:scale-95 sm:px-8 sm:py-3 sm:text-sm">
           ← Compare different players
-        </Link>
+        </FullscreenNavLink>
       </div>
 
     </section>
   );
 }
+
+

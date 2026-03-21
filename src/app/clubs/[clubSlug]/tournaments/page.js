@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CalendarDays, Trophy, Volleyball } from "lucide-react";
 import { isClubManager } from "@/lib/clubRoles";
 import { getClubPageData } from "@/lib/clubPageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 function StatusBadge({ status }) {
   const styles =
@@ -95,12 +95,12 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
             </p>
           </div>
           {isClubManager(club.role) ? (
-            <Link
+            <FullscreenNavLink
               href={`/clubs/${clubSlug}/tournaments/new`}
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-teal-400 to-cyan-500 text-3xl font-light text-slate-900 shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 hover:opacity-90 hover:shadow-cyan-500/40 active:scale-95"
             >
               +
-            </Link>
+            </FullscreenNavLink>
           ) : null}
         </div>
       </div>
@@ -134,7 +134,7 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
                 : (tournament.participants ?? []).length;
 
             return (
-              <Link
+              <FullscreenNavLink
                 key={tournament.id}
                 href={`/clubs/${clubSlug}/tournaments/${tournament.id}`}
                 className="group relative block overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/10 hover:shadow-2xl"
@@ -180,7 +180,7 @@ export default async function ClubTournamentsPage({ params, searchParams }) {
                     </span>
                   </div>
                 </div>
-              </Link>
+              </FullscreenNavLink>
             );
           })
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFullscreenNavStart } from "@/components/FullscreenNavOverlay";
 import { useRouter } from "next/navigation";
 
 const singlesSlots = [
@@ -143,6 +144,7 @@ function PlayerSelect({ label, value, options, onChange }) {
 
 export default function ClubCompareBuilder({ clubSlug, players }) {
   const router = useRouter();
+  const startNav = useFullscreenNavStart();
   const [mode, setMode] = useState("singles");
   const [selected, setSelected] = useState({
     player1: "",
@@ -214,6 +216,7 @@ export default function ClubCompareBuilder({ clubSlug, players }) {
       query.set("player4", selected.player4);
     }
 
+    startNav();
     router.push(`/clubs/${clubSlug}/compare/result?${query.toString()}`);
   }
 

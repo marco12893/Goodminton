@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 import { notFound, redirect } from "next/navigation";
 import {
   addClubPlayerAction,
@@ -228,9 +228,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             </select>
           </label>
 
-          <button className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]">
+          <PendingButton
+            className="w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]"
+            pendingLabel="Saving..."
+          >
             Save Club Settings
-          </button>
+          </PendingButton>
         </form>
       </div>
 
@@ -254,9 +257,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
               className="w-full rounded-xl border border-white/10 bg-slate-950/40 py-3 pl-11 pr-4 text-base text-white outline-none transition-all focus:border-teal-400 focus:ring-1 focus:ring-teal-400"
             />
           </div>
-          <button className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-slate-900 transition-all hover:bg-slate-200 active:scale-95">
+          <PendingButton
+            className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-slate-900 transition-all hover:bg-slate-200 active:scale-95"
+            pendingLabel="Adding..."
+          >
             Add Player
-          </button>
+          </PendingButton>
         </form>
 
         <div className="mt-8 space-y-3">
@@ -267,12 +273,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link
+                  <FullscreenNavLink
                     href={`/clubs/${clubSlug}/players/${member.id}`}
                     className="text-base font-bold text-white transition-colors hover:text-teal-400"
                   >
                     {member.player?.full_name}
-                  </Link>
+                  </FullscreenNavLink>
                   {[CLUB_ROLE_OWNER, CLUB_ROLE_ADMIN].includes(roleMap.get(member.player?.user_id)) && (
                     <RoleBadge role={roleMap.get(member.player?.user_id)} />
                   )}
@@ -305,9 +311,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                         className="w-full rounded-lg border border-white/10 bg-slate-950/50 py-1.5 pl-8 pr-3 text-xs text-white outline-none focus:border-teal-400"
                       />
                     </div>
-                    <button className="rounded-lg bg-teal-500/20 px-3 py-1.5 text-xs font-bold text-teal-400 hover:bg-teal-500/30">
+                    <PendingButton
+                      className="rounded-lg bg-teal-500/20 px-3 py-1.5 text-xs font-bold text-teal-400 hover:bg-teal-500/30"
+                      pendingLabel="Linking..."
+                    >
                       Link
-                    </button>
+                    </PendingButton>
                   </form>
                 )}
 
@@ -396,10 +405,13 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                       {confirmPlayerId === member.id ? (
                         <input type="hidden" name="confirm_remove" value="1" />
                       ) : null}
-                      <button className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors">
+                      <PendingButton
+                        className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-colors"
+                        pendingLabel="Removing..."
+                      >
                         <UserMinus size={14} />
                         {confirmPlayerId === member.id ? "Remove Anyway" : "Remove"}
-                      </button>
+                      </PendingButton>
                     </form>
                   )
                 )}
@@ -440,16 +452,22 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                   <form action={promoteSpectatorToPlayerAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="membership_id" value={spectator.id} />
-                    <button className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-teal-200 hover:bg-teal-500/20 transition-colors">
+                    <PendingButton
+                      className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-teal-200 hover:bg-teal-500/20 transition-colors"
+                      pendingLabel="Promoting..."
+                    >
                       Promote to Player
-                    </button>
+                    </PendingButton>
                   </form>
                   <form action={removeClubSpectatorAction}>
                     <input type="hidden" name="club_slug" value={clubSlug} />
                     <input type="hidden" name="membership_id" value={spectator.id} />
-                    <button className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors">
+                    <PendingButton
+                      className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-colors"
+                      pendingLabel="Removing..."
+                    >
                       Remove
-                    </button>
+                    </PendingButton>
                   </form>
                 </div>
               </div>
@@ -482,9 +500,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
             />
           </label>
 
-          <button className="w-full rounded-xl border border-rose-400/20 bg-rose-500 px-5 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:bg-rose-400 active:scale-[0.98]">
+          <PendingButton
+            className="w-full rounded-xl border border-rose-400/20 bg-rose-500 px-5 py-3.5 text-base font-bold text-white shadow-lg transition-all hover:bg-rose-400 active:scale-[0.98]"
+            pendingLabel="Dissolving..."
+          >
             Dissolve Club
-          </button>
+          </PendingButton>
         </form>
       </div>
       )}

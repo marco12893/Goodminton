@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getClubPageData } from "@/lib/clubPageData";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +91,7 @@ function PodiumCard({ entry, rank, variant }) {
   }[variant];
 
   return (
-    <Link
+    <FullscreenNavLink
       href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
       className="group flex h-full flex-col items-center justify-end"
     >
@@ -114,13 +114,13 @@ function PodiumCard({ entry, rank, variant }) {
           {entry.elo}
         </p>
       </div>
-    </Link>
+    </FullscreenNavLink>
   );
 }
 
 function RankRow({ entry, rank }) {
   return (
-    <Link
+    <FullscreenNavLink
       href={`/clubs/${entry.clubSlug}/players/${entry.id}`}
       className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-white/5 px-4 py-4 transition-all hover:-translate-y-1 hover:border-teal-400/30 hover:bg-white/10 hover:shadow-lg hover:shadow-teal-500/10"
     >
@@ -145,7 +145,7 @@ function RankRow({ entry, rank }) {
           {entry.elo}
         </p>
       </div>
-    </Link>
+    </FullscreenNavLink>
   );
 }
 

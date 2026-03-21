@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useFullscreenNavStart } from "@/components/FullscreenNavOverlay";
 
 function getInitials(name) {
   return name
@@ -14,6 +16,8 @@ function getInitials(name) {
 
 export default function SearchModal({ isOpen, onClose, players = [], clubSlug }) {
   const [value, setValue] = useState("");
+  const router = useRouter();
+  const startNav = useFullscreenNavStart();
 
   function handleClear() {
     setValue("");
@@ -31,7 +35,7 @@ export default function SearchModal({ isOpen, onClose, players = [], clubSlug })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 px-4 pt-10 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] flex items-start justify-center bg-black/70 px-4 pt-10 backdrop-blur-sm">
       <div className="w-full max-w-md">
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,20,32,0.96),rgba(5,12,22,0.98))] shadow-[0_20px_50px_rgba(3,12,22,0.28)] backdrop-blur-xl">
           <div className="flex items-center gap-3 border-b border-white/8 px-4 py-4">
@@ -94,11 +98,18 @@ export default function SearchModal({ isOpen, onClose, players = [], clubSlug })
               </div>
             ) : (
               <div className="space-y-1">
-                {results.map((player) => (
+                {results.map((player) => {
+                  const href = `/clubs/${clubSlug}/players/${player.id}`;
+                  return (
                   <Link
                     key={player.id}
-                    href={`/clubs/${clubSlug}/players/${player.id}`}
-                    onClick={onClose}
+                    href={href}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      startNav();
+                      onClose();
+                      router.push(href);
+                    }}
                     className="flex items-center gap-3 rounded-[1.35rem] px-3 py-3 text-white transition hover:bg-white/8"
                   >
                     <div
@@ -114,7 +125,8 @@ export default function SearchModal({ isOpen, onClose, players = [], clubSlug })
                       </p>
                     </div>
                   </Link>
-                ))}
+                );
+                })}
               </div>
             )}
           </div>

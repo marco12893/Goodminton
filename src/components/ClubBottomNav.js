@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Share2, PieChart, Settings, Trophy } from "lucide-react";
+import { FullscreenNavLink } from "@/components/FullscreenNavOverlay";
 
 const navItems = [
   { label: "Home", href: "", icon: Home },
@@ -26,7 +26,7 @@ export default function ClubBottomNav({ clubSlug, pendingJoinRequestsCount = 0 }
           const showBadge = item.label === "Settings" && pendingJoinRequestsCount > 0;
 
           return (
-            <Link
+            <FullscreenNavLink
               key={item.label}
               href={href}
               className={`relative flex flex-1 flex-col items-center justify-center rounded-xl py-2.5 transition-all duration-200 ${
@@ -52,7 +52,7 @@ export default function ClubBottomNav({ clubSlug, pendingJoinRequestsCount = 0 }
               >
                 {item.label}
               </span>
-            </Link>
+            </FullscreenNavLink>
           );
         })}
       </div>
