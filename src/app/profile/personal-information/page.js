@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { updatePersonalInformationAction } from "@/app/profile/personal-information/actions";
 import SignedImageUploadField from "@/components/SignedImageUploadField";
-import BackIcon from "@/components/BackIcon";
+import PendingButton from "@/components/PendingButton";
+import BackNavIcon from "@/components/BackNavIcon";
+import { FullscreenNavProvider } from "@/components/FullscreenNavOverlay";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -51,7 +52,8 @@ export default async function PersonalInformationPage({ searchParams }) {
       .join("") || "GM";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
+    <FullscreenNavProvider>
+      <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.96))]" />
 
@@ -61,7 +63,7 @@ export default async function PersonalInformationPage({ searchParams }) {
           {/* Header section with Back Button */}
           <div className="flex items-start justify-between">
             <div className="pt-1">
-              <BackIcon href="/profile" />
+              <BackNavIcon href="/profile" />
             </div>
             <div className="flex-1 px-4 text-center">
               <h1 className="text-2xl font-bold leading-tight tracking-tight text-white">
@@ -164,12 +166,16 @@ export default async function PersonalInformationPage({ searchParams }) {
               />
             </label>
 
-            <button className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]">
+            <PendingButton
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]"
+              pendingLabel="Saving..."
+            >
               Save Personal Information
-            </button>
+            </PendingButton>
           </form>
         </div>
       </div>
     </main>
+    </FullscreenNavProvider>
   );
 }

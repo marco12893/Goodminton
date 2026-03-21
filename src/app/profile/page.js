@@ -1,13 +1,14 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, LockKeyhole, LogOut, Share2, UserRound } from "lucide-react";
 import { logoutAction } from "@/app/auth/actions";
-import BackIcon from "@/components/BackIcon";
+import PendingButton from "@/components/PendingButton";
+import BackNavIcon from "@/components/BackNavIcon";
+import { FullscreenNavLink, FullscreenNavProvider } from "@/components/FullscreenNavOverlay";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function AccountMenuItem({ href, icon: Icon, title, description }) {
   return (
-    <Link
+    <FullscreenNavLink
       href={href}
       className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:-translate-y-1 hover:bg-white/10 hover:shadow-lg active:scale-[0.98]"
     >
@@ -23,7 +24,7 @@ function AccountMenuItem({ href, icon: Icon, title, description }) {
         </p>
       </div>
       <ChevronRight className="h-5 w-5 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-teal-400" />
-    </Link>
+    </FullscreenNavLink>
   );
 }
 
@@ -71,7 +72,8 @@ export default async function ProfilePage() {
   const avatarUrl = player?.avatar_url ?? "";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
+    <FullscreenNavProvider>
+      <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.96))]" />
       <div className="absolute inset-0 bg-[url('/background/premium_photo-1670002272491-3d3f8f5c00a5.webp')] bg-cover bg-center opacity-10 mix-blend-screen" />
@@ -82,7 +84,7 @@ export default async function ProfilePage() {
         <div className="relative z-20 rounded-[2rem] border border-white/20 bg-gradient-to-br from-teal-400 to-cyan-500 px-6 pb-10 pt-6 shadow-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center">
-              <BackIcon href="/" />
+              <BackNavIcon href="/" />
             </div>
             <p className="text-xl font-bold tracking-tight text-slate-900">Profile</p>
             {/* Balancer for absolute centering */}
@@ -135,14 +137,18 @@ export default async function ProfilePage() {
           </div>
 
           <form action={logoutAction} className="mt-8">
-            <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-base font-bold text-rose-400 shadow-lg transition-all hover:bg-rose-500/20 hover:text-rose-300 active:scale-[0.98]">
+            <PendingButton
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-5 py-4 text-base font-bold text-rose-400 shadow-lg transition-all hover:bg-rose-500/20 hover:text-rose-300 active:scale-[0.98]"
+              pendingLabel="Signing out..."
+            >
               <LogOut className="h-5 w-5" />
               Logout
-            </button>
+            </PendingButton>
           </form>
         </section>
 
       </div>
     </main>
+    </FullscreenNavProvider>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loginAction } from "@/app/auth/actions";
+import PendingButton from "@/components/PendingButton";
 
 function Message({ value, tone }) {
   if (!value) return null;
@@ -67,9 +68,12 @@ export default async function LoginPage({ searchParams }) {
               />
             </label>
 
-            <button className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]">
+            <PendingButton
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]"
+              pendingLabel="Signing in..."
+            >
               Login
-            </button>
+            </PendingButton>
           </form>
 
           <p className="mt-6 text-center text-sm font-medium text-slate-300">

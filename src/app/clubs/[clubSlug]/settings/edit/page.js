@@ -20,6 +20,7 @@ import {
   isClubOwner,
 } from "@/lib/clubRoles";
 import SignedImageUploadField from "@/components/SignedImageUploadField";
+import PendingButton from "@/components/PendingButton";
 import { getClubPageData } from "@/lib/clubPageData";
 import { parseStoragePathFromPublicUrl } from "@/lib/storageUploads";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -316,9 +317,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                       <form action={promoteClubMemberAction} className="w-full">
                         <input type="hidden" name="club_slug" value={clubSlug} />
                         <input type="hidden" name="club_player_id" value={member.id} />
-                        <button className="flex h-10 w-full items-center justify-center rounded-lg bg-amber-500/20 px-3 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/30">
+                        <PendingButton
+                          className="flex h-10 w-full items-center justify-center rounded-lg bg-amber-500/20 px-3 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/30"
+                          pendingLabel="Promoting..."
+                        >
                           Promote
-                        </button>
+                        </PendingButton>
                       </form>
                     )}
 
@@ -326,9 +330,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                       <form action={demotePlayerToSpectatorAction} className="w-full">
                         <input type="hidden" name="club_slug" value={clubSlug} />
                         <input type="hidden" name="club_player_id" value={member.id} />
-                        <button className="flex h-10 w-full items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-[11px] font-bold uppercase tracking-widest text-amber-200 transition-colors hover:bg-amber-500/20">
+                        <PendingButton
+                          className="flex h-10 w-full items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 text-[11px] font-bold uppercase tracking-widest text-amber-200 transition-colors hover:bg-amber-500/20"
+                          pendingLabel="Converting..."
+                        >
                           Convert to Spectator
-                        </button>
+                        </PendingButton>
                       </form>
                     )}
 
@@ -336,9 +343,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                       <form action={demoteClubMemberAction} className="w-full">
                         <input type="hidden" name="club_slug" value={clubSlug} />
                         <input type="hidden" name="club_player_id" value={member.id} />
-                        <button className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-500/20 px-3 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-500/30">
+                        <PendingButton
+                          className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-500/20 px-3 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-500/30"
+                          pendingLabel="Demoting..."
+                        >
                           Demote
-                        </button>
+                        </PendingButton>
                       </form>
                     )}
 
@@ -349,9 +359,12 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                         {confirmPlayerId === member.id ? (
                           <input type="hidden" name="confirm_transfer" value="1" />
                         ) : null}
-                        <button className="flex h-10 w-full items-center justify-center rounded-lg bg-cyan-500/20 px-3 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-500/30">
+                        <PendingButton
+                          className="flex h-10 w-full items-center justify-center rounded-lg bg-cyan-500/20 px-3 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-500/30"
+                          pendingLabel="Transferring..."
+                        >
                           {confirmPlayerId === member.id ? "Confirm Owner" : "Make Owner"}
-                        </button>
+                        </PendingButton>
                       </form>
                     )}
 
@@ -363,10 +376,13 @@ export default async function EditClubSettingsPage({ params, searchParams }) {
                         {confirmPlayerId === member.id ? (
                           <input type="hidden" name="confirm_remove" value="1" />
                         ) : null}
-                        <button className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20">
+                        <PendingButton
+                          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20"
+                          pendingLabel="Removing..."
+                        >
                           <UserMinus size={14} />
                           {confirmPlayerId === member.id ? "Remove Anyway" : "Remove"}
-                        </button>
+                        </PendingButton>
                       </form>
                     )}
                   </div>

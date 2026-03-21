@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClubAction } from "@/app/clubs/new/actions";
 import SignedImageUploadField from "@/components/SignedImageUploadField";
-import BackIcon from "@/components/BackIcon";
+import PendingButton from "@/components/PendingButton";
+import BackNavIcon from "@/components/BackNavIcon";
+import { FullscreenNavProvider } from "@/components/FullscreenNavOverlay";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function ErrorMessage({ value }) {
@@ -29,7 +30,8 @@ export default async function NewClubPage({ searchParams }) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
+    <FullscreenNavProvider>
+      <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.96))]" />
 
@@ -39,7 +41,7 @@ export default async function NewClubPage({ searchParams }) {
           {/* Header section with Back Button */}
           <div className="flex items-start justify-between">
             <div className="pt-1">
-              <BackIcon href="/" />
+              <BackNavIcon href="/" />
             </div>
             <div className="flex-1 px-4 text-center">
               <p className="font-mono text-lg font-bold tracking-tight text-teal-400">
@@ -129,13 +131,17 @@ export default async function NewClubPage({ searchParams }) {
               </select>
             </label>
 
-            <button className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]">
+            <PendingButton
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]"
+              pendingLabel="Creating..."
+            >
               Create Club
-            </button>
+            </PendingButton>
           </form>
 
         </div>
       </div>
     </main>
+    </FullscreenNavProvider>
   );
 }

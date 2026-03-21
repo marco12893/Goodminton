@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import BackIcon from "@/components/BackIcon";
+import PendingButton from "@/components/PendingButton";
+import BackNavIcon from "@/components/BackNavIcon";
+import { FullscreenNavLink, FullscreenNavProvider } from "@/components/FullscreenNavOverlay";
 import { requestClubJoinAction } from "@/app/clubs/discover/actions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -64,12 +65,13 @@ export default async function DiscoverClubsPage({ searchParams }) {
     false;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
+    <FullscreenNavProvider>
+      <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.96))]" />
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col px-6 py-8">
         <div className="flex items-start justify-between">
-          <BackIcon href="/" />
+          <BackNavIcon href="/" />
           <div className="flex-1 px-4 text-center">
             <p className="font-mono text-lg font-bold tracking-tight text-teal-400">GoodMinton</p>
             <h1 className="mt-1 text-2xl font-bold text-white">Find Clubs</h1>
@@ -84,9 +86,12 @@ export default async function DiscoverClubsPage({ searchParams }) {
             placeholder="Search by club name"
             className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-base text-white outline-none transition-all placeholder:text-slate-500 focus:border-teal-400 focus:ring-1 focus:ring-teal-400"
           />
-          <button className="mt-3 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3 text-sm font-bold text-slate-900">
+          <PendingButton
+            className="mt-3 w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3 text-sm font-bold text-slate-900"
+            pendingLabel="Searching..."
+          >
             Search Clubs
-          </button>
+          </PendingButton>
         </form>
 
         <div className="mt-4 space-y-3 empty:hidden">
@@ -143,19 +148,19 @@ export default async function DiscoverClubsPage({ searchParams }) {
 
                   <div className="mt-4">
                     {membershipRole ? (
-                      <Link
+                      <FullscreenNavLink
                         href={`/clubs/${club.slug}`}
                         className="block w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-4 py-3 text-center text-sm font-bold text-slate-900"
                       >
                         Open Club
-                      </Link>
+                      </FullscreenNavLink>
                     ) : club.join_mode === "open" ? (
-                      <Link
+                      <FullscreenNavLink
                         href={`/join-club/${club.slug}`}
                         className="block w-full rounded-xl bg-gradient-to-r from-teal-400 to-cyan-500 px-4 py-3 text-center text-sm font-bold text-slate-900"
                       >
                         Join Club
-                      </Link>
+                      </FullscreenNavLink>
                     ) : club.join_mode === "approval" ? (
                       requestStatus === "pending" ? (
                         <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm font-bold text-amber-300">
@@ -182,9 +187,12 @@ export default async function DiscoverClubsPage({ searchParams }) {
                               <option value="spectator" className="bg-slate-900 text-white">Spectator</option>
                             </select>
                           </label>
-                          <button className="w-full rounded-xl bg-gradient-to-r from-amber-300 to-orange-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg transition-all hover:opacity-90 hover:shadow-orange-500/20 active:scale-[0.98]">
+                          <PendingButton
+                            className="w-full rounded-xl bg-gradient-to-r from-amber-300 to-orange-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg transition-all hover:opacity-90 hover:shadow-orange-500/20 active:scale-[0.98]"
+                            pendingLabel="Requesting..."
+                          >
                             Request to Join
-                          </button>
+                          </PendingButton>
                         </form>
                       )
                     ) : (
@@ -200,5 +208,6 @@ export default async function DiscoverClubsPage({ searchParams }) {
         </div>
       </div>
     </main>
+    </FullscreenNavProvider>
   );
 }

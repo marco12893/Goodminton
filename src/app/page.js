@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getClubRoleLabel } from "@/lib/clubRoles";
 import { getHomepageData } from "@/lib/homepageData";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { HomeNavLink, HomeNavOverlayProvider } from "@/components/HomeNavOverlay";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,8 @@ export default async function Home({ searchParams }) {
     .join("") || "GM";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
+    <HomeNavOverlayProvider>
+      <main className="relative min-h-screen overflow-hidden bg-[#07131f] text-white">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(24,206,195,0.16),transparent_28%),linear-gradient(180deg,_rgba(4,18,31,0.55),rgba(4,18,31,0.96))]" />
 
@@ -51,7 +53,7 @@ export default async function Home({ searchParams }) {
             <div className="mt-2 h-1.5 w-16 rounded-full bg-gradient-to-r from-teal-400 to-cyan-500" />
           </div>
 
-          <Link
+          <HomeNavLink
             href="/profile"
             className="group flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 shadow-lg backdrop-blur-md transition-transform hover:scale-105 active:scale-95"
           >
@@ -61,7 +63,7 @@ export default async function Home({ searchParams }) {
             >
               {!data.avatarUrl ? profileInitials : null}
             </div>
-          </Link>
+          </HomeNavLink>
         </header>
 
         {/* Greeting Section */}
@@ -107,19 +109,19 @@ export default async function Home({ searchParams }) {
             </div>
           </div>
 
-          <Link
+          <HomeNavLink
             href="/clubs/new"
             className="mt-6 block w-full rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-500 px-5 py-3.5 text-center text-base font-bold text-slate-900 shadow-lg transition-all hover:opacity-90 hover:shadow-cyan-500/25 active:scale-[0.98]"
           >
             New Club
-          </Link>
+          </HomeNavLink>
 
-          <Link
+          <HomeNavLink
             href="/clubs/discover"
             className="mt-3 block w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-center text-base font-bold text-white transition-all hover:bg-white/10"
           >
             Find Clubs
-          </Link>
+          </HomeNavLink>
         </section>
 
         {/* My Clubs Section */}
@@ -137,7 +139,7 @@ export default async function Home({ searchParams }) {
               </div>
             ) : (
               data.clubs.map((club) => (
-                <Link
+                <HomeNavLink
                   key={club.id}
                   href={`/clubs/${club.slug}`}
                   className={`group block overflow-hidden rounded-3xl bg-gradient-to-br ${club.gradient} p-5 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]`}
@@ -161,12 +163,13 @@ export default async function Home({ searchParams }) {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </HomeNavLink>
               ))
             )}
           </div>
         </section>
       </div>
     </main>
+    </HomeNavOverlayProvider>
   );
 }
